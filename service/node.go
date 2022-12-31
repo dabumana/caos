@@ -20,7 +20,7 @@ var penalty float32 = 0.0
 var frequency float32 = 0.0
 var promptctx []string
 var prompt []string
-var maxtokens int = 512
+var maxtokens int = 150
 var mode string = "Text"
 
 // Node manager

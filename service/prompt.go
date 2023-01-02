@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/gdamore/tcell/v2"
 )
 
 // Prompt service - handles requests prompts
@@ -70,6 +71,11 @@ func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionRespons
 
 	if err != nil {
 		Node.Layout.infoOutput.SetText(err.Error())
+		Node.Layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
+		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
+	} else {
+		Node.Layout.promptInput.SetPlaceholder("Type here...")
+		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
 	}
 
 	c.contextualResponse = resp
@@ -98,6 +104,11 @@ func (c ServicePrompt) SendIntructionPrompt(service ServiceClient) *gpt3.EditsRe
 
 	if err != nil {
 		Node.Layout.infoOutput.SetText(err.Error())
+		Node.Layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
+		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
+	} else {
+		Node.Layout.promptInput.SetPlaceholder("Type here...")
+		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
 	}
 
 	c.extendedResponse = resp

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"sync"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -26,6 +28,8 @@ func OnNewTopic() {
 	Node.Layout.infoOutput.SetText("")
 	Node.Layout.metadataOutput.SetText("")
 	Node.Layout.promptOutput.SetText("")
+	Node.Layout.promptInput.SetPlaceholder("Type here...")
+	Node.Layout.promptInput.SetText("")
 }
 
 // Dropdown from input to change mode
@@ -134,6 +138,23 @@ func OnChangeResultsAndProbs(option string, optionIndex int) {
 	)
 }
 
+func OnChangeWords(option string, optionIndex int) {
+	switch option {
+	case "1":
+		maxtokens = 1
+	case "50":
+		maxtokens = 37
+	case "100":
+		maxtokens = 75
+	case "500":
+		maxtokens = 375
+	case "1000":
+		maxtokens = 750
+	case "1500":
+		maxtokens = 1125
+	}
+}
+
 // Checkbox from input
 func OnCheck(checked bool) {
 	if checked {
@@ -179,15 +200,25 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 
 // Text key event
 func OnTextDone(key tcell.Key) {
+	var group sync.WaitGroup
 	if key == tcell.KeyEnter {
 		if mode == "Edit" {
-			Node.Agent.InstructionRequest()
+			group.Add(1)
+			go func() {
+				Node.Agent.InstructionRequest()
+				group.Done()
+			}()
 		} else {
-			Node.Agent.StartRequest()
-			mode = "Edit"
+			group.Add(1)
+			go func() {
+				Node.Agent.StartRequest()
+				mode = "Edit"
+				group.Done()
+			}()
 		}
-		Node.Layout.promptInput.SetText("")
 	}
+	Node.Layout.promptInput.SetText("")
+	group.Wait()
 }
 
 /* Service layout functionality */
@@ -207,9 +238,10 @@ func GenerateLayoutContent() {
 		SetLabel("Enter your request: ").
 		SetLabelColor(tcell.ColorDarkOrange.TrueColor()).
 		SetPlaceholder("Type here...").
-		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor())
+		SetFieldBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetFieldTextColor(tcell.ColorWhiteSmoke.TrueColor())
 	//Output
-	Node.Layout.infoOutput.
+	Node.Layout.infoOutput.SetToggleHighlights(true).
 		SetLabel("Request: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -217,7 +249,7 @@ func GenerateLayoutContent() {
 		SetTextColor(tcell.ColorDarkOrange.TrueColor()).
 		SetRegions(true).
 		SetDynamicColors(true)
-	Node.Layout.metadataOutput.
+	Node.Layout.metadataOutput.SetToggleHighlights(true).
 		SetLabel("Description: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -225,7 +257,7 @@ func GenerateLayoutContent() {
 		SetTextColor(tcell.ColorDarkTurquoise.TrueColor()).
 		SetRegions(true).
 		SetDynamicColors(true)
-	Node.Layout.promptOutput.
+	Node.Layout.promptOutput.SetToggleHighlights(true).
 		SetLabel("Response: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -255,10 +287,14 @@ func InitializeLayout() {
 		AddDropDown("Engine", []string{"davinci", "curie", "babbage", "ada", "cushman"}, 0, OnChangeEngine).
 		AddDropDown("Results", []string{"r1", "r2", "r4", "r8"}, 0, OnChangeResultsAndProbs).
 		AddDropDown("Probabilities", []string{"p1", "p2", "p4", "p8"}, 0, OnChangeResultsAndProbs).
+		AddDropDown("Words", []string{"1", "50", "100", "500", "1000", "1500"}, 2, OnChangeWords).
 		AddCheckbox("Affinity", false, OnCheck).
 		AddButton("New conversation", OnNewTopic).
 		SetHorizontal(true).
-		SetBackgroundColor(tcell.ColorDarkOrange.TrueColor())
+		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
+		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		SetButtonBackgroundColor(tcell.ColorDarkOrange.TrueColor()).
+		SetButtonsAlign(tview.AlignRight)
 	metadataSection.
 		AddItem(Node.Layout.metadataOutput, 0, 1, false).
 		SetBorder(true).

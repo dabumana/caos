@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"os"
 	"sync"
 
 	"github.com/gdamore/tcell/v2"
@@ -30,6 +32,14 @@ func OnNewTopic() {
 	Node.Layout.promptOutput.SetText("")
 	Node.Layout.promptInput.SetPlaceholder("Type here...")
 	Node.Layout.promptInput.SetText("")
+}
+
+func OnExport() {
+	out, err := os.Create("export/conversation.txt")
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	out.WriteString(fmt.Sprintln(Node.Layout.promptOutput))
 }
 
 // Dropdown from input to change mode
@@ -144,6 +154,8 @@ func OnChangeWords(option string, optionIndex int) {
 		maxtokens = 1
 	case "50":
 		maxtokens = 37
+	case "85":
+		maxtokens = 64
 	case "100":
 		maxtokens = 75
 	case "500":
@@ -286,9 +298,10 @@ func InitializeLayout() {
 		AddDropDown("Engine", []string{"davinci", "curie", "babbage", "ada", "cushman"}, 0, OnChangeEngine).
 		AddDropDown("Results", []string{"r1", "r2", "r4", "r8"}, 0, OnChangeResultsAndProbs).
 		AddDropDown("Probabilities", []string{"p1", "p2", "p4", "p8"}, 0, OnChangeResultsAndProbs).
-		AddDropDown("Words", []string{"1", "50", "100", "500", "1000", "1500"}, 2, OnChangeWords).
+		AddDropDown("Words", []string{"1", "50", "85", "100", "500", "1000", "1500"}, 2, OnChangeWords).
 		AddCheckbox("Affinity", false, OnCheck).
 		AddButton("New conversation", OnNewTopic).
+		AddButton("Export conversation", OnExport).
 		SetHorizontal(true).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).

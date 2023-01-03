@@ -3,7 +3,9 @@ package service
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -34,12 +36,30 @@ func OnNewTopic() {
 	Node.Layout.promptInput.SetText("")
 }
 
-func OnExport() {
-	out, err := os.Create("export/conversation.txt")
+func OnExportTopic() {
+	if Node.Layout.promptOutput.GetText(true) == "" {
+		return
+	}
+
+	unix_milliseconds := fmt.Sprint(time.Now().UnixMilli())
+	ts_file := fmt.Sprintf("prompt-%s.txt", unix_milliseconds)
+	var dir string
+	if dir, e := os.Getwd(); e != nil {
+		fmt.Printf("e: %v\n", e)
+		fmt.Printf("dir: %v\n", dir)
+	}
+
+	if _, err := os.Stat(fmt.Sprintf("%s/export", dir)); os.IsNotExist(err) {
+		os.Mkdir("export", 0755)
+	}
+
+	path := filepath.Join(dir, "export", ts_file)
+	out, err := os.Create(path)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
-	out.WriteString(fmt.Sprintln(Node.Layout.promptOutput))
+
+	out.WriteString(Node.Layout.promptOutput.GetText(true))
 }
 
 // Dropdown from input to change mode
@@ -301,11 +321,11 @@ func InitializeLayout() {
 		AddDropDown("Words", []string{"1", "50", "85", "100", "500", "1000", "1500"}, 2, OnChangeWords).
 		AddCheckbox("Affinity", false, OnCheck).
 		AddButton("New conversation", OnNewTopic).
-		AddButton("Export conversation", OnExport).
+		AddButton("Export conversation", OnExportTopic).
 		SetHorizontal(true).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
-		SetButtonBackgroundColor(tcell.ColorDarkOrange.TrueColor()).
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignRight)
 	metadataSection.
 		AddItem(Node.Layout.metadataOutput, 0, 1, false).

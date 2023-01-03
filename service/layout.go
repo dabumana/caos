@@ -160,10 +160,9 @@ func OnCheck(checked bool) {
 	if checked {
 		// Global parameters
 		temperature = 0.4
-		topp = 1.0
-		penalty = 0.0
+		topp = 0.8
+		penalty = 0.5
 		frequency = 0.5
-		maxtokens = 65
 		// Set engine properties for accurated results
 		Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
 			engine,      // "code-davinci-002",

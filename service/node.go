@@ -14,13 +14,13 @@ var Node NodeService
 var engine string = "text-davinci-003"
 var probabilities int = 1
 var results int = 1
-var temperature float32 = 0.0
-var topp float32 = 1.0
-var penalty float32 = 0.0
-var frequency float32 = 0.0
+var temperature float32 = 1.0
+var topp float32 = 0.4
+var penalty float32 = 0.5
+var frequency float32 = 0.5
 var promptctx []string
 var prompt []string
-var maxtokens int = 150
+var maxtokens int = 512
 var mode string = "Text"
 
 // Node manager

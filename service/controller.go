@@ -16,10 +16,12 @@ func (c ServiceController) AttachProfile() ServiceClient {
 	return serviceClient
 }
 
+const TextDavinci001Edit string = "text-davinci-edit-001"
+
 // Start edited request based on the previous response
 func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
 	var servicePrompt ServicePrompt
-	c.currentUser.engineProperties.Model = gpt3.TextDavinci001Edit
+	c.currentUser.engineProperties.Model = TextDavinci001Edit
 
 	resp := servicePrompt.SendIntructionPrompt(c.currentUser)
 

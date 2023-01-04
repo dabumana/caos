@@ -1,6 +1,7 @@
 # caos 
 [![start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Go](https://github.com/dabumana/caos/actions/workflows/go.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/go.yml)
+[![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)
 ### Description
 Conversational assistant for openai services, includes advanced modes to modify the contextual information for specifical uses, engine, results, probabilities according to the ammount or words with predefined values for best accuracy. 
 ### Build
@@ -10,6 +11,8 @@ Installation steps:
   * `go-gpt3`
   * `tview`
   * `tcell`
+* Add you API key provided from OpenAI into the .env file
+* Run `go clean`
 * Run `go build`
 * Execute `./caos`
 ### How to use? 

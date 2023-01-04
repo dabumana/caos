@@ -78,6 +78,9 @@ func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionRespons
 		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
 	}
 
+	isLoading = false
+	Node.Layout.promptInput.SetText("")
+
 	c.contextualResponse = resp
 	return c.contextualResponse
 }
@@ -110,6 +113,9 @@ func (c ServicePrompt) SendIntructionPrompt(service ServiceClient) *gpt3.EditsRe
 		Node.Layout.promptInput.SetPlaceholder("Type here...")
 		Node.Layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
 	}
+
+	isLoading = false
+	Node.Layout.promptInput.SetText("")
 
 	c.extendedResponse = resp
 	return c.extendedResponse

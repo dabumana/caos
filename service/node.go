@@ -19,9 +19,9 @@ var topp float32 = 0.4
 var penalty float32 = 0.5
 var frequency float32 = 0.5
 var promptctx []string
-var prompt []string
 var maxtokens int = 512
 var mode string = "Text"
+var isLoading bool = false
 
 // Node manager
 type NodeService struct {
@@ -56,7 +56,6 @@ func (c NodeService) Start() {
 	}
 	// Initialize app layout service
 	InitializeLayout()
-
 	// Exception
 	if err := Node.Layout.app.Run(); err != nil {
 		fmt.Printf("Execution error:%s\n", err)

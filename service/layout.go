@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"caos/util"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -16,13 +18,52 @@ type ServiceLayout struct {
 	app   *tview.Application
 	pages *tview.Pages
 	// Flex
-	consoleView *tview.Grid
+	consoleView  *tview.Grid
+	affinityView *tview.Grid
+	// User form
+	refinementInput *tview.Form
 	// User input
 	promptInput *tview.InputField
 	// Details output
 	metadataOutput *tview.TextView
 	promptOutput   *tview.TextView
 	infoOutput     *tview.TextView
+}
+
+func OnResultChange(text string) {
+	results = util.ParseInt(text)
+}
+
+func OnProbabilityChange(text string) {
+	probabilities = util.ParseInt(text)
+}
+
+func OnTemperatureChange(text string) {
+	temperature = util.ParseFloat32(text)
+}
+
+func OnToppChange(text string) {
+	topp = util.ParseFloat32(text)
+}
+
+func OnPenaltyChange(text string) {
+	penalty = util.ParseFloat32(text)
+}
+
+func OnFrequencyPenaltyChange(text string) {
+	frequency = util.ParseFloat32(text)
+}
+
+func OnTypeAccept(text string, lastChar rune) bool {
+	matched := util.MatchNumber(text)
+	return matched
+}
+
+func OnBack() {
+	// Console view
+	Node.Layout.pages.ShowPage("console")
+	Node.Layout.pages.HidePage("refinement")
+	ValidateRefinementForm()
 }
 
 // Define new conversation
@@ -34,6 +75,12 @@ func OnNewTopic() {
 	Node.Layout.promptOutput.SetText("")
 	Node.Layout.promptInput.SetPlaceholder("Type here...")
 	Node.Layout.promptInput.SetText("")
+}
+
+func OnRefinementTopic() {
+	// Refinement view
+	Node.Layout.pages.HidePage("console")
+	Node.Layout.pages.ShowPage("refinement")
 }
 
 func OnExportTopic() {
@@ -75,22 +122,6 @@ func OnChangeMode(option string, optionIndex int) {
 		engine = "text-davinci-003"
 		mode = "Text"
 	}
-
-	Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
-		engine,      // "code-davinci-002",
-		temperature, // if temperature is used set topp to 1.0
-		topp,        // if topp is used set temperature to 1.0
-		penalty,     // Penalize from 0 to 1 the repeated tokens
-		frequency,   // Frequency  of penalization
-	)
-
-	Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
-		promptctx,
-		prompt,
-		maxtokens,
-		results,
-		probabilities,
-	)
 }
 
 // Dropdown from input to change engine
@@ -112,60 +143,6 @@ func OnChangeEngine(option string, optionIndex int) {
 		engine = "code-cushman-001"
 		mode = "Code"
 	}
-
-	Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
-		engine,      // "code-davinci-002",
-		temperature, // if temperature is used set topp to 1.0
-		topp,        // if topp is used set temperature to 1.0
-		penalty,     // Penalize from 0 to 1 the repeated tokens
-		frequency,   // Frequency  of penalization
-	)
-
-	Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
-		promptctx,
-		prompt,
-		maxtokens,
-		results,
-		probabilities,
-	)
-}
-
-// Dropdown from input to change results and probabilities
-func OnChangeResultsAndProbs(option string, optionIndex int) {
-	switch option {
-	case "p1":
-		probabilities = 1
-	case "p2":
-		probabilities = 2
-	case "p4":
-		probabilities = 4
-	case "p8":
-		probabilities = 8
-	case "r1":
-		results = 1
-	case "r2":
-		results = 2
-	case "r4":
-		results = 4
-	case "r8":
-		results = 8
-	}
-
-	Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
-		engine,      // "code-davinci-002",
-		temperature, // if temperature is used set topp to 1.0
-		topp,        // if topp is used set temperature to 1.0
-		penalty,     // Penalize from 0 to 1 the repeated tokens
-		frequency,   // Frequency  of penalization
-	)
-
-	Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
-		promptctx,
-		prompt,
-		maxtokens,
-		results,
-		probabilities,
-	)
 }
 
 func OnChangeWords(option string, optionIndex int) {
@@ -178,6 +155,8 @@ func OnChangeWords(option string, optionIndex int) {
 		maxtokens = 64
 	case "100":
 		maxtokens = 75
+	case "200":
+		maxtokens = 150
 	case "500":
 		maxtokens = 375
 	case "1000":
@@ -187,27 +166,21 @@ func OnChangeWords(option string, optionIndex int) {
 	}
 }
 
-// Checkbox from input
-func OnCheck(checked bool) {
-	if checked {
-		// Global parameters
-		temperature = 0.4
-		topp = 0.8
-		penalty = 0.5
-		frequency = 0.5
-		// Set engine properties for accurated results
-		Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
-			engine,      // "code-davinci-002",
-			temperature, // if temperature is used set topp to 1.0
-			topp,        // if topp is used set temperature to 1.0
-			penalty,     // Penalize from 0 to 1 the repeated tokens
-			frequency,   // Frequency  of penalization
-		)
-	}
-}
-
 // Text field from input
 func OnTextAccept(textToCheck string, lastChar rune) bool {
+	if isLoading {
+		Node.Layout.promptInput.SetText("...")
+		return false
+	}
+
+	Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
+		engine,      // "code-davinci-002",
+		temperature, // if temperature is used set topp to 1.0
+		topp,        // if topp is used set temperature to 1.0
+		penalty,     // Penalize from 0 to 1 the repeated tokens
+		frequency,   // Frequency  of penalization
+	)
+
 	if mode == "Edit" {
 		Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
 			promptctx,
@@ -231,25 +204,30 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 
 // Text key event
 func OnTextDone(key tcell.Key) {
-	var group sync.WaitGroup
-	if key == tcell.KeyEnter {
+	if key == tcell.KeyEnter && !isLoading {
+		var group sync.WaitGroup
 		if mode == "Edit" {
 			group.Add(1)
 			go func() {
+				isLoading = true
 				Node.Agent.InstructionRequest()
+				Node.Layout.promptInput.SetText("")
 				group.Done()
 			}()
 		} else {
 			group.Add(1)
 			go func() {
+				isLoading = true
 				Node.Agent.StartRequest()
 				mode = "Edit"
+				Node.Layout.promptInput.SetText("")
 				group.Done()
 			}()
 		}
+		Node.Layout.promptInput.SetText("...")
+	} else {
+		Node.Layout.promptInput.SetText("...")
 	}
-	Node.Layout.promptInput.SetText("")
-	group.Wait()
 }
 
 /* Service layout functionality */
@@ -298,10 +276,41 @@ func GenerateLayoutContent() {
 		SetDynamicColors(true)
 }
 
-// Create service layour for terminal session
-func InitializeLayout() {
-	/* Console View */
-	GenerateLayoutContent()
+func ValidateRefinementForm() {
+	// Default Values
+	resultInput := Node.Layout.refinementInput.GetFormItem(0).(*tview.InputField)
+	probabilityInput := Node.Layout.refinementInput.GetFormItem(1).(*tview.InputField)
+	temperatureInput := Node.Layout.refinementInput.GetFormItem(2).(*tview.InputField)
+	toppInput := Node.Layout.refinementInput.GetFormItem(3).(*tview.InputField)
+	penaltyInput := Node.Layout.refinementInput.GetFormItem(4).(*tview.InputField)
+	frecuencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
+
+	if !util.MatchNumber(resultInput.GetText()) {
+		resultInput.SetText("1")
+	}
+
+	if !util.MatchNumber(probabilityInput.GetText()) {
+		probabilityInput.SetText("1")
+	}
+
+	if !util.MatchNumber(toppInput.GetText()) {
+		temperatureInput.SetText("1.0")
+	}
+
+	if !util.MatchNumber(toppInput.GetText()) {
+		toppInput.SetText("0.4")
+	}
+
+	if !util.MatchNumber(penaltyInput.GetText()) {
+		penaltyInput.SetText("0.5")
+	}
+
+	if !util.MatchNumber(frecuencyInput.GetText()) {
+		frecuencyInput.SetText("0.5")
+	}
+}
+
+func CreateConsoleView() bool {
 	// help
 	helpOutput := tview.NewTextView()
 	helpOutput.
@@ -316,10 +325,8 @@ func InitializeLayout() {
 	detailsSection.
 		AddDropDown("Mode", []string{"Edit", "Code", "Text"}, 2, OnChangeMode).
 		AddDropDown("Engine", []string{"davinci", "curie", "babbage", "ada", "cushman"}, 0, OnChangeEngine).
-		AddDropDown("Results", []string{"r1", "r2", "r4", "r8"}, 0, OnChangeResultsAndProbs).
-		AddDropDown("Probabilities", []string{"p1", "p2", "p4", "p8"}, 0, OnChangeResultsAndProbs).
-		AddDropDown("Words", []string{"1", "50", "85", "100", "500", "1000", "1500"}, 2, OnChangeWords).
-		AddCheckbox("Affinity", false, OnCheck).
+		AddDropDown("Words", []string{"1", "50", "85", "100", "200", "500", "1000", "1500"}, 2, OnChangeWords).
+		AddButton("Affinity", OnRefinementTopic).
 		AddButton("New conversation", OnNewTopic).
 		AddButton("Export conversation", OnExportTopic).
 		SetHorizontal(true).
@@ -359,14 +366,76 @@ func InitializeLayout() {
 		AddItem(Node.Layout.promptInput, 12, 0, 1, 5, 0, 0, true).
 		AddItem(helpOutput, 13, 0, 1, 5, 0, 0, false)
 	// Console
-	Node.Layout.consoleView.SetBorderPadding(0, 0, 9, 9).
+	Node.Layout.consoleView.
+		SetBorderPadding(0, 0, 9, 9).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
+	// Validate view
+	if Node.Layout.consoleView != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+func CreateRefinementView() bool {
+	// Layout
+	affinitySection := tview.NewForm()
+	// Affinity section
+	affinitySection.
+		AddInputField("Results", fmt.Sprintf("%v", results), 5, OnTypeAccept, OnResultChange).
+		AddInputField("Probabilities", fmt.Sprintf("%v", probabilities), 5, OnTypeAccept, OnProbabilityChange).
+		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", temperature), 5, OnTypeAccept, OnTemperatureChange).
+		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", topp), 5, OnTypeAccept, OnToppChange).
+		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", penalty), 5, OnTypeAccept, OnPenaltyChange).
+		AddInputField("Frecuency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", frequency), 5, OnTypeAccept, OnFrequencyPenaltyChange).
+		AddButton("Back to chat", OnBack).
+		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
+		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetButtonsAlign(tview.AlignCenter).
+		SetTitle("Improve your search criteria: ").
+		SetTitleAlign(tview.AlignLeft).
+		SetTitleColor(tcell.ColorDarkCyan.TrueColor()).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBorderPadding(3, 3, 9, 9)
+	// Refinement form
+	Node.Layout.refinementInput = affinitySection
+	// Affinity grid
+	Node.Layout.affinityView = tview.NewGrid().
+		SetRows(0, 1).
+		SetColumns(0, 1).
+		AddItem(affinitySection, 0, 0, 1, 1, 0, 0, true)
+	// Affinity
+	Node.Layout.affinityView.
+		SetBorderPadding(15, 15, 20, 20).
+		SetBorder(true).
+		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
+		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
+		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
+	// Validate view
+	if Node.Layout.affinityView != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+// Create service layour for terminal session
+func InitializeLayout() {
+	/* Layout content */
+	GenerateLayoutContent()
+	// Create views
+	CreateConsoleView()
+	CreateRefinementView()
 	// Window frame
 	Node.Layout.pages = tview.NewPages()
-	Node.Layout.pages.AddAndSwitchToPage("console", Node.Layout.consoleView, true)
+	Node.Layout.pages.
+		AddAndSwitchToPage("console", Node.Layout.consoleView, true).
+		AddAndSwitchToPage("refinement", Node.Layout.affinityView, true)
 	// Main executor
 	Node.Layout.app = tview.NewApplication()
 	// App terminal configuration
@@ -374,4 +443,7 @@ func InitializeLayout() {
 		SetRoot(Node.Layout.pages, true).
 		SetFocus(Node.Layout.promptInput).
 		EnableMouse(true)
+	// Console view
+	Node.Layout.pages.ShowPage("console")
+	Node.Layout.pages.HidePage("refinement")
 }

@@ -26,8 +26,19 @@ func (c ServicePrompt) Log(resp *gpt3.CompletionResponse) {
 	log := strings.Join(responses, "")
 	reg := strings.ReplaceAll(log, "[]", "\n")
 	Node.Layout.promptOutput.SetText(reg)
-	Node.Layout.infoOutput.SetText(fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v \n",
-		resp.ID, resp.Model, resp.Created, resp.Object, resp.Usage.CompletionTokens, resp.Usage.PromptTokens, resp.Usage.TotalTokens, resp.Choices[0].FinishReason, resp.Choices[0].LogProbs.TokenLogprobs, resp.Choices[0].LogProbs.TopLogprobs))
+	Node.Layout.infoOutput.SetText(
+		fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v \n",
+			resp.ID,
+			resp.Model,
+			resp.Created,
+			resp.Object,
+			resp.Usage.
+				CompletionTokens,
+			resp.Usage.PromptTokens,
+			resp.Usage.TotalTokens,
+			resp.Choices[0].FinishReason,
+			resp.Choices[0].LogProbs.TokenLogprobs,
+			resp.Choices[0].LogProbs.TopLogprobs))
 }
 
 // Log edited response details
@@ -41,7 +52,12 @@ func (c ServicePrompt) LogEdit(resp *gpt3.EditsResponse) {
 	reg := strings.ReplaceAll(log, "[]", "\n")
 	Node.Layout.promptOutput.SetText(reg)
 	Node.Layout.infoOutput.SetText(fmt.Sprintf("\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
-		resp.Created, resp.Object, resp.Usage.CompletionTokens, resp.Usage.PromptTokens, resp.Usage.TotalTokens, resp.Choices[0].Index))
+		resp.Created,
+		resp.Object,
+		resp.Usage.CompletionTokens,
+		resp.Usage.PromptTokens,
+		resp.Usage.TotalTokens,
+		resp.Choices[0].Index))
 }
 
 // Send taks prompt
@@ -52,8 +68,15 @@ func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionRespons
 		log.Fatalln("Client NOT found")
 	}
 
+	var prompt []string
+	if isConversational {
+		prompt = []string{fmt.Sprintf("Human: %v \nAI:", service.promptProperties.PromptContext)}
+	} else {
+		prompt = service.promptProperties.PromptContext
+	}
+
 	req := gpt3.CompletionRequest{
-		Prompt:           service.promptProperties.PromptContext,
+		Prompt:           prompt,
 		MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 		Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 		TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),

@@ -13,6 +13,8 @@ import (
 	"github.com/rivo/tview"
 )
 
+var group sync.WaitGroup
+
 // Layout service - recreates the terminal definitions and parameters for console app
 type ServiceLayout struct {
 	app   *tview.Application
@@ -205,7 +207,6 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 // Text key event
 func OnTextDone(key tcell.Key) {
 	if key == tcell.KeyEnter && !isLoading {
-		var group sync.WaitGroup
 		if mode == "Edit" {
 			group.Add(1)
 			go func() {
@@ -219,14 +220,33 @@ func OnTextDone(key tcell.Key) {
 			go func() {
 				isLoading = true
 				Node.Agent.StartRequest()
-				mode = "Edit"
 				Node.Layout.promptInput.SetText("")
 				group.Done()
+				if isEditable {
+					mode = "Edit"
+				}
 			}()
 		}
 		Node.Layout.promptInput.SetText("...")
 	} else {
 		Node.Layout.promptInput.SetText("...")
+	}
+}
+
+func OnEditChecked(state bool) {
+	if state {
+		isEditable = true
+	} else {
+		isEditable = false
+		mode = "Text"
+	}
+}
+
+func OnConversationChecked(state bool) {
+	if state {
+		isConversational = true
+	} else {
+		isConversational = false
 	}
 }
 
@@ -325,7 +345,7 @@ func CreateConsoleView() bool {
 	detailsSection.
 		AddDropDown("Mode", []string{"Edit", "Code", "Text"}, 2, OnChangeMode).
 		AddDropDown("Engine", []string{"davinci", "curie", "babbage", "ada", "cushman"}, 0, OnChangeEngine).
-		AddDropDown("Words", []string{"1", "50", "85", "100", "200", "500", "1000", "1500"}, 2, OnChangeWords).
+		AddDropDown("Words", []string{"1", "50", "85", "100", "200", "500", "1000", "1500"}, 4, OnChangeWords).
 		AddButton("Affinity", OnRefinementTopic).
 		AddButton("New conversation", OnNewTopic).
 		AddButton("Export conversation", OnExportTopic).
@@ -391,6 +411,8 @@ func CreateRefinementView() bool {
 		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", topp), 5, OnTypeAccept, OnToppChange).
 		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", penalty), 5, OnTypeAccept, OnPenaltyChange).
 		AddInputField("Frecuency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", frequency), 5, OnTypeAccept, OnFrequencyPenaltyChange).
+		AddCheckbox("Edit mode (edit and improve the previous reponse)", true, OnEditChecked).
+		AddCheckbox("Conversational mode", false, OnConversationChecked).
 		AddButton("Back to chat", OnBack).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
@@ -401,7 +423,7 @@ func CreateRefinementView() bool {
 		SetTitleColor(tcell.ColorDarkCyan.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(3, 3, 9, 9)
+		SetBorderPadding(2, 1, 9, 9)
 	// Refinement form
 	Node.Layout.refinementInput = affinitySection
 	// Affinity grid

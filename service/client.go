@@ -51,9 +51,18 @@ func (c ServiceClient) LogClient() {
 
 // Log current engine
 func (c ServiceClient) LogEngine() {
-	Node.Layout.metadataOutput.SetText(fmt.Sprintf("\nModel: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt context: %v\nPrompt: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
-		c.engineProperties.Model, c.engineProperties.Temperature, c.engineProperties.TopP, c.engineProperties.FrequencyPenalty, c.engineProperties.PresencePenalty,
-		c.promptProperties.PromptContext, c.promptProperties.Prompt, c.promptProperties.Probabilities, c.promptProperties.Results, c.promptProperties.MaxTokens))
+	Node.Layout.metadataOutput.SetText(
+		fmt.Sprintf("\nModel: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt context: %v\nPrompt: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
+			c.engineProperties.Model,
+			c.engineProperties.Temperature,
+			c.engineProperties.TopP,
+			c.engineProperties.FrequencyPenalty,
+			c.engineProperties.PresencePenalty,
+			c.promptProperties.PromptContext,
+			c.promptProperties.Prompt,
+			c.promptProperties.Probabilities,
+			c.promptProperties.Results,
+			c.promptProperties.MaxTokens))
 }
 
 // Set engine parameters

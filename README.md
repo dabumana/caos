@@ -11,7 +11,7 @@ Installation steps:
   * `go-gpt3`
   * `tview`
   * `tcell`
-* Add you API key provided from OpenAI into the .env file
+* Add your API key provided from OpenAI into the `.env` file
 * Run `go clean`
 * Run `go build`
 * Execute `./caos`

@@ -207,27 +207,28 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 // Text key event
 func OnTextDone(key tcell.Key) {
 	if key == tcell.KeyEnter && !isLoading {
+		Node.Layout.promptInput.SetText("...")
 		if mode == "Edit" {
 			group.Add(1)
 			go func() {
 				isLoading = true
 				Node.Agent.InstructionRequest()
 				Node.Layout.promptInput.SetText("")
-				group.Done()
+				defer group.Done()
 			}()
 		} else {
 			group.Add(1)
 			go func() {
 				isLoading = true
-				Node.Agent.StartRequest()
+				Node.Agent.CompletionRequest()
 				Node.Layout.promptInput.SetText("")
-				group.Done()
+				defer group.Done()
 				if isEditable {
 					mode = "Edit"
 				}
 			}()
 		}
-		Node.Layout.promptInput.SetText("...")
+		group.Wait()
 	} else {
 		Node.Layout.promptInput.SetText("...")
 	}
@@ -251,6 +252,40 @@ func OnConversationChecked(state bool) {
 }
 
 /* Service layout functionality */
+func ValidateRefinementForm() {
+	// Default Values
+	resultInput := Node.Layout.refinementInput.GetFormItem(0).(*tview.InputField)
+	probabilityInput := Node.Layout.refinementInput.GetFormItem(1).(*tview.InputField)
+	temperatureInput := Node.Layout.refinementInput.GetFormItem(2).(*tview.InputField)
+	toppInput := Node.Layout.refinementInput.GetFormItem(3).(*tview.InputField)
+	penaltyInput := Node.Layout.refinementInput.GetFormItem(4).(*tview.InputField)
+	frecuencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
+
+	if !util.MatchNumber(resultInput.GetText()) {
+		resultInput.SetText("1")
+	}
+
+	if !util.MatchNumber(probabilityInput.GetText()) {
+		probabilityInput.SetText("1")
+	}
+
+	if !util.MatchNumber(toppInput.GetText()) {
+		temperatureInput.SetText("1.0")
+	}
+
+	if !util.MatchNumber(toppInput.GetText()) {
+		toppInput.SetText("0.4")
+	}
+
+	if !util.MatchNumber(penaltyInput.GetText()) {
+		penaltyInput.SetText("0.5")
+	}
+
+	if !util.MatchNumber(frecuencyInput.GetText()) {
+		frecuencyInput.SetText("0.5")
+	}
+}
+
 func GenerateLayoutContent() {
 	// COM
 	Node.Layout.promptInput = tview.NewInputField()
@@ -294,40 +329,6 @@ func GenerateLayoutContent() {
 		SetTextColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetRegions(true).
 		SetDynamicColors(true)
-}
-
-func ValidateRefinementForm() {
-	// Default Values
-	resultInput := Node.Layout.refinementInput.GetFormItem(0).(*tview.InputField)
-	probabilityInput := Node.Layout.refinementInput.GetFormItem(1).(*tview.InputField)
-	temperatureInput := Node.Layout.refinementInput.GetFormItem(2).(*tview.InputField)
-	toppInput := Node.Layout.refinementInput.GetFormItem(3).(*tview.InputField)
-	penaltyInput := Node.Layout.refinementInput.GetFormItem(4).(*tview.InputField)
-	frecuencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
-
-	if !util.MatchNumber(resultInput.GetText()) {
-		resultInput.SetText("1")
-	}
-
-	if !util.MatchNumber(probabilityInput.GetText()) {
-		probabilityInput.SetText("1")
-	}
-
-	if !util.MatchNumber(toppInput.GetText()) {
-		temperatureInput.SetText("1.0")
-	}
-
-	if !util.MatchNumber(toppInput.GetText()) {
-		toppInput.SetText("0.4")
-	}
-
-	if !util.MatchNumber(penaltyInput.GetText()) {
-		penaltyInput.SetText("0.5")
-	}
-
-	if !util.MatchNumber(frecuencyInput.GetText()) {
-		frecuencyInput.SetText("0.5")
-	}
 }
 
 func CreateConsoleView() bool {

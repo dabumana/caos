@@ -42,7 +42,7 @@ type ICommand interface {
 
 /** Node service functionality */
 // Initialize node service
-func (c NodeService) Start() {
+func (c NodeService) Start(sandboxMode bool) {
 	var controller ServiceController
 	Node.Agent = controller
 
@@ -58,6 +58,10 @@ func (c NodeService) Start() {
 	}
 	// Initialize app layout service
 	InitializeLayout()
+	// Test mode
+	if sandboxMode {
+		return
+	}
 	// Exception
 	if err := Node.Layout.app.Run(); err != nil {
 		fmt.Printf("Execution error:%s\n", err)

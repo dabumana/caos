@@ -20,10 +20,8 @@ const TextDavinci001Edit string = "text-davinci-edit-001"
 
 // Start edited request based on the previous response
 func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
-	var servicePrompt ServicePrompt
 	c.currentUser.engineProperties.Model = TextDavinci001Edit
-
-	resp := servicePrompt.SendIntructionPrompt(c.currentUser)
+	resp := Node.Prompt.SendIntructionPrompt(c.currentUser)
 
 	c.currentUser.LogEngine()
 	if resp != nil {
@@ -34,7 +32,7 @@ func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
 }
 
 // Start initial request to send task prompt
-func (c ServiceController) StartRequest() *gpt3.CompletionResponse {
+func (c ServiceController) CompletionRequest() *gpt3.CompletionResponse {
 	resp := Node.Prompt.SendPrompt(c.currentUser)
 
 	c.currentUser.LogEngine()

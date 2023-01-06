@@ -7,7 +7,7 @@ import (
 /* API Interface */
 type IServiceRequester interface {
 	// Start
-	Start()
+	Start(sandboxMode bool)
 }
 
 // Global node

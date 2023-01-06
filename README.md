@@ -16,8 +16,10 @@ Installation steps:
 * Run `go build`
 * Execute `./caos`
 ### How to use? 
-OpenAI API is a set of tools and services that allow developers to create applications that use artificial intelligence (AI) technology. The OpenAI API provides access to a range of AI-powered services, including natural language processing (NLP), computer vision, and reinforcement learning.  To use the OpenAI API, developers must first register for an API key. 
 The OpenAI API provides access to a range of AI-powered services, including natural language processing (NLP), computer vision, and reinforcement learning.
+* OpenAI API is a set of tools and services that allow developers to create applications that use artificial intelligence (AI) technology. 
+* The OpenAI API provides access to a range of AI-powered services, including natural language processing (NLP), computer vision, and reinforcement learning.  
+* To use the OpenAI API, developers must first register for an API key. 
 
 In order to use it, you just need to enter the prompt details and adjust the parameters according to the requirements.
 ```

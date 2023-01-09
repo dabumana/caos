@@ -6,7 +6,7 @@ import (
 )
 
 func TestConnect(t *testing.T) {
-	var service service.ServiceClient
+	var service service.Client
 	client := service.Connect()
 	if client == nil {
 		t.Error("client not found.")
@@ -18,7 +18,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestSetEngineParameters(t *testing.T) {
-	var service service.ServiceClient
+	var service service.Client
 	model := "text-davinci-003"
 	temperature := 1.0
 	topp := 0.4
@@ -48,7 +48,7 @@ func TestSetEngineParameters(t *testing.T) {
 }
 
 func TestSetRequestParameters(t *testing.T) {
-	var service service.ServiceClient
+	var service service.Client
 	context := []string{"Generate an UML template"}
 	prompt := []string{"for an eshop, include customers and providers."}
 	tokens := 64

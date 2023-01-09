@@ -10,7 +10,6 @@ func ParseFloat32(text string) float32 {
 	in, err := strconv.ParseFloat(text, 32)
 	if err != nil && text != "" {
 		fmt.Printf("err: %v\n", err)
-	} else if text != "0" {
 		return 0.5
 	}
 	return float32(in)
@@ -20,20 +19,27 @@ func ParseFloat64(text string) float64 {
 	in, err := strconv.ParseFloat(text, 64)
 	if err != nil && text != "" {
 		fmt.Printf("err: %v\n", err)
-	} else if text != "0" {
 		return 0.5
 	}
 	return float64(in)
 }
 
-func ParseInt(text string) int {
-	in, err := strconv.Atoi(text)
+func ParseInt64(text string) int64 {
+	in, err := strconv.ParseInt(text, 0, 64)
 	if err != nil && text != "" {
 		fmt.Printf("err: %v\n", err)
-	} else if text != "0" {
 		return 1
 	}
-	return in
+	return int64(in)
+}
+
+func ParseInt32(text string) int32 {
+	in, err := strconv.ParseInt(text, 0, 32)
+	if err != nil && text != "" {
+		fmt.Printf("err: %v\n", err)
+		return 1
+	}
+	return int32(in)
 }
 
 func MatchString(text string) bool {

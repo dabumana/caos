@@ -2,26 +2,23 @@ package service
 
 import "github.com/PullRequestInc/go-gpt3"
 
-// Controller service - initializes the client as a service
-type ServiceController struct {
-	currentUser ServiceClient
+// Controller - Contextual client controller API
+type Controller struct {
+	currentUser Client
 }
 
-/* Service controller functionality */
-// Attach profile to a new service client
-func (c ServiceController) AttachProfile() ServiceClient {
-	var serviceClient ServiceClient
+// AttachProfile - Attach profile to a new service client
+func (c Controller) AttachProfile() Client {
+	var serviceClient Client
 	serviceClient = serviceClient.Initialize()
 
 	return serviceClient
 }
 
-const TextDavinci001Edit string = "text-davinci-edit-001"
-
-// Start edited request based on the previous response
-func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
-	c.currentUser.engineProperties.Model = TextDavinci001Edit
-	resp := Node.Prompt.SendIntructionPrompt(c.currentUser)
+// InstructionRequest - Start edit request  to send a task prompt
+func (c Controller) InstructionRequest() *gpt3.EditsResponse {
+	c.currentUser.engineProperties.Model = "text-davinci-edit-001"
+	resp := Node.Prompt.SendInstructionPrompt(c.currentUser)
 
 	c.currentUser.LogEngine()
 	if resp != nil {
@@ -31,8 +28,8 @@ func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
 	return resp
 }
 
-// Start initial request to send task prompt
-func (c ServiceController) CompletionRequest() *gpt3.CompletionResponse {
+// CompletionRequest - Start completion request to send task prompt
+func (c Controller) CompletionRequest() *gpt3.CompletionResponse {
 	resp := Node.Prompt.SendPrompt(c.currentUser)
 
 	c.currentUser.LogEngine()

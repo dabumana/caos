@@ -7,43 +7,42 @@ import (
 	"github.com/PullRequestInc/go-gpt3"
 )
 
-// Global node
+// Node - Global node service
 var Node NodeService
 
 // Global parameters
 var engine string = "text-davinci-003"
-var probabilities int = 1
-var results int = 1
+var probabilities int32 = 1
+var results int32 = 1
 var temperature float32 = 0.4
 var topp float32 = 1.0
 var penalty float32 = 0.5
 var frequency float32 = 0.5
 var promptctx []string
-var maxtokens int = 2048
+var maxtokens int64 = 2048
 var mode string = "Text"
 var isLoading bool = false
 var isConversational bool = false
 var isEditable bool = true
 
-// Node manager
+// NodeService - Node manager
 type NodeService struct {
 	Prompt ServicePrompt
-	Layout ServiceLayout
-	Agent  ServiceController
+	Layout Layout
+	Agent  Controller
 }
 
-/* Command insterface */
+// ICommand - Command interface
 type ICommand interface {
-	AttachProfile() ServiceClient
-	// Controller API
+	AttachProfile() Client
+	// StartInstructionRequest Controller API
 	StartInstructionRequest() *gpt3.CompletionResponse
 	StartRequest() *gpt3.CompletionResponse
 }
 
-/** Node service functionality */
-// Initialize node service
+// Start - Initialize node service
 func (c NodeService) Start(sandboxMode bool) {
-	var controller ServiceController
+	var controller Controller
 	Node.Agent = controller
 
 	if Node.Agent.currentUser.client == nil {

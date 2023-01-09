@@ -1,6 +1,6 @@
 package model
 
-// Engine preferences
+// EngineProperties Engine preferences
 type EngineProperties struct {
 	Model            string
 	Temperature      float32

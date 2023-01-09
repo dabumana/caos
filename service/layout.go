@@ -78,7 +78,9 @@ func OnBack() {
 
 // OnNewTopic - Define a new conversation button event
 func OnNewTopic() {
-	mode = "Text"
+	if isEditable {
+		mode = "Text"
+	}
 
 	Node.Layout.infoOutput.SetText("")
 	Node.Layout.metadataOutput.SetText("")
@@ -244,12 +246,7 @@ func OnTextDone(key tcell.Key) {
 
 // OnEditChecked - Editable mode activation
 func OnEditChecked(state bool) {
-	if state {
-		isEditable = true
-	} else {
-		isEditable = false
-		mode = "Text"
-	}
+	isEditable = state
 }
 
 // OnConversationChecked - Conversation mode for friendly responses

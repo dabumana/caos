@@ -23,7 +23,7 @@ var maxtokens int64 = 2048
 var mode string = "Text"
 var isLoading bool = false
 var isConversational bool = false
-var isEditable bool = true
+var isEditable bool = false
 
 // NodeService - Node manager
 type NodeService struct {

@@ -9,25 +9,24 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Prompt service - handles requests prompts
+// ServicePrompt - Handle prompt request
 type ServicePrompt struct {
 	contextualResponse *gpt3.CompletionResponse
 	extendedResponse   *gpt3.EditsResponse
 }
 
-/* Service prompt functionality */
-// Log response details
+// Log - Response details
 func (c ServicePrompt) Log(resp *gpt3.CompletionResponse) {
 	var responses []string
 	for i := range resp.Choices {
-		responses = append(responses, resp.Choices[i].Text)
+		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
 	}
 	promptctx = responses
 	log := strings.Join(responses, "")
 	reg := strings.ReplaceAll(log, "[]", "\n")
 	Node.Layout.promptOutput.SetText(reg)
 	Node.Layout.infoOutput.SetText(
-		fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v \n",
+		fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\n",
 			resp.ID,
 			resp.Model,
 			resp.Created,
@@ -41,11 +40,11 @@ func (c ServicePrompt) Log(resp *gpt3.CompletionResponse) {
 			resp.Choices[0].LogProbs.TopLogprobs))
 }
 
-// Log edited response details
+// LogEdit - Log edited response details
 func (c ServicePrompt) LogEdit(resp *gpt3.EditsResponse) {
 	var responses []string
 	for i := range resp.Choices {
-		responses = append(responses, resp.Choices[i].Text, "\n")
+		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
 	}
 	promptctx = responses
 	log := strings.Join(responses, "")
@@ -60,8 +59,8 @@ func (c ServicePrompt) LogEdit(resp *gpt3.EditsResponse) {
 		resp.Choices[0].Index))
 }
 
-// Send taks prompt
-func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionResponse {
+// SendPrompt - Send task prompt
+func (c ServicePrompt) SendPrompt(service Client) *gpt3.CompletionResponse {
 	if Node.Agent.currentUser.ctx == nil {
 		log.Fatalln("Context NOT found")
 	} else if service.client == nil {
@@ -82,7 +81,7 @@ func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionRespons
 		TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
 		PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
 		FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-		Stream:           true,
+		Stream:           false,
 		N:                gpt3.IntPtr(service.promptProperties.Results),
 		LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
 		Echo:             true}
@@ -108,8 +107,8 @@ func (c ServicePrompt) SendPrompt(service ServiceClient) *gpt3.CompletionRespons
 	return c.contextualResponse
 }
 
-// Send instruction prompt
-func (c ServicePrompt) SendIntructionPrompt(service ServiceClient) *gpt3.EditsResponse {
+// SendInstructionPrompt - Send instruction prompt
+func (c ServicePrompt) SendInstructionPrompt(service Client) *gpt3.EditsResponse {
 	if service.ctx == nil {
 		log.Fatalln("Context NOT found")
 	} else if service.client == nil {

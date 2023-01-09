@@ -1,6 +1,6 @@
 package model
 
-// Prompt console preferences
+// PromptProperties Prompt console preferences
 type PromptProperties struct {
 	PromptContext []string
 	Prompt        []string

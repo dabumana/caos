@@ -4,11 +4,10 @@ import (
 	"caos/service"
 )
 
-/* API Interface */
+// IServiceRequester - Service requester interface API
 type IServiceRequester interface {
-	// Start
 	Start(sandboxMode bool)
 }
 
-// Global node
+// Node - Global node service for handler
 var Node service.NodeService

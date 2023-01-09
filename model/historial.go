@@ -1,6 +1,6 @@
 package model
 
-type Historial struct {
+type Historical struct {
 	Id          string
 	Created     int
 	Object      string

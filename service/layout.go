@@ -15,8 +15,8 @@ import (
 
 var group sync.WaitGroup
 
-// Layout service - recreates the terminal definitions and parameters for console app
-type ServiceLayout struct {
+// Layout - Recreates the terminal definitions and parameters for a console app
+type Layout struct {
 	app   *tview.Application
 	pages *tview.Pages
 	// Flex
@@ -32,35 +32,43 @@ type ServiceLayout struct {
 	infoOutput     *tview.TextView
 }
 
+// OnResultChange - Evaluates when an input text changes for the result input field
 func OnResultChange(text string) {
-	results = util.ParseInt(text)
+	results = util.ParseInt32(text)
 }
 
+// OnProbabilityChange - Evaluates when an input text changes for the probability input field
 func OnProbabilityChange(text string) {
-	probabilities = util.ParseInt(text)
+	probabilities = util.ParseInt32(text)
 }
 
+// OnTemperatureChange - Evaluates when an input text changes for the temperature input field
 func OnTemperatureChange(text string) {
 	temperature = util.ParseFloat32(text)
 }
 
+// OnToppChange - Evaluates when an input text changes for the topp input field
 func OnToppChange(text string) {
 	topp = util.ParseFloat32(text)
 }
 
+// OnPenaltyChange - Evaluates when an input text changes for the penalty input field
 func OnPenaltyChange(text string) {
 	penalty = util.ParseFloat32(text)
 }
 
-func OnFrequencyPenaltyChange(text string) {
+// OnFrequencyChange - Evaluates when an input text changes for the frequency penalty input field
+func OnFrequencyChange(text string) {
 	frequency = util.ParseFloat32(text)
 }
 
+// OnTypeAccept - Evaluates when an input text matches the field criteria
 func OnTypeAccept(text string, lastChar rune) bool {
 	matched := util.MatchNumber(text)
 	return matched
 }
 
+// OnBack - Button event to return to the main page
 func OnBack() {
 	// Console view
 	Node.Layout.pages.ShowPage("console")
@@ -68,7 +76,7 @@ func OnBack() {
 	ValidateRefinementForm()
 }
 
-// Define new conversation
+// OnNewTopic - Define a new conversation button event
 func OnNewTopic() {
 	mode = "Text"
 
@@ -79,19 +87,21 @@ func OnNewTopic() {
 	Node.Layout.promptInput.SetText("")
 }
 
+// OnRefinementTopic - Refinement view button event
 func OnRefinementTopic() {
 	// Refinement view
 	Node.Layout.pages.HidePage("console")
 	Node.Layout.pages.ShowPage("refinement")
 }
 
+// OnExportTopic - Export current conversation as a file .txt
 func OnExportTopic() {
 	if Node.Layout.promptOutput.GetText(true) == "" {
 		return
 	}
 
-	unix_milliseconds := fmt.Sprint(time.Now().UnixMilli())
-	ts_file := fmt.Sprintf("prompt-%s.txt", unix_milliseconds)
+	unixMilliseconds := fmt.Sprint(time.Now().UnixMilli())
+	tsFile := fmt.Sprintf("prompt-%s.txt", unixMilliseconds)
 	var dir string
 	if dir, e := os.Getwd(); e != nil {
 		fmt.Printf("e: %v\n", e)
@@ -102,7 +112,7 @@ func OnExportTopic() {
 		os.Mkdir("export", 0755)
 	}
 
-	path := filepath.Join(dir, "export", ts_file)
+	path := filepath.Join(dir, "export", tsFile)
 	out, err := os.Create(path)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -111,7 +121,7 @@ func OnExportTopic() {
 	out.WriteString(Node.Layout.promptOutput.GetText(true))
 }
 
-// Dropdown from input to change mode
+// OnChangeMode - Dropdown from input to change mode
 func OnChangeMode(option string, optionIndex int) {
 	switch option {
 	case "Edit":
@@ -126,7 +136,7 @@ func OnChangeMode(option string, optionIndex int) {
 	}
 }
 
-// Dropdown from input to change engine
+// OnChangeEngine - Dropdown from input to change engine
 func OnChangeEngine(option string, optionIndex int) {
 	switch option {
 	case "davinci":
@@ -147,6 +157,7 @@ func OnChangeEngine(option string, optionIndex int) {
 	}
 }
 
+// OnChangeWords - Dropdown for tokens according to the amount of words
 func OnChangeWords(option string, optionIndex int) {
 	switch option {
 	case "1":
@@ -168,7 +179,7 @@ func OnChangeWords(option string, optionIndex int) {
 	}
 }
 
-// Text field from input
+// OnTextAccept - Text field from input
 func OnTextAccept(textToCheck string, lastChar rune) bool {
 	if isLoading {
 		Node.Layout.promptInput.SetText("...")
@@ -187,33 +198,31 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 		Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
 			promptctx,
 			[]string{textToCheck},
-			maxtokens,
-			results,
-			probabilities,
+			int(maxtokens),
+			int(results),
+			int(probabilities),
 		)
 		return true
 	} else {
 		Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
 			[]string{textToCheck},
 			[]string{""},
-			maxtokens,
-			results,
-			probabilities,
+			int(maxtokens),
+			int(results),
+			int(probabilities),
 		)
 		return true
 	}
 }
 
-// Text key event
+// OnTextDone - Text key event
 func OnTextDone(key tcell.Key) {
 	if key == tcell.KeyEnter && !isLoading {
-		Node.Layout.promptInput.SetText("...")
 		if mode == "Edit" {
 			group.Add(1)
 			go func() {
 				isLoading = true
 				Node.Agent.InstructionRequest()
-				Node.Layout.promptInput.SetText("")
 				defer group.Done()
 			}()
 		} else {
@@ -221,7 +230,6 @@ func OnTextDone(key tcell.Key) {
 			go func() {
 				isLoading = true
 				Node.Agent.CompletionRequest()
-				Node.Layout.promptInput.SetText("")
 				defer group.Done()
 				if isEditable {
 					mode = "Edit"
@@ -234,6 +242,7 @@ func OnTextDone(key tcell.Key) {
 	}
 }
 
+// OnEditChecked - Editable mode activation
 func OnEditChecked(state bool) {
 	if state {
 		isEditable = true
@@ -243,6 +252,7 @@ func OnEditChecked(state bool) {
 	}
 }
 
+// OnConversationChecked - Conversation mode for friendly responses
 func OnConversationChecked(state bool) {
 	if state {
 		isConversational = true
@@ -251,7 +261,7 @@ func OnConversationChecked(state bool) {
 	}
 }
 
-/* Service layout functionality */
+// ValidateRefinementForm - Service layout functionality
 func ValidateRefinementForm() {
 	// Default Values
 	resultInput := Node.Layout.refinementInput.GetFormItem(0).(*tview.InputField)
@@ -259,7 +269,7 @@ func ValidateRefinementForm() {
 	temperatureInput := Node.Layout.refinementInput.GetFormItem(2).(*tview.InputField)
 	toppInput := Node.Layout.refinementInput.GetFormItem(3).(*tview.InputField)
 	penaltyInput := Node.Layout.refinementInput.GetFormItem(4).(*tview.InputField)
-	frecuencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
+	frequencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
 
 	if !util.MatchNumber(resultInput.GetText()) {
 		resultInput.SetText("1")
@@ -281,11 +291,12 @@ func ValidateRefinementForm() {
 		penaltyInput.SetText("0.5")
 	}
 
-	if !util.MatchNumber(frecuencyInput.GetText()) {
-		frecuencyInput.SetText("0.5")
+	if !util.MatchNumber(frequencyInput.GetText()) {
+		frequencyInput.SetText("0.5")
 	}
 }
 
+// GenerateLayoutContent - Layout content for console view
 func GenerateLayoutContent() {
 	// COM
 	Node.Layout.promptInput = tview.NewInputField()
@@ -331,6 +342,7 @@ func GenerateLayoutContent() {
 		SetDynamicColors(true)
 }
 
+// CreateConsoleView - Create console view page
 func CreateConsoleView() bool {
 	// help
 	helpOutput := tview.NewTextView()
@@ -401,6 +413,7 @@ func CreateConsoleView() bool {
 	}
 }
 
+// CreateRefinementView - Creates refinement page view
 func CreateRefinementView() bool {
 	// Layout
 	affinitySection := tview.NewForm()
@@ -411,8 +424,8 @@ func CreateRefinementView() bool {
 		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", temperature), 5, OnTypeAccept, OnTemperatureChange).
 		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", topp), 5, OnTypeAccept, OnToppChange).
 		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", penalty), 5, OnTypeAccept, OnPenaltyChange).
-		AddInputField("Frecuency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", frequency), 5, OnTypeAccept, OnFrequencyPenaltyChange).
-		AddCheckbox("Edit mode (edit and improve the previous reponse)", true, OnEditChecked).
+		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", frequency), 5, OnTypeAccept, OnFrequencyChange).
+		AddCheckbox("Edit mode (edit and improve the previous response)", false, OnEditChecked).
 		AddCheckbox("Conversational mode", false, OnConversationChecked).
 		AddButton("Back to chat", OnBack).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
@@ -447,7 +460,7 @@ func CreateRefinementView() bool {
 	}
 }
 
-// Create service layour for terminal session
+// InitializeLayout - Create service layout for terminal session
 func InitializeLayout() {
 	/* Layout content */
 	GenerateLayoutContent()

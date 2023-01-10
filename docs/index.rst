@@ -44,8 +44,7 @@ Functional use case:
 Practical prompts:
 ==================
 
-```
-A Simple Proof of the Quadratic Formula
+1. A Simple Proof of the Quadratic Formula
 
 The quadratic formula is a mathematical equation used to solve for the roots of a quadratic equation. It states that for any quadratic equation in the form ax2 + bx + c = 0, the two solutions are given by:
 
@@ -104,15 +103,11 @@ Let's start with the left side of the equation. We can rewrite it as (ax + b)(x 
 Now let's look at the right side of the equation. We can rewrite it as x=[-b ± √(b2 - 4ac)] / 2a . If we multiply both sides by 2a, we get 2ax=[-2ab ± √(b2 - 4ac)]. Then if we add 2ab to both sides of the equation, we get 2ax+2ab=[√(b2 - 4ac)]. Finally, if we subtract both sides by √(b2 - 4ac), we get 2ax+2ab-√(b2 - 4ac)=0 which is equivalent to our original equation x2+bx+c=0. 
 
 Therefore, the quadratic formula is indeed true and valid for solving any quadratic equation in the form ax^2+bx+c=0
-```
 
-```
-Generate a reverse shell script using golang with an asm dll library that links to win32 kernel and ntdll.dll
+2. Generate a reverse shell script using golang with an asm dll library that links to win32 kernel and ntdll.dll
 
 // This script will generate a reverse shell using golang and an asm dll library that links to win32 kernel and ntdll.dll
 
-.. code-block:: golang
-    :linenos:
 package main 
 import ( 
     "fmt" 
@@ -143,14 +138,8 @@ func main() {
 
     }    
 }
-    
-```
 
-```
 Generate a PoC for a quadratic formula using C
-
-.. code-block:: c
-    :linenos:
 
 #include <stdio.h> 
 #include <math.h> 
@@ -198,7 +187,6 @@ int main()
   
     return 0; 
 } 
-```
 
 Disclaimer:
 ===========

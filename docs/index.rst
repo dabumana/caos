@@ -139,7 +139,7 @@ func main() {
     }    
 }
 
-Generate a PoC for a quadratic formula using C
+3. Generate a PoC for a quadratic formula using C
 
 #include <stdio.h> 
 #include <math.h> 

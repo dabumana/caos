@@ -163,26 +163,28 @@ func OnChangeEngine(option string, optionIndex int) {
 func OnChangeWords(option string, optionIndex int) {
 	switch option {
 	case "1":
-		maxtokens = 1
+		maxtokens = util.ParseInt64("\u0031")
 	case "50":
-		maxtokens = 37
+		maxtokens = util.ParseInt64("\u0033\u0031")
 	case "85":
-		maxtokens = 64
+		maxtokens = util.ParseInt64("\u0036\u0034")
 	case "100":
-		maxtokens = 75
+		maxtokens = util.ParseInt64("\u0037\u0035")
 	case "200":
-		maxtokens = 150
+		maxtokens = util.ParseInt64("\u0031\u0035\u0030")
 	case "500":
-		maxtokens = 375
+		maxtokens = util.ParseInt64("\u0033\u0037\u0035")
 	case "1000":
-		maxtokens = 750
+		maxtokens = util.ParseInt64("\u0037\u0035\u0030")
 	case "1500":
-		maxtokens = 1125
+		maxtokens = util.ParseInt64("\u0031\u0031\u0032\u0035")
 	}
 }
 
 // OnTextAccept - Text field from input
 func OnTextAccept(textToCheck string, lastChar rune) bool {
+	textToCheck = strings.ReplaceAll(textToCheck, "\u23ce", "\u0020")
+
 	if isLoading {
 		Node.Layout.promptInput.SetText("...")
 		return false

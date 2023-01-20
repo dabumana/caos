@@ -1,6 +1,8 @@
-FROM ubuntu
+FROM ubuntu:latest
 RUN apt-get update \
-    && sudo apt-get upgrade -y \
-    && apt-get install golang
-ADD ./bin/caos /usr/local/bin
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends golang \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+COPY ./bin/caos /usr/local/bin
 ENTRYPOINT ["caos"]

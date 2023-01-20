@@ -1,3 +1,4 @@
+// Test section - Use case
 package caos
 
 import (

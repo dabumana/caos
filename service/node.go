@@ -1,3 +1,4 @@
+// Service node section
 package service
 
 import (
@@ -11,7 +12,7 @@ import (
 var Node NodeService
 
 // Global parameters
-var engine string = "text-davinci-003"
+var engine = "text-davinci-003"
 var probabilities int32 = 1
 var results int32 = 1
 var temperature float32 = 0.4
@@ -20,10 +21,10 @@ var penalty float32 = 0.5
 var frequency float32 = 0.5
 var promptctx []string
 var maxtokens int64 = 2048
-var mode string = "Text"
-var isLoading bool = false
-var isConversational bool = false
-var isEditable bool = false
+var mode = "Text"
+var isLoading = false
+var isConversational = false
+var isEditable = false
 
 // NodeService - Node manager
 type NodeService struct {

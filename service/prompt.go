@@ -1,3 +1,4 @@
+// Service prompt section
 package service
 
 import (
@@ -9,14 +10,14 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// ServicePrompt - Handle prompt request
-type ServicePrompt struct {
+// Prompt - Handle prompt request
+type Prompt struct {
 	contextualResponse *gpt3.CompletionResponse
 	extendedResponse   *gpt3.EditsResponse
 }
 
 // Log - Response details
-func (c ServicePrompt) Log(resp *gpt3.CompletionResponse) {
+func (c Prompt) Log(resp *gpt3.CompletionResponse) {
 	var responses []string
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
@@ -41,7 +42,7 @@ func (c ServicePrompt) Log(resp *gpt3.CompletionResponse) {
 }
 
 // LogEdit - Log edited response details
-func (c ServicePrompt) LogEdit(resp *gpt3.EditsResponse) {
+func (c Prompt) LogEdit(resp *gpt3.EditsResponse) {
 	var responses []string
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
@@ -60,7 +61,7 @@ func (c ServicePrompt) LogEdit(resp *gpt3.EditsResponse) {
 }
 
 // SendPrompt - Send task prompt
-func (c ServicePrompt) SendPrompt(service Client) *gpt3.CompletionResponse {
+func (c Prompt) SendPrompt(service Client) *gpt3.CompletionResponse {
 	if Node.Agent.currentUser.ctx == nil {
 		log.Fatalln("Context NOT found")
 	} else if service.client == nil {
@@ -108,7 +109,7 @@ func (c ServicePrompt) SendPrompt(service Client) *gpt3.CompletionResponse {
 }
 
 // SendInstructionPrompt - Send instruction prompt
-func (c ServicePrompt) SendInstructionPrompt(service Client) *gpt3.EditsResponse {
+func (c Prompt) SendInstructionPrompt(service Client) *gpt3.EditsResponse {
 	if service.ctx == nil {
 		log.Fatalln("Context NOT found")
 	} else if service.client == nil {

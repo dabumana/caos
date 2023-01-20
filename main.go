@@ -1,3 +1,4 @@
+// Main package
 package main
 
 import "caos/handler"

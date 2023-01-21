@@ -1,3 +1,4 @@
+// Requester component
 package handler
 
 import (
@@ -10,4 +11,4 @@ type IServiceRequester interface {
 }
 
 // Node - Global node service for handler
-var Node service.NodeService
+var Node service.Node

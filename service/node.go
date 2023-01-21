@@ -1,3 +1,4 @@
+// Service node section
 package service
 
 import (
@@ -8,28 +9,13 @@ import (
 )
 
 // Node - Global node service
-var Node NodeService
-
-// Global parameters
-var engine string = "text-davinci-003"
-var probabilities int32 = 1
-var results int32 = 1
-var temperature float32 = 0.4
-var topp float32 = 1.0
-var penalty float32 = 0.5
-var frequency float32 = 0.5
-var promptctx []string
-var maxtokens int64 = 2048
-var mode string = "Text"
-var isLoading bool = false
-var isConversational bool = false
-var isEditable bool = false
+var node Node
 
 // NodeService - Node manager
-type NodeService struct {
-	Prompt ServicePrompt
-	Layout Layout
-	Agent  Controller
+type Node struct {
+	prompt Prompt
+	layout Layout
+	agent  Controller
 }
 
 // ICommand - Command interface
@@ -41,16 +27,16 @@ type ICommand interface {
 }
 
 // Start - Initialize node service
-func (c NodeService) Start(sandboxMode bool) {
+func (c Node) Start(sandboxMode bool) {
 	var controller Controller
-	Node.Agent = controller
+	node.agent = controller
 
-	if Node.Agent.currentUser.client == nil {
-		Node.Agent.currentUser = c.Agent.AttachProfile()
+	if node.agent.currentUser.client == nil {
+		node.agent.currentUser = c.agent.AttachProfile()
 	}
 
-	if Node.Agent.currentUser.client != nil {
-		Node.Agent.currentUser.LogClient()
+	if node.agent.currentUser.client != nil {
+		node.agent.currentUser.LogClient()
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return
@@ -62,7 +48,7 @@ func (c NodeService) Start(sandboxMode bool) {
 		return
 	}
 	// Exception
-	if err := Node.Layout.app.Run(); err != nil {
+	if err := node.layout.app.Run(); err != nil {
 		fmt.Printf("Execution error:%s\n", err)
 	}
 }

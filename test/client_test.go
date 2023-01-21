@@ -1,3 +1,4 @@
+// Test section - Use case
 package caos
 
 import (
@@ -61,12 +62,12 @@ func TestSetRequestParameters(t *testing.T) {
 		result,
 		probabilities)
 	if requestProperties.PromptContext == nil ||
-		requestProperties.Prompt == nil ||
+		requestProperties.Instruction == nil ||
 		requestProperties.MaxTokens != tokens ||
 		requestProperties.Results != result ||
 		requestProperties.Probabilities != probabilities {
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.PromptContext, context)
-		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Prompt, prompt)
+		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Instruction, prompt)
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.MaxTokens, tokens)
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Probabilities, probabilities)

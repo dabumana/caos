@@ -1,6 +1,8 @@
+// Service layout sections
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	parameters "caos/service/parameters"
 	"caos/util"
 
 	"github.com/gdamore/tcell/v2"
@@ -25,6 +28,8 @@ type Layout struct {
 	affinityView *tview.Grid
 	// User form
 	refinementInput *tview.Form
+	// User modal
+	modalInput *tview.Modal
 	// User input
 	promptInput *tview.InputField
 	// Details output
@@ -35,32 +40,32 @@ type Layout struct {
 
 // OnResultChange - Evaluates when an input text changes for the result input field
 func OnResultChange(text string) {
-	results = util.ParseInt32(text)
+	parameters.Results = util.ParseInt32(text)
 }
 
 // OnProbabilityChange - Evaluates when an input text changes for the probability input field
 func OnProbabilityChange(text string) {
-	probabilities = util.ParseInt32(text)
+	parameters.Probabilities = util.ParseInt32(text)
 }
 
 // OnTemperatureChange - Evaluates when an input text changes for the temperature input field
 func OnTemperatureChange(text string) {
-	temperature = util.ParseFloat32(text)
+	parameters.Temperature = util.ParseFloat32(text)
 }
 
 // OnToppChange - Evaluates when an input text changes for the topp input field
 func OnToppChange(text string) {
-	topp = util.ParseFloat32(text)
+	parameters.Topp = util.ParseFloat32(text)
 }
 
 // OnPenaltyChange - Evaluates when an input text changes for the penalty input field
 func OnPenaltyChange(text string) {
-	penalty = util.ParseFloat32(text)
+	parameters.Penalty = util.ParseFloat32(text)
 }
 
 // OnFrequencyChange - Evaluates when an input text changes for the frequency penalty input field
 func OnFrequencyChange(text string) {
-	frequency = util.ParseFloat32(text)
+	parameters.Frequency = util.ParseFloat32(text)
 }
 
 // OnTypeAccept - Evaluates when an input text matches the field criteria
@@ -72,39 +77,61 @@ func OnTypeAccept(text string, lastChar rune) bool {
 // OnBack - Button event to return to the main page
 func OnBack() {
 	// Console view
-	Node.Layout.pages.ShowPage("console")
-	Node.Layout.pages.HidePage("refinement")
+	node.layout.pages.ShowPage("console")
+	node.layout.pages.HidePage("refinement")
+	node.layout.pages.HidePage("modal")
 	ValidateRefinementForm()
 }
 
 // OnNewTopic - Define a new conversation button event
 func OnNewTopic() {
-	if isEditable {
-		mode = "Text"
+	parameters.IsNewSession = true
+
+	if parameters.IsEditable {
+		parameters.Mode = "Text"
+		parameters.Engine = "text-davinci-003"
 	}
 
-	Node.Layout.infoOutput.SetText("")
-	Node.Layout.metadataOutput.SetText("")
-	Node.Layout.promptOutput.SetText("")
-	Node.Layout.promptInput.SetPlaceholder("Type here...")
-	Node.Layout.promptInput.SetText("")
+	if parameters.IsTraining {
+		OnTrainingTopic()
+		return
+	}
+
+	CleanConsoleView()
+}
+
+// CleanConsoleView - Clean input-output fields
+func CleanConsoleView() {
+	node.layout.infoOutput.SetText("")
+	node.layout.metadataOutput.SetText("")
+	node.layout.promptOutput.SetText("")
+	node.layout.promptInput.SetPlaceholder("Type here...")
+	node.layout.promptInput.SetText("")
 }
 
 // OnRefinementTopic - Refinement view button event
 func OnRefinementTopic() {
 	// Refinement view
-	Node.Layout.pages.HidePage("console")
-	Node.Layout.pages.ShowPage("refinement")
+	node.layout.pages.HidePage("console")
+	node.layout.pages.ShowPage("refinement")
+	node.layout.pages.HidePage("modal")
+}
+
+func OnTrainingTopic() {
+	// Training modal view
+	node.layout.pages.HidePage("console")
+	node.layout.pages.HidePage("refinement")
+	node.layout.pages.ShowPage("modal")
 }
 
 // OnExportTopic - Export current conversation as a file .txt
 func OnExportTopic() {
-	if Node.Layout.promptOutput.GetText(true) == "" {
+	if node.layout.promptOutput.GetText(true) == "" {
 		return
 	}
 
-	unixMilliseconds := fmt.Sprint(time.Now().UnixMilli())
-	tsFile := fmt.Sprintf("prompt-%s.txt", unixMilliseconds)
+	now := fmt.Sprint(time.Now().UTC())
+	tsFile := fmt.Sprintf("conversation-%s.txt", now)
 	var dir string
 	if dir, e := os.Getwd(); e != nil {
 		fmt.Printf("e: %v\n", e)
@@ -121,21 +148,47 @@ func OnExportTopic() {
 		fmt.Printf("err: %v\n", err)
 	}
 
-	out.WriteString(Node.Layout.promptOutput.GetText(true))
+	out.WriteString(node.layout.promptOutput.GetText(true))
+}
+
+// OnExportTrainedTopic - Export current conversation as a trained model as a .json file
+func OnExportTrainedTopic() {
+	var dir string
+	if dir, e := os.Getwd(); e != nil {
+		fmt.Printf("dir: %v\n", dir)
+	}
+
+	if _, err := os.Stat(fmt.Sprintf("%s/training", dir)); os.IsNotExist(err) {
+		os.Mkdir("training", 0755)
+	}
+
+	var out *os.File
+	now := fmt.Sprint(time.Now().UTC())
+	tsFile := fmt.Sprintf("training_model-%s.json", now)
+	path := filepath.Join(dir, "training", tsFile)
+
+	if _, err := os.Stat(fmt.Sprintf("%s/training/%s", dir, tsFile)); os.IsNotExist(err) {
+		out, _ = os.Create(path)
+	} else {
+		out, _ = os.OpenFile(path, 0, 0644)
+	}
+
+	raw, _ := json.MarshalIndent(TrainingSessionPool, "", "\u0009")
+	out.WriteString(string(raw))
 }
 
 // OnChangeMode - Dropdown from input to change mode
 func OnChangeMode(option string, optionIndex int) {
 	switch option {
 	case "Edit":
-		engine = "text-davinci-edit-001"
-		mode = "Edit"
+		parameters.Engine = "text-davinci-edit-001"
+		parameters.Mode = "Edit"
 	case "Code":
-		engine = "code-davinci-002"
-		mode = "Code"
+		parameters.Engine = "code-davinci-002"
+		parameters.Mode = "Code"
 	case "Text":
-		engine = "text-davinci-003"
-		mode = "Text"
+		parameters.Engine = "text-davinci-003"
+		parameters.Mode = "Text"
 	}
 }
 
@@ -143,20 +196,20 @@ func OnChangeMode(option string, optionIndex int) {
 func OnChangeEngine(option string, optionIndex int) {
 	switch option {
 	case "davinci":
-		engine = "text-davinci-003"
-		mode = "Text"
+		parameters.Engine = "text-davinci-003"
+		parameters.Mode = "Text"
 	case "babbage":
-		engine = "text-babbage-002"
-		mode = "Text"
+		parameters.Engine = "text-babbage-002"
+		parameters.Mode = "Text"
 	case "ada":
-		engine = "text-ada-001"
-		mode = "Text"
+		parameters.Engine = "text-ada-001"
+		parameters.Mode = "Text"
 	case "curie":
-		engine = "text-curie-002"
-		mode = "Text"
+		parameters.Engine = "text-curie-002"
+		parameters.Mode = "Text"
 	case "cushman":
-		engine = "code-cushman-001"
-		mode = "Code"
+		parameters.Engine = "code-cushman-001"
+		parameters.Mode = "Code"
 	}
 }
 
@@ -164,21 +217,21 @@ func OnChangeEngine(option string, optionIndex int) {
 func OnChangeWords(option string, optionIndex int) {
 	switch option {
 	case "1":
-		maxtokens = util.ParseInt64("\u0031")
+		parameters.MaxTokens = util.ParseInt64("\u0031")
 	case "50":
-		maxtokens = util.ParseInt64("\u0033\u0031")
+		parameters.MaxTokens = util.ParseInt64("\u0033\u0031")
 	case "85":
-		maxtokens = util.ParseInt64("\u0036\u0034")
+		parameters.MaxTokens = util.ParseInt64("\u0036\u0034")
 	case "100":
-		maxtokens = util.ParseInt64("\u0037\u0035")
+		parameters.MaxTokens = util.ParseInt64("\u0037\u0035")
 	case "200":
-		maxtokens = util.ParseInt64("\u0031\u0035\u0030")
+		parameters.MaxTokens = util.ParseInt64("\u0031\u0035\u0030")
 	case "500":
-		maxtokens = util.ParseInt64("\u0033\u0037\u0035")
+		parameters.MaxTokens = util.ParseInt64("\u0033\u0037\u0035")
 	case "1000":
-		maxtokens = util.ParseInt64("\u0037\u0035\u0030")
+		parameters.MaxTokens = util.ParseInt64("\u0037\u0035\u0030")
 	case "1500":
-		maxtokens = util.ParseInt64("\u0031\u0031\u0032\u0035")
+		parameters.MaxTokens = util.ParseInt64("\u0031\u0031\u0032\u0035")
 	}
 }
 
@@ -186,127 +239,138 @@ func OnChangeWords(option string, optionIndex int) {
 func OnTextAccept(textToCheck string, lastChar rune) bool {
 	textToCheck = strings.ReplaceAll(textToCheck, "\u23ce", "\u0020")
 
-	if isLoading {
-		Node.Layout.promptInput.SetText("...")
+	if parameters.IsLoading {
+		node.layout.promptInput.SetText("...")
 		return false
 	}
 
-	Node.Agent.currentUser.engineProperties = Node.Agent.currentUser.SetEngineParameters(
-		engine,      // "code-davinci-002",
-		temperature, // if temperature is used set topp to 1.0
-		topp,        // if topp is used set temperature to 1.0
-		penalty,     // Penalize from 0 to 1 the repeated tokens
-		frequency,   // Frequency  of penalization
-	)
+	ValidateRefinementForm()
 
-	if mode == "Edit" {
-		Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
-			promptctx,
+	if parameters.Mode == "Edit" {
+		parameters.Engine = "text-davinci-edit-001"
+		node.agent.currentUser.promptProperties = node.agent.currentUser.SetRequestParameters(
+			parameters.PromptCtx,
 			[]string{textToCheck},
-			int(maxtokens),
-			int(results),
-			int(probabilities),
+			int(parameters.MaxTokens),
+			int(parameters.Results),
+			int(parameters.Probabilities),
 		)
-		return true
 	} else {
-		Node.Agent.currentUser.promptProperties = Node.Agent.currentUser.SetRequestParameters(
+		node.agent.currentUser.promptProperties = node.agent.currentUser.SetRequestParameters(
 			[]string{textToCheck},
 			[]string{""},
-			int(maxtokens),
-			int(results),
-			int(probabilities),
+			int(parameters.MaxTokens),
+			int(parameters.Results),
+			int(parameters.Probabilities),
 		)
-		return true
 	}
+
+	node.agent.currentUser.engineProperties = node.agent.currentUser.SetEngineParameters(
+		parameters.Engine,      // "text-davinci-003",
+		parameters.Temperature, // if temperature is used set topp to 1.0
+		parameters.Topp,        // if topp is used set temperature to 1.0
+		parameters.Penalty,     // Penalize from 0 to 1 the repeated tokens
+		parameters.Frequency,   // Frequency  of penalization
+	)
+
+	return true
 }
 
 // OnTextDone - Text key event
 func OnTextDone(key tcell.Key) {
-	if key == tcell.KeyEnter && !isLoading {
-		if mode == "Edit" {
+	if parameters.IsNewSession {
+		parameters.IsNewSession = false
+	}
+
+	if key == tcell.KeyEnter && !parameters.IsLoading {
+		if parameters.Mode == "Edit" {
 			group.Add(1)
 			go func() {
-				isLoading = true
-				Node.Agent.InstructionRequest()
+				parameters.IsLoading = true
+				node.agent.InstructionRequest()
 				defer group.Done()
 			}()
 		} else {
 			group.Add(1)
 			go func() {
-				isLoading = true
-				Node.Agent.CompletionRequest()
+				parameters.IsLoading = true
+				node.agent.CompletionRequest()
 				defer group.Done()
-				if isEditable {
-					mode = "Edit"
+				if parameters.IsEditable {
+					parameters.Mode = "Edit"
 				}
 			}()
 		}
 		group.Wait()
-	} else {
-		Node.Layout.promptInput.SetText("...")
 	}
+
+	var event EventManager
+	event.SaveLog()
 }
 
 // OnEditChecked - Editable mode activation
 func OnEditChecked(state bool) {
-	isEditable = state
+	parameters.IsEditable = state
 }
 
 // OnConversationChecked - Conversation mode for friendly responses
 func OnConversationChecked(state bool) {
-	if state {
-		isConversational = true
-	} else {
-		isConversational = false
-	}
+	parameters.IsConversational = state
+	parameters.Mode = "Text"
+	parameters.Engine = "text-davinci-003"
+}
+
+// OnTrainingChecked - Training mode to store the current conversation
+func OnTrainingChecked(state bool) {
+	parameters.IsTraining = state
 }
 
 // ValidateRefinementForm - Service layout functionality
 func ValidateRefinementForm() {
 	// Default Values
-	resultInput := Node.Layout.refinementInput.GetFormItem(0).(*tview.InputField)
-	probabilityInput := Node.Layout.refinementInput.GetFormItem(1).(*tview.InputField)
-	temperatureInput := Node.Layout.refinementInput.GetFormItem(2).(*tview.InputField)
-	toppInput := Node.Layout.refinementInput.GetFormItem(3).(*tview.InputField)
-	penaltyInput := Node.Layout.refinementInput.GetFormItem(4).(*tview.InputField)
-	frequencyInput := Node.Layout.refinementInput.GetFormItem(5).(*tview.InputField)
+	resultInput := node.layout.refinementInput.GetFormItem(0).(*tview.InputField)
+	probabilityInput := node.layout.refinementInput.GetFormItem(1).(*tview.InputField)
+	temperatureInput := node.layout.refinementInput.GetFormItem(2).(*tview.InputField)
+	toppInput := node.layout.refinementInput.GetFormItem(3).(*tview.InputField)
+	penaltyInput := node.layout.refinementInput.GetFormItem(4).(*tview.InputField)
+	frequencyInput := node.layout.refinementInput.GetFormItem(5).(*tview.InputField)
 
 	if !util.MatchNumber(resultInput.GetText()) {
-		resultInput.SetText("1")
+		resultInput.SetText("\u0031")
 	}
 
 	if !util.MatchNumber(probabilityInput.GetText()) {
-		probabilityInput.SetText("1")
+		probabilityInput.SetText("\u0031")
 	}
 
 	if !util.MatchNumber(toppInput.GetText()) {
-		temperatureInput.SetText("1.0")
+		temperatureInput.SetText("\u0031\u002e\u0030")
 	}
 
 	if !util.MatchNumber(toppInput.GetText()) {
-		toppInput.SetText("0.4")
+		toppInput.SetText("\u0030\u002e\u0034")
 	}
 
 	if !util.MatchNumber(penaltyInput.GetText()) {
-		penaltyInput.SetText("0.5")
+		penaltyInput.SetText("\u0030\u002e\u0035")
 	}
 
 	if !util.MatchNumber(frequencyInput.GetText()) {
-		frequencyInput.SetText("0.5")
+		frequencyInput.SetText("\u0030\u002e\u0035")
 	}
 }
 
 // GenerateLayoutContent - Layout content for console view
 func GenerateLayoutContent() {
 	// COM
-	Node.Layout.promptInput = tview.NewInputField()
-	Node.Layout.promptOutput = tview.NewTextView()
+	node.layout.promptInput = tview.NewInputField()
+	node.layout.promptOutput = tview.NewTextView()
 	// Metadata
-	Node.Layout.metadataOutput = tview.NewTextView()
+	node.layout.metadataOutput = tview.NewTextView()
 	// Info
-	Node.Layout.infoOutput = tview.NewTextView()
+	node.layout.infoOutput = tview.NewTextView()
 	// Input
-	Node.Layout.promptInput.
+	node.layout.promptInput.
 		SetFieldTextColor(tcell.ColorDarkOrange.TrueColor()).
 		SetAcceptanceFunc(OnTextAccept).
 		SetDoneFunc(OnTextDone).
@@ -316,7 +380,8 @@ func GenerateLayoutContent() {
 		SetFieldBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetFieldTextColor(tcell.ColorWhiteSmoke.TrueColor())
 	//Output
-	Node.Layout.infoOutput.SetToggleHighlights(true).
+	node.layout.infoOutput.
+		SetToggleHighlights(true).
 		SetLabel("Request: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -324,7 +389,8 @@ func GenerateLayoutContent() {
 		SetTextColor(tcell.ColorDarkOrange.TrueColor()).
 		SetRegions(true).
 		SetDynamicColors(true)
-	Node.Layout.metadataOutput.SetToggleHighlights(true).
+	node.layout.metadataOutput.
+		SetToggleHighlights(true).
 		SetLabel("Description: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -332,7 +398,8 @@ func GenerateLayoutContent() {
 		SetTextColor(tcell.ColorDarkTurquoise.TrueColor()).
 		SetRegions(true).
 		SetDynamicColors(true)
-	Node.Layout.promptOutput.SetToggleHighlights(true).
+	node.layout.promptOutput.
+		SetToggleHighlights(true).
 		SetLabel("Response: ").
 		SetScrollable(true).
 		ScrollToEnd().
@@ -358,55 +425,56 @@ func CreateConsoleView() bool {
 	detailsSection.
 		AddDropDown("Mode", []string{"Edit", "Code", "Text"}, 2, OnChangeMode).
 		AddDropDown("Engine", []string{"davinci", "curie", "babbage", "ada", "cushman"}, 0, OnChangeEngine).
-		AddDropDown("Words", []string{"1", "50", "85", "100", "200", "500", "1000", "1500"}, 4, OnChangeWords).
+		AddDropDown("Words", []string{"\u0031", "\u0035\u0030", "\u0038\u0035", "\u0031\u0030\u0030", "\u0032\u0030\u0030", "\u0035\u0030\u0030", "\u0031\u0030\u0030\u0030", "\u0031\u0035\u0030\u0030"}, 4, OnChangeWords).
 		AddButton("Affinity", OnRefinementTopic).
 		AddButton("New conversation", OnNewTopic).
 		AddButton("Export conversation", OnExportTopic).
+		AddButton("Export training", OnExportTrainedTopic).
 		SetHorizontal(true).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignRight)
 	metadataSection.
-		AddItem(Node.Layout.metadataOutput, 0, 1, false).
+		AddItem(node.layout.metadataOutput, 0, 1, false).
 		SetBorder(true).
 		SetBackgroundColor(tcell.ColorDarkSlateGray.TrueColor()).
 		SetTitle("Metadata").
 		SetTitleColor(tcell.ColorOrange.TrueColor()).
 		SetTitleAlign(tview.AlignLeft)
 	infoSection.
-		AddItem(Node.Layout.infoOutput, 0, 1, false).
+		AddItem(node.layout.infoOutput, 0, 1, false).
 		SetBorder(true).
 		SetBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetTitle("Details").
 		SetTitleColor(tcell.ColorDarkTurquoise.TrueColor()).
 		SetTitleAlign(tview.AlignLeft)
 	comSection.
-		AddItem(Node.Layout.promptOutput, 0, 1, false).
+		AddItem(node.layout.promptOutput, 0, 1, false).
 		SetBorder(true).
 		SetBackgroundColor(tcell.ColorDarkSlateGray.TrueColor()).
 		SetTitle("Prompter").
 		SetTitleColor(tcell.ColorOrange.TrueColor()).
 		SetTitleAlign(tview.AlignLeft)
 	// Console grid
-	Node.Layout.consoleView = tview.NewGrid().
+	node.layout.consoleView = tview.NewGrid().
 		SetRows(0, 12).
 		SetColumns(0, 2).
 		AddItem(metadataSection, 1, 0, 1, 1, 0, 0, false).
 		AddItem(infoSection, 1, 1, 1, 4, 0, 0, false).
 		AddItem(detailsSection, 2, 0, 1, 5, 50, 0, true).
 		AddItem(comSection, 3, 0, 9, 5, 0, 0, false).
-		AddItem(Node.Layout.promptInput, 12, 0, 1, 5, 0, 0, true).
+		AddItem(node.layout.promptInput, 12, 0, 1, 5, 0, 0, true).
 		AddItem(helpOutput, 13, 0, 1, 5, 0, 0, false)
 	// Console
-	Node.Layout.consoleView.
+	node.layout.consoleView.
 		SetBorderPadding(0, 0, 9, 9).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
 	// Validate view
-	if Node.Layout.consoleView != nil {
+	if node.layout.consoleView != nil {
 		return true
 	} else {
 		return false
@@ -419,14 +487,15 @@ func CreateRefinementView() bool {
 	affinitySection := tview.NewForm()
 	// Affinity section
 	affinitySection.
-		AddInputField("Results", fmt.Sprintf("%v", results), 5, OnTypeAccept, OnResultChange).
-		AddInputField("Probabilities", fmt.Sprintf("%v", probabilities), 5, OnTypeAccept, OnProbabilityChange).
-		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", temperature), 5, OnTypeAccept, OnTemperatureChange).
-		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", topp), 5, OnTypeAccept, OnToppChange).
-		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", penalty), 5, OnTypeAccept, OnPenaltyChange).
-		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", frequency), 5, OnTypeAccept, OnFrequencyChange).
-		AddCheckbox("Edit mode (edit and improve the previous response)", false, OnEditChecked).
+		AddInputField("Results", fmt.Sprintf("%v", parameters.Results), 5, OnTypeAccept, OnResultChange).
+		AddInputField("Probabilities", fmt.Sprintf("%v", parameters.Probabilities), 5, OnTypeAccept, OnProbabilityChange).
+		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", parameters.Temperature), 5, OnTypeAccept, OnTemperatureChange).
+		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", parameters.Topp), 5, OnTypeAccept, OnToppChange).
+		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", parameters.Penalty), 5, OnTypeAccept, OnPenaltyChange).
+		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", parameters.Frequency), 5, OnTypeAccept, OnFrequencyChange).
+		AddCheckbox("Edit mode (edit and improve the previous response)", true, OnEditChecked).
 		AddCheckbox("Conversational mode", false, OnConversationChecked).
+		AddCheckbox("Training mode", false, OnTrainingChecked).
 		AddButton("Back to chat", OnBack).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
@@ -437,27 +506,50 @@ func CreateRefinementView() bool {
 		SetTitleColor(tcell.ColorDarkCyan.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(2, 1, 9, 9)
+		SetBorderPadding(1, 0, 9, 9)
 	// Refinement form
-	Node.Layout.refinementInput = affinitySection
+	node.layout.refinementInput = affinitySection
 	// Affinity grid
-	Node.Layout.affinityView = tview.NewGrid().
+	node.layout.affinityView = tview.NewGrid().
 		SetRows(0, 1).
 		SetColumns(0, 1).
 		AddItem(affinitySection, 0, 0, 1, 1, 0, 0, true)
 	// Affinity
-	Node.Layout.affinityView.
+	node.layout.affinityView.
 		SetBorderPadding(15, 15, 20, 20).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
 	// Validate view
-	if Node.Layout.affinityView != nil {
+	if node.layout.affinityView != nil {
 		return true
 	} else {
 		return false
 	}
+}
+
+// CreateModalView - Create modal view for training mode
+func CreateModalView() {
+	// Modal layout
+	node.layout.modalInput = tview.NewModal()
+	// Modal section
+	node.layout.modalInput.
+		SetText("Do you want to export the current conversation? Press Ok to export it or Cancel to start a new conversation.").
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		AddButtons([]string{"Ok", "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Ok" {
+				OnExportTrainedTopic()
+			}
+
+			node.layout.pages.ShowPage("console")
+			node.layout.pages.HidePage("refinement")
+			node.layout.pages.HidePage("modal")
+
+			CleanConsoleView()
+		})
 }
 
 // InitializeLayout - Create service layout for terminal session
@@ -467,19 +559,22 @@ func InitializeLayout() {
 	// Create views
 	CreateConsoleView()
 	CreateRefinementView()
+	CreateModalView()
 	// Window frame
-	Node.Layout.pages = tview.NewPages()
-	Node.Layout.pages.
-		AddAndSwitchToPage("console", Node.Layout.consoleView, true).
-		AddAndSwitchToPage("refinement", Node.Layout.affinityView, true)
+	node.layout.pages = tview.NewPages()
+	node.layout.pages.
+		AddAndSwitchToPage("console", node.layout.consoleView, true).
+		AddAndSwitchToPage("refinement", node.layout.affinityView, true).
+		AddAndSwitchToPage("modal", node.layout.modalInput, true)
 	// Main executor
-	Node.Layout.app = tview.NewApplication()
+	node.layout.app = tview.NewApplication()
 	// App terminal configuration
-	Node.Layout.app.
-		SetRoot(Node.Layout.pages, true).
-		SetFocus(Node.Layout.promptInput).
+	node.layout.app.
+		SetRoot(node.layout.pages, true).
+		SetFocus(node.layout.promptInput).
 		EnableMouse(true)
 	// Console view
-	Node.Layout.pages.ShowPage("console")
-	Node.Layout.pages.HidePage("refinement")
+	node.layout.pages.ShowPage("console")
+	node.layout.pages.HidePage("refinement")
+	node.layout.pages.HidePage("modal")
 }

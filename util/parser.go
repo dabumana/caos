@@ -1,3 +1,4 @@
+// Internal utilities section
 package util
 
 import (
@@ -6,6 +7,7 @@ import (
 	"strconv"
 )
 
+// Parse string to float32
 func ParseFloat32(text string) float32 {
 	in, err := strconv.ParseFloat(text, 32)
 	if err != nil && text != "" {
@@ -15,6 +17,7 @@ func ParseFloat32(text string) float32 {
 	return float32(in)
 }
 
+// Parse string float64
 func ParseFloat64(text string) float64 {
 	in, err := strconv.ParseFloat(text, 64)
 	if err != nil && text != "" {
@@ -24,6 +27,7 @@ func ParseFloat64(text string) float64 {
 	return float64(in)
 }
 
+// Parse string int64
 func ParseInt64(text string) int64 {
 	in, err := strconv.ParseInt(text, 0, 64)
 	if err != nil && text != "" {
@@ -33,6 +37,7 @@ func ParseInt64(text string) int64 {
 	return int64(in)
 }
 
+// Parse string int32
 func ParseInt32(text string) int32 {
 	in, err := strconv.ParseInt(text, 0, 32)
 	if err != nil && text != "" {
@@ -42,6 +47,7 @@ func ParseInt32(text string) int32 {
 	return int32(in)
 }
 
+// Match string with regex compatibility (only letters from a-Z)
 func MatchString(text string) bool {
 	var matched bool = false
 	rule := regexp.MustCompile("[A-Z, a-z]")
@@ -51,6 +57,7 @@ func MatchString(text string) bool {
 	return matched
 }
 
+// Match number with regex compatibility (only numbers)
 func MatchNumber(text string) bool {
 	var matched bool = false
 	rule := regexp.MustCompile("[0-9]")

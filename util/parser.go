@@ -47,7 +47,7 @@ func ParseInt32(text string) int32 {
 	return int32(in)
 }
 
-// Match string with regex compatibility
+// Match string with regex compatibility (only letters from a-Z)
 func MatchString(text string) bool {
 	var matched bool = false
 	rule := regexp.MustCompile("[A-Z, a-z]")
@@ -57,7 +57,7 @@ func MatchString(text string) bool {
 	return matched
 }
 
-// Match number with regex compatibility
+// Match number with regex compatibility (only numbers)
 func MatchNumber(text string) bool {
 	var matched bool = false
 	rule := regexp.MustCompile("[0-9]")

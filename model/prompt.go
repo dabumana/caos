@@ -1,11 +1,11 @@
 // Prompt properties model
 package model
 
-// PromptProperties Prompt console preferences
+// PromptProperties - Prompt console preferences
 type PromptProperties struct {
-	PromptContext []string
-	Prompt        []string
-	MaxTokens     int
-	Results       int
-	Probabilities int
+	PromptContext []string `json:"prompt"`
+	Instruction   []string `json:"instruction"`
+	MaxTokens     int      `json:"token_ammount"`
+	Results       int      `json:"results"`
+	Probabilities int      `json:"probabilities"`
 }

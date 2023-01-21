@@ -17,15 +17,16 @@ Installation steps:
   - `go-gpt3`
   - `tview`
   - `tcell`
-- Add your API key provided from OpenAI into the `.env` file
-- Run `go clean`
-- Run `go build`
-- Execute `./caos`
+- Add your API key provided from OpenAI into the `.env` file to use it with docker or export the value locally in your environment
+- Run `./clean.sh`
+- If you have Docker installed execute `./run.sh`, in any other case `./build.sh`
 
 ### Features
 
-- Edit mode
-- Conversational mode
+- Training mode: Prepare your own sets based on the interaction
+- Edit mode: First input will be contextual the second one instructional
+- Conversational mode: A friendly experience with the model
+
 - Advanced parameters like:
   - Temperature
   - Topp
@@ -33,7 +34,9 @@ Installation steps:
   - Frequency penalty
   - Max tokens
   - Engine
+
 - Multiple results and probabilities
+- Detailed log according to UTC 
 
 ### How to use?
 
@@ -49,6 +52,8 @@ also includes advanced modes that allow users to modify the contextual informati
 ![console.gif](docs%2Fmedia%2Fconsole.gif)
 
 #### General parameters:
+* **Mode**: Modify the actual mode, select between (TEXT/EDIT/CODE)
+* **Engine**: Modify the model that you want to test
 * **Results**: Modify the amount of results displayed for each prompt
 * **Probabilities**: According to your setup of the temperature and topp, probably you will need to use this field to populate a more accurate response according to the possibilities of results
 * **Temperature**: If you are working with temperature, try to keep the topp in a higher values than temperature
@@ -57,9 +62,10 @@ also includes advanced modes that allow users to modify the contextual informati
 * **Frequency Penalty**: Establish the frequency of the penalty threshold defined
 
 #### Modes:
+* **Training Mode**: Prepare your fine tunning data based on the completion response, can be exported to a JSON file for further use.
 * **Edit Mode**: Use Edit mode for all the requests
   * Press `New Conversation` and select `Edit mode` the first request will be for a completion endpoint the second based on the first request will continue editing the content in the parameters that you ask.
-* **Conversational Mode**: Use conversational AI mode request for a friendly interaction
+* **Conversational Mode**: Use conversational AI mode request for a friendly interaction.
 
 ![details.png](docs%2Fmedia%2Fdetails.png)
 

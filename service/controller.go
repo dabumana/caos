@@ -1,7 +1,9 @@
 // Service controller section
 package service
 
-import "github.com/PullRequestInc/go-gpt3"
+import (
+	"github.com/PullRequestInc/go-gpt3"
+)
 
 // Controller - Contextual client controller API
 type Controller struct {
@@ -18,12 +20,13 @@ func (c Controller) AttachProfile() Client {
 
 // InstructionRequest - Start edit request  to send a task prompt
 func (c Controller) InstructionRequest() *gpt3.EditsResponse {
-	c.currentUser.engineProperties.Model = "text-davinci-edit-001"
-	resp := Node.Prompt.SendInstructionPrompt(c.currentUser)
+	resp := node.prompt.SendInstructionPrompt(c.currentUser)
 
+	var event EventManager
 	c.currentUser.LogEngine()
 	if resp != nil {
-		Node.Prompt.LogEdit(resp)
+		event.LogEdit(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.LogVizEdit(resp)
 	}
 
 	return resp
@@ -31,11 +34,13 @@ func (c Controller) InstructionRequest() *gpt3.EditsResponse {
 
 // CompletionRequest - Start completion request to send task prompt
 func (c Controller) CompletionRequest() *gpt3.CompletionResponse {
-	resp := Node.Prompt.SendPrompt(c.currentUser)
+	resp := node.prompt.SendPrompt(c.currentUser)
 
+	var event EventManager
 	c.currentUser.LogEngine()
 	if resp != nil {
-		Node.Prompt.Log(resp)
+		event.Log(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.LogViz(resp)
 	}
 
 	return resp

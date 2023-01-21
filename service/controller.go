@@ -1,4 +1,4 @@
-// Service controller section
+// Package service section
 package service
 
 import (

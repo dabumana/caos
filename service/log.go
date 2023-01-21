@@ -1,4 +1,4 @@
-// Log service section
+// Package service section
 package service
 
 import (

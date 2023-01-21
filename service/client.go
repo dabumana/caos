@@ -1,4 +1,4 @@
-// Service client section
+// Package service section
 package service
 
 import (

@@ -1,4 +1,4 @@
-// Service layout sections
+// Package service section
 package service
 
 import (

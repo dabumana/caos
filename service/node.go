@@ -1,4 +1,4 @@
-// Service node section
+// Package service section
 package service
 
 import (
@@ -8,10 +8,10 @@ import (
 	"github.com/PullRequestInc/go-gpt3"
 )
 
-// Node - Global node service
+// node - Global node service
 var node Node
 
-// NodeService - Node manager
+// Node - Node manager
 type Node struct {
 	prompt Prompt
 	layout Layout

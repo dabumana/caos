@@ -50,6 +50,37 @@ func (c EventManager) ClearSession() {
 	TrainingSessionPool = nil
 }
 
+// AppendToSession - Add a set of events as a session
+func (c EventManager) AppendToSession(header *model.EngineProperties, body *model.PromptProperties, id string, train model.TrainingPrompt) {
+	c.event.Event.Header = *header
+	c.event.Event.Body = *body
+	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
+
+	EventPool = append(EventPool, c.event)
+
+	c.session.ID = id
+	c.session.Session = EventPool
+
+	if parameters.IsTraining {
+
+		event := model.HistoricalTrainingEvent{
+			Timestamp: c.event.Timestamp,
+			Event:     train,
+		}
+
+		TrainingEventPool = append(TrainingEventPool, event)
+
+		session := model.HistoricalTrainingSession{
+			ID:      c.session.ID,
+			Session: []model.HistoricalTrainingEvent{event},
+		}
+
+		TrainingSessionPool = append(TrainingSessionPool, session)
+	}
+
+	SessionPool = append(SessionPool, c.session)
+}
+
 // Log - Response details in a .json file
 func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if parameters.IsNewSession {
@@ -57,74 +88,24 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 		parameters.IsNewSession = false
 	}
 
-	c.event.Event.Header = *header
-	c.event.Event.Body = *body
-	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
-
-	EventPool = append(EventPool, c.event)
-
-	c.session.ID = resp.ID
-	c.session.Session = EventPool
-
-	if parameters.IsTraining {
-		modelTrainer := model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[0].Text},
-		}
-
-		event := model.HistoricalTrainingEvent{
-			Timestamp: c.event.Timestamp,
-			Event:     modelTrainer,
-		}
-
-		TrainingEventPool = append(TrainingEventPool, event)
-
-		session := model.HistoricalTrainingSession{
-			ID:      c.session.ID,
-			Session: []model.HistoricalTrainingEvent{event},
-		}
-
-		TrainingSessionPool = append(TrainingSessionPool, session)
+	modelTrainer := model.TrainingPrompt{
+		Prompt:     body.PromptContext,
+		Completion: []string{resp.Choices[0].Text},
 	}
 
-	SessionPool = append(SessionPool, c.session)
+	c.AppendToSession(header, body, resp.ID, modelTrainer)
 
-	CurrentID = c.session.ID
+	CurrentID = resp.ID
 }
 
 // LogEdit - Response details in a .json file
 func (c EventManager) LogEdit(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EditsResponse) {
-	c.event.Event.Header = *header
-	c.event.Event.Body = *body
-	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
-
-	EventPool = append(EventPool, c.event)
-
-	c.session.ID = CurrentID
-	c.session.Session = EventPool
-
-	if parameters.IsTraining {
-		modelTrainer := model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[0].Text},
-		}
-
-		event := model.HistoricalTrainingEvent{
-			Timestamp: c.event.Timestamp,
-			Event:     modelTrainer,
-		}
-
-		TrainingEventPool = append(TrainingEventPool, event)
-
-		session := model.HistoricalTrainingSession{
-			ID:      c.session.ID,
-			Session: []model.HistoricalTrainingEvent{event},
-		}
-
-		TrainingSessionPool = append(TrainingSessionPool, session)
+	modelTrainer := model.TrainingPrompt{
+		Prompt:     body.PromptContext,
+		Completion: []string{resp.Choices[0].Text},
 	}
 
-	SessionPool = append(SessionPool, c.session)
+	c.AppendToSession(header, body, CurrentID, modelTrainer)
 }
 
 // LogViz - Response details

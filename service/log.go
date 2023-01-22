@@ -38,7 +38,7 @@ type EventManager struct {
 // SaveLog - Save log with actual historic detail
 func (c EventManager) SaveLog() {
 	raw, _ := json.MarshalIndent(SessionPool[len(SessionPool)-1], "", "\u0009")
-	out := util.ConstructPathFileToJSON("log")
+	out := util.ConstructPathFileTo("log", "json")
 	out.WriteString(string(raw))
 }
 

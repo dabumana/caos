@@ -128,14 +128,14 @@ func OnExportTopic() {
 		return
 	}
 
-	out := util.ConstructPathFileToTXT("export")
+	out := util.ConstructPathFileTo("export", "txt")
 	out.WriteString(node.layout.promptOutput.GetText(true))
 }
 
 // OnExportTrainedTopic - Export current conversation as a trained model as a .json file
 func OnExportTrainedTopic() {
 	raw, _ := json.MarshalIndent(TrainingSessionPool, "", "\u0009")
-	out := util.ConstructPathFileToJSON("training")
+	out := util.ConstructPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 

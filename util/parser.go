@@ -70,7 +70,7 @@ func MatchNumber(text string) bool {
 	return matched
 }
 
-// ConstructPathFile - Initialize a directory for further storage
+// ConstructPathFileToJSON - Initialize a directory for further storage in a JSON file
 func ConstructPathFileToJSON(path string) *os.File {
 	var dir string
 	if dir, e := os.Getwd(); e != nil {
@@ -95,7 +95,7 @@ func ConstructPathFileToJSON(path string) *os.File {
 	return out
 }
 
-// ConstructPathFile - Initialize a directory for further storage
+// ConstructPathFileToTXT - Initialize a directory for further storage in a TXT file
 func ConstructPathFileToTXT(path string) *os.File {
 	var dir string
 	if dir, e := os.Getwd(); e != nil {

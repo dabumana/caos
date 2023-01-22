@@ -17,10 +17,13 @@ import (
 
 // EventPool - Historical events
 var EventPool []model.HistoricalEvent
+
 // SessionPool - Historical sessions
 var SessionPool []model.HistoricalSession
+
 // TrainingEventPool - Historical training events
 var TrainingEventPool []model.HistoricalTrainingEvent
+
 // TrainingSessionPool - Historical training sessions
 var TrainingSessionPool []model.HistoricalTrainingSession
 
@@ -76,7 +79,7 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 
 	EventPool = append(EventPool, c.event)
 
-	c.session.Id = resp.ID
+	c.session.ID = resp.ID
 	c.session.Session = EventPool
 
 	if parameters.IsTraining {
@@ -93,7 +96,7 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 		TrainingEventPool = append(TrainingEventPool, event)
 
 		session := model.HistoricalTrainingSession{
-			Id:      c.session.Id,
+			ID:      c.session.ID,
 			Session: []model.HistoricalTrainingEvent{event},
 		}
 
@@ -102,7 +105,7 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 
 	SessionPool = append(SessionPool, c.session)
 
-	CurrentID = c.session.Id
+	CurrentID = c.session.ID
 }
 
 // LogEdit - Response details in a .json file
@@ -113,7 +116,7 @@ func (c EventManager) LogEdit(header *model.EngineProperties, body *model.Prompt
 
 	EventPool = append(EventPool, c.event)
 
-	c.session.Id = CurrentID
+	c.session.ID = CurrentID
 	c.session.Session = EventPool
 
 	if parameters.IsTraining {
@@ -130,7 +133,7 @@ func (c EventManager) LogEdit(header *model.EngineProperties, body *model.Prompt
 		TrainingEventPool = append(TrainingEventPool, event)
 
 		session := model.HistoricalTrainingSession{
-			Id:      c.session.Id,
+			ID:      c.session.ID,
 			Session: []model.HistoricalTrainingEvent{event},
 		}
 

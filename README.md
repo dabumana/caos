@@ -28,6 +28,7 @@ Installation steps:
 - Conversational mode: A friendly experience with the model
 
 - Advanced parameters like:
+
   - Temperature
   - Topp
   - Penalty
@@ -36,7 +37,7 @@ Installation steps:
   - Engine
 
 - Multiple results and probabilities
-- Detailed log according to UTC 
+- Detailed log according to UTC
 
 ### How to use?
 
@@ -52,22 +53,25 @@ also includes advanced modes that allow users to modify the contextual informati
 ![console.gif](docs%2Fmedia%2Fconsole.gif)
 
 #### General parameters:
-* **Mode**: Modify the actual mode, select between (TEXT/EDIT/CODE)
-* **Engine**: Modify the model that you want to test
-* **Results**: Modify the amount of results displayed for each prompt
-* **Probabilities**: According to your setup of the temperature and topp, probably you will need to use this field to populate a more accurate response according to the possibilities of results
-* **Temperature**: If you are working with temperature, try to keep the topp in a higher values than temperature
-* **Topp**: Applies the same concept as temperature, when you are modifying this value, you need to apply a higher value for temperature
-* **Penalty**: Penalty applied to the characters an redundancy in a result completion 
-* **Frequency Penalty**: Establish the frequency of the penalty threshold defined
+
+- **Mode**: Modify the actual mode, select between (TEXT/EDIT/CODE)
+- **Engine**: Modify the model that you want to test
+- **Results**: Modify the amount of results displayed for each prompt
+- **Probabilities**: According to your setup of the temperature and topp, probably you will need to use this field to populate a more accurate response according to the possibilities of results
+- **Temperature**: If you are working with temperature, try to keep the topp in a higher values than temperature
+- **Topp**: Applies the same concept as temperature, when you are modifying this value, you need to apply a higher value for temperature
+- **Penalty**: Penalty applied to the characters an redundancy in a result completion
+- **Frequency Penalty**: Establish the frequency of the penalty threshold defined
 
 #### Modes:
-* **Training Mode**: Prepare your fine tunning data based on the completion response, can be exported to a JSON file for further use.
-* **Edit Mode**: Use Edit mode for all the requests
-  * Press `New Conversation` and select `Edit mode` the first request will be for a completion endpoint the second based on the first request will continue editing the content in the parameters that you ask.
-* **Conversational Mode**: Use conversational AI mode request for a friendly interaction.
+
+- **Training Mode**: Prepare your fine tunning data based on the completion response, can be exported to a JSON file for further use.
+- **Edit Mode**: Use Edit mode for all the requests
+  - Press `New Conversation` and select `Edit mode` the first request will be for a completion endpoint the second based on the first request will continue editing the content in the parameters that you ask.
+- **Conversational Mode**: Use conversational AI mode request for a friendly interaction.
 
 ![details.png](docs%2Fmedia%2Fdetails.png)
 
 ### Disclaimer :warning:
+
 This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.

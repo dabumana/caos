@@ -1,14 +1,14 @@
+// Package handler section
 package handler
 
 import (
 	"caos/service"
 )
 
-/* API Interface */
+// IServiceRequester - Service requester interface API
 type IServiceRequester interface {
-	// Start
-	Start()
+	Start(sandboxMode bool)
 }
 
-// Global node
-var Node service.NodeService
+// Node - Global node service for handler
+var Node service.Node

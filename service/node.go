@@ -1,3 +1,4 @@
+// Package service section
 package service
 
 import (
@@ -7,58 +8,47 @@ import (
 	"github.com/PullRequestInc/go-gpt3"
 )
 
-// Global node
-var Node NodeService
+// node - Global node service
+var node Node
 
-// Global parameters
-var engine string = "text-davinci-003"
-var probabilities int = 1
-var results int = 1
-var temperature float32 = 0.0
-var topp float32 = 1.0
-var penalty float32 = 0.0
-var frequency float32 = 0.0
-var promptctx []string
-var prompt []string
-var maxtokens int = 150
-var mode string = "Text"
-
-// Node manager
-type NodeService struct {
-	Prompt ServicePrompt
-	Layout ServiceLayout
-	Agent  ServiceController
+// Node - Node manager
+type Node struct {
+	prompt Prompt
+	layout Layout
+	agent  Controller
 }
 
-/* Command insterface */
+// ICommand - Command interface
 type ICommand interface {
-	AttachProfile() ServiceClient
-	// Controller API
+	AttachProfile() Client
+	// StartInstructionRequest Controller API
 	StartInstructionRequest() *gpt3.CompletionResponse
 	StartRequest() *gpt3.CompletionResponse
 }
 
-/** Node service functionality */
-// Initialize node service
-func (c NodeService) Start() {
-	var controller ServiceController
-	Node.Agent = controller
+// Start - Initialize node service
+func (c Node) Start(sandboxMode bool) {
+	var controller Controller
+	node.agent = controller
 
-	if Node.Agent.currentUser.client == nil {
-		Node.Agent.currentUser = c.Agent.AttachProfile()
+	if node.agent.currentUser.client == nil {
+		node.agent.currentUser = c.agent.AttachProfile()
 	}
 
-	if Node.Agent.currentUser.client != nil {
-		Node.Agent.currentUser.LogClient()
+	if node.agent.currentUser.client != nil {
+		node.agent.currentUser.LogClient()
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return
 	}
 	// Initialize app layout service
 	InitializeLayout()
-
+	// Test mode
+	if sandboxMode {
+		return
+	}
 	// Exception
-	if err := Node.Layout.app.Run(); err != nil {
+	if err := node.layout.app.Run(); err != nil {
 		fmt.Printf("Execution error:%s\n", err)
 	}
 }

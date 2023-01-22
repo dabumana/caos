@@ -1,43 +1,46 @@
+// Package service section
 package service
 
-import "github.com/PullRequestInc/go-gpt3"
+import (
+	"github.com/PullRequestInc/go-gpt3"
+)
 
-// Controller service - initializes the client as a service
-type ServiceController struct {
-	currentUser ServiceClient
+// Controller - Contextual client controller API
+type Controller struct {
+	currentUser Client
 }
 
-/* Service controller functionality */
-// Attach profile to a new service client
-func (c ServiceController) AttachProfile() ServiceClient {
-	var serviceClient ServiceClient
+// AttachProfile - Attach profile to a new service client
+func (c Controller) AttachProfile() Client {
+	var serviceClient Client
 	serviceClient = serviceClient.Initialize()
 
 	return serviceClient
 }
 
-// Start edited request based on the previous response
-func (c ServiceController) InstructionRequest() *gpt3.EditsResponse {
-	var servicePrompt ServicePrompt
-	c.currentUser.engineProperties.Model = gpt3.TextDavinci001Edit
+// InstructionRequest - Start edit request  to send a task prompt
+func (c Controller) InstructionRequest() *gpt3.EditsResponse {
+	resp := node.prompt.SendInstructionPrompt(c.currentUser)
 
-	resp := servicePrompt.SendIntructionPrompt(c.currentUser)
-
+	var event EventManager
 	c.currentUser.LogEngine()
 	if resp != nil {
-		Node.Prompt.LogEdit(resp)
+		event.LogEdit(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.LogVizEdit(resp)
 	}
 
 	return resp
 }
 
-// Start initial request to send task prompt
-func (c ServiceController) StartRequest() *gpt3.CompletionResponse {
-	resp := Node.Prompt.SendPrompt(c.currentUser)
+// CompletionRequest - Start completion request to send task prompt
+func (c Controller) CompletionRequest() *gpt3.CompletionResponse {
+	resp := node.prompt.SendPrompt(c.currentUser)
 
+	var event EventManager
 	c.currentUser.LogEngine()
 	if resp != nil {
-		Node.Prompt.Log(resp)
+		event.Log(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.LogViz(resp)
 	}
 
 	return resp

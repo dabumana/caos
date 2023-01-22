@@ -1,4 +1,4 @@
-// Engine properties model
+// Package model section
 package model
 
 // EngineProperties - Engine preferences

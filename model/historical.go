@@ -1,4 +1,4 @@
-// Session historical models
+// Package model section
 package model
 
 // HistoricalPrompt - historical prompt
@@ -13,7 +13,7 @@ type HistoricalEvent struct {
 	Event     HistoricalPrompt `json:"event"`
 }
 
-// HistoricalEvent - Session training historical event
+// HistoricalTrainingEvent - Session training historical event
 type HistoricalTrainingEvent struct {
 	Timestamp string         `json:"timestamp"`
 	Event     TrainingPrompt `json:"event"`

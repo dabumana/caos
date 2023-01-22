@@ -117,6 +117,7 @@ func OnRefinementTopic() {
 	node.layout.pages.HidePage("modal")
 }
 
+// OnTrainingTopic - Modal confirmation to export training
 func OnTrainingTopic() {
 	// Training modal view
 	node.layout.pages.HidePage("console")
@@ -476,9 +477,8 @@ func CreateConsoleView() bool {
 	// Validate view
 	if node.layout.consoleView != nil {
 		return true
-	} else {
-		return false
-	}
+	} 
+	return false
 }
 
 // CreateRefinementView - Creates refinement page view

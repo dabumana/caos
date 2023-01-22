@@ -1,4 +1,4 @@
-// Interaction prompt models
+// Package model section
 package model
 
 // TrainingPrompt - Fine-tunning model

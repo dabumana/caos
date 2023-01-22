@@ -1,4 +1,4 @@
-// Requester component
+// Package handler section
 package handler
 
 import (

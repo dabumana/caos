@@ -1,4 +1,4 @@
-// Prompt properties model
+// Package model section
 package model
 
 // PromptProperties - Prompt console preferences

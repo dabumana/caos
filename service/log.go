@@ -15,16 +15,17 @@ import (
 	"github.com/PullRequestInc/go-gpt3"
 )
 
-// Historical pool
+// EventPool - Historical events
 var EventPool []model.HistoricalEvent
+// SessionPool - Historical sessions
 var SessionPool []model.HistoricalSession
-
-// Historical training pool
+// TrainingEventPool - Historical training events
 var TrainingEventPool []model.HistoricalTrainingEvent
+// TrainingSessionPool - Historical training sessions
 var TrainingSessionPool []model.HistoricalTrainingSession
 
-// Current contextual parent id
-var CurrentId string
+// CurrentID - contextual parent id
+var CurrentID string
 
 // EventManager - Log event service
 type EventManager struct {
@@ -101,7 +102,7 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 
 	SessionPool = append(SessionPool, c.session)
 
-	CurrentId = c.session.Id
+	CurrentID = c.session.Id
 }
 
 // LogEdit - Response details in a .json file
@@ -112,7 +113,7 @@ func (c EventManager) LogEdit(header *model.EngineProperties, body *model.Prompt
 
 	EventPool = append(EventPool, c.event)
 
-	c.session.Id = CurrentId
+	c.session.Id = CurrentID
 	c.session.Session = EventPool
 
 	if parameters.IsTraining {

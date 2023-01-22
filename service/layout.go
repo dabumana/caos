@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	parameters "caos/service/parameters"
+	"caos/service/parameters"
 	"caos/util"
 
 	"github.com/gdamore/tcell/v2"
@@ -524,9 +524,8 @@ func CreateRefinementView() bool {
 	// Validate view
 	if node.layout.affinityView != nil {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 // CreateModalView - Create modal view for training mode

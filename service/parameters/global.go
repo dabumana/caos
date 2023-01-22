@@ -1,9 +1,8 @@
 // Package parameters section
-package paramaters
+package parameters
 
 import "caos/util"
 
-// Global parameters
 // Engine - model parameter
 var Engine = "text-davinci-003"
 // Probabilities - Amount of probabilities designed for the request
@@ -25,7 +24,6 @@ var MaxTokens int64 = util.ParseInt64("\u0032\u0030\u0034\u0038")
 // Mode - Select between (Edit/Text/Code)
 var Mode = "Text"
 
-// Modes
 // IsLoading - Actually working in a request
 var IsLoading = false
 // IsConversational - Conversational mode
@@ -35,5 +33,5 @@ var IsEditable = true
 // IsTraining - Fine-tunning training mode
 var IsTraining = false
 
-// New session
+// IsNewSession - New session
 var IsNewSession = true

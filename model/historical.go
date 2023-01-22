@@ -21,12 +21,12 @@ type HistoricalTrainingEvent struct {
 
 // HistoricalSession - Historical session events
 type HistoricalSession struct {
-	Id      string            `json:"id"`
+	ID      string            `json:"id"`
 	Session []HistoricalEvent `json:"session"`
 }
 
 // HistoricalTrainingSession - Historical training session events
 type HistoricalTrainingSession struct {
-	Id      string                    `json:"id"`
+	ID      string                    `json:"id"`
 	Session []HistoricalTrainingEvent `json:"session"`
 }

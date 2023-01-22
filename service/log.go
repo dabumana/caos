@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"caos/model"
-	parameters "caos/service/parameters"
+	"caos/service/parameters"
 
 	"github.com/PullRequestInc/go-gpt3"
 )

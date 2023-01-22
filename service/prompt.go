@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	parameters "caos/service/parameters"
+	"caos/service/parameters"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/gdamore/tcell/v2"

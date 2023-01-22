@@ -81,6 +81,14 @@ func (c EventManager) AppendToSession(header *model.EngineProperties, body *mode
 	SessionPool = append(SessionPool, c.session)
 }
 
+// AppendToLayout - Append and visualize content in console page view
+func (c EventManager) AppendToLayout(responses []string) {
+	parameters.PromptCtx = responses
+	log := strings.Join(responses, "")
+	reg := strings.ReplaceAll(log, "[]", "\n")
+	node.layout.promptOutput.SetText(reg)
+}
+
 // Log - Response details in a .json file
 func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if parameters.IsNewSession {
@@ -114,10 +122,9 @@ func (c EventManager) LogViz(resp *gpt3.CompletionResponse) {
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
 	}
-	parameters.PromptCtx = responses
-	log := strings.Join(responses, "")
-	reg := strings.ReplaceAll(log, "[]", "\n")
-	node.layout.promptOutput.SetText(reg)
+
+	c.AppendToLayout(responses)
+
 	node.layout.infoOutput.SetText(
 		fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\n",
 			resp.ID,
@@ -139,10 +146,9 @@ func (c EventManager) LogVizEdit(resp *gpt3.EditsResponse) {
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
 	}
-	parameters.PromptCtx = responses
-	log := strings.Join(responses, "")
-	reg := strings.ReplaceAll(log, "[]", "\n")
-	node.layout.promptOutput.SetText(reg)
+
+	c.AppendToLayout(responses)
+
 	node.layout.infoOutput.SetText(fmt.Sprintf("\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Created,
 		resp.Object,

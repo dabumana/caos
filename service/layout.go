@@ -4,11 +4,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"caos/service/parameters"
 	"caos/util"
@@ -131,50 +128,14 @@ func OnExportTopic() {
 		return
 	}
 
-	now := fmt.Sprint(time.Now().UTC())
-	tsFile := fmt.Sprintf("conversation-%s.txt", now)
-	var dir string
-	if dir, e := os.Getwd(); e != nil {
-		fmt.Printf("e: %v\n", e)
-		fmt.Printf("dir: %v\n", dir)
-	}
-
-	if _, err := os.Stat(fmt.Sprintf("%s/export", dir)); os.IsNotExist(err) {
-		os.Mkdir("export", 0755)
-	}
-
-	path := filepath.Join(dir, "export", tsFile)
-	out, err := os.Create(path)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-
+	out := util.ConstructPathFileToTXT("export")
 	out.WriteString(node.layout.promptOutput.GetText(true))
 }
 
 // OnExportTrainedTopic - Export current conversation as a trained model as a .json file
 func OnExportTrainedTopic() {
-	var dir string
-	if dir, e := os.Getwd(); e != nil {
-		fmt.Printf("dir: %v\n", dir)
-	}
-
-	if _, err := os.Stat(fmt.Sprintf("%s/training", dir)); os.IsNotExist(err) {
-		os.Mkdir("training", 0755)
-	}
-
-	var out *os.File
-	now := fmt.Sprint(time.Now().UTC())
-	tsFile := fmt.Sprintf("training_model-%s.json", now)
-	path := filepath.Join(dir, "training", tsFile)
-
-	if _, err := os.Stat(fmt.Sprintf("%s/training/%s", dir, tsFile)); os.IsNotExist(err) {
-		out, _ = os.Create(path)
-	} else {
-		out, _ = os.OpenFile(path, 0, 0644)
-	}
-
 	raw, _ := json.MarshalIndent(TrainingSessionPool, "", "\u0009")
+	out := util.ConstructPathFileToJSON("training")
 	out.WriteString(string(raw))
 }
 
@@ -477,7 +438,7 @@ func CreateConsoleView() bool {
 	// Validate view
 	if node.layout.consoleView != nil {
 		return true
-	} 
+	}
 	return false
 }
 

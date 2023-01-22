@@ -3,8 +3,11 @@ package util
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // ParseFloat32 - Parse string to float32
@@ -65,4 +68,54 @@ func MatchNumber(text string) bool {
 		matched = true
 	}
 	return matched
+}
+
+// ConstructPathFile - Initialize a directory for further storage
+func ConstructPathFileToJSON(path string) *os.File {
+	var dir string
+	if dir, e := os.Getwd(); e != nil {
+		fmt.Printf("dir: %v\n", dir)
+	}
+
+	if _, err := os.Stat(fmt.Sprintf("%s/%s", dir, path)); os.IsNotExist(err) {
+		os.Mkdir(path, 0755)
+	}
+
+	var out *os.File
+	now := fmt.Sprint(time.Now().UTC())
+	tsFile := fmt.Sprintf("%s-%s.json", path, now)
+	pathOutput := filepath.Join(dir, path, tsFile)
+
+	if _, err := os.Stat(fmt.Sprintf("%s/%s/%s", dir, path, tsFile)); os.IsNotExist(err) {
+		out, _ = os.Create(pathOutput)
+	} else {
+		out, _ = os.OpenFile(pathOutput, 0, 0644)
+	}
+
+	return out
+}
+
+// ConstructPathFile - Initialize a directory for further storage
+func ConstructPathFileToTXT(path string) *os.File {
+	var dir string
+	if dir, e := os.Getwd(); e != nil {
+		fmt.Printf("dir: %v\n", dir)
+	}
+
+	if _, err := os.Stat(fmt.Sprintf("%s/%s", dir, path)); os.IsNotExist(err) {
+		os.Mkdir(path, 0755)
+	}
+
+	var out *os.File
+	now := fmt.Sprint(time.Now().UTC())
+	tsFile := fmt.Sprintf("%s-%s.txt", path, now)
+	pathOutput := filepath.Join(dir, path, tsFile)
+
+	if _, err := os.Stat(fmt.Sprintf("%s/%s/%s", dir, path, tsFile)); os.IsNotExist(err) {
+		out, _ = os.Create(pathOutput)
+	} else {
+		out, _ = os.OpenFile(pathOutput, 0, 0644)
+	}
+
+	return out
 }

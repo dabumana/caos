@@ -4,13 +4,12 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"caos/model"
 	"caos/service/parameters"
+	"caos/util"
 
 	"github.com/PullRequestInc/go-gpt3"
 )
@@ -38,38 +37,23 @@ type EventManager struct {
 
 // SaveLog - Save log with actual historic detail
 func (c EventManager) SaveLog() {
-	var dir string
-	if dir, e := os.Getwd(); e != nil {
-		fmt.Printf("dir: %v\n", dir)
-	}
-
-	if _, err := os.Stat(fmt.Sprintf("%s/log", dir)); os.IsNotExist(err) {
-		os.Mkdir("log", 0755)
-	}
-
-	var out *os.File
-	now := fmt.Sprint(time.Now().UTC())
-	tsFile := fmt.Sprintf("log-%s.json", now)
-	path := filepath.Join(dir, "log", tsFile)
-
-	if _, err := os.Stat(fmt.Sprintf("%s/log/%s", dir, tsFile)); os.IsNotExist(err) {
-		out, _ = os.Create(path)
-	} else {
-		out, _ = os.OpenFile(path, 0, 0644)
-	}
-
 	raw, _ := json.MarshalIndent(SessionPool[len(SessionPool)-1], "", "\u0009")
+	out := util.ConstructPathFileToJSON("log")
 	out.WriteString(string(raw))
+}
+
+// ClearSession - Clear all the pools
+func (c EventManager) ClearSession() {
+	EventPool = nil
+	SessionPool = nil
+	TrainingEventPool = nil
+	TrainingSessionPool = nil
 }
 
 // Log - Response details in a .json file
 func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if parameters.IsNewSession {
-		EventPool = nil
-		SessionPool = nil
-		TrainingEventPool = nil
-		TrainingSessionPool = nil
-
+		c.ClearSession()
 		parameters.IsNewSession = false
 	}
 

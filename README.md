@@ -1,5 +1,6 @@
 # caos
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/757ab57528f049719f0281d5a486d9c9)](https://app.codacy.com/gh/dabumana/caos?utm_source=github.com&utm_medium=referral&utm_content=dabumana/caos&utm_campaign=Badge_Grade_Settings)
 [![start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Go](https://github.com/dabumana/caos/actions/workflows/go.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/go.yml)
 [![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)

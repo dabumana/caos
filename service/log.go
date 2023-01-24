@@ -12,6 +12,7 @@ import (
 	"caos/util"
 
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/gdamore/tcell/v2"
 )
 
 // EventPool - Historical events
@@ -89,8 +90,8 @@ func (c EventManager) AppendToLayout(responses []string) {
 	node.layout.promptOutput.SetText(reg)
 }
 
-// Log - Response details in a .json file
-func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
+// LogCompletion - Response details in a .json file
+func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if parameters.IsNewSession {
 		c.ClearSession()
 		parameters.IsNewSession = false
@@ -106,8 +107,9 @@ func (c EventManager) Log(header *model.EngineProperties, body *model.PromptProp
 	CurrentID = resp.ID
 }
 
-// LogEdit - Response details in a .json file
-func (c EventManager) LogEdit(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EditsResponse) {
+// LogInstruction - Response details in a .json file
+func (c EventManager) LogInstruction(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EditsResponse) {
+
 	modelTrainer := model.TrainingPrompt{
 		Prompt:     body.PromptContext,
 		Completion: []string{resp.Choices[0].Text},
@@ -116,8 +118,8 @@ func (c EventManager) LogEdit(header *model.EngineProperties, body *model.Prompt
 	c.AppendToSession(header, body, CurrentID, modelTrainer)
 }
 
-// LogViz - Response details
-func (c EventManager) LogViz(resp *gpt3.CompletionResponse) {
+// VisualLogCompletion - Response details
+func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	var responses []string
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
@@ -140,8 +142,8 @@ func (c EventManager) LogViz(resp *gpt3.CompletionResponse) {
 			resp.Choices[0].LogProbs.TopLogprobs))
 }
 
-// LogVizEdit - Log edited response details
-func (c EventManager) LogVizEdit(resp *gpt3.EditsResponse) {
+// VisualLogInstruction - Log edited response details
+func (c EventManager) VisualLogInstruction(resp *gpt3.EditsResponse) {
 	var responses []string
 	for i := range resp.Choices {
 		responses = append(responses, resp.Choices[i].Text, "\n\n###\n\n")
@@ -156,4 +158,43 @@ func (c EventManager) LogVizEdit(resp *gpt3.EditsResponse) {
 		resp.Usage.PromptTokens,
 		resp.Usage.TotalTokens,
 		resp.Choices[0].Index))
+}
+
+// LogClient - Log client context
+func (c EventManager) LogClient(client Client) {
+	fmt.Printf("-------------------------------------------\n")
+	fmt.Printf("Context: %v\nClient: %v\n", client.ctx, client.client)
+	fmt.Printf("-------------------------------------------\n")
+}
+
+// LogEngine - Log current engine
+func (c EventManager) LogEngine(client Client) {
+	node.layout.metadataOutput.SetText(
+		fmt.Sprintf("\nModel: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
+			client.engineProperties.Model,
+			client.engineProperties.Temperature,
+			client.engineProperties.TopP,
+			client.engineProperties.FrequencyPenalty,
+			client.engineProperties.PresencePenalty,
+			client.promptProperties.PromptContext,
+			client.promptProperties.Instruction,
+			client.promptProperties.Probabilities,
+			client.promptProperties.Results,
+			client.promptProperties.MaxTokens))
+}
+
+// Errata - Generic error method
+func (c EventManager) Errata(err error) {
+	if err != nil {
+		parameters.IsNewSession = true
+		node.layout.infoOutput.SetText(err.Error())
+		node.layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
+		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
+	} else {
+		node.layout.promptInput.SetPlaceholder("Type here...")
+		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
+	}
+
+	parameters.IsLoading = false
+	node.layout.promptInput.SetText("")
 }

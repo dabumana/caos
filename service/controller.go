@@ -2,7 +2,7 @@
 package service
 
 import (
-	"github.com/PullRequestInc/go-gpt3"
+	"caos/service/parameters"
 )
 
 // Controller - Contextual client controller API
@@ -19,29 +19,33 @@ func (c Controller) AttachProfile() Client {
 }
 
 // InstructionRequest - Start edit request  to send a task prompt
-func (c Controller) InstructionRequest() *gpt3.EditsResponse {
+func (c Controller) InstructionRequest() {
 	resp := node.prompt.SendInstructionPrompt(c.currentUser)
 
 	var event EventManager
-	c.currentUser.LogEngine()
 	if resp != nil {
-		event.LogEdit(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
-		event.LogVizEdit(resp)
+		event.LogInstruction(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.VisualLogInstruction(resp)
 	}
-
-	return resp
+	event.LogEngine(c.currentUser)
 }
 
 // CompletionRequest - Start completion request to send task prompt
-func (c Controller) CompletionRequest() *gpt3.CompletionResponse {
+func (c Controller) CompletionRequest() {
 	resp := node.prompt.SendPrompt(c.currentUser)
 
 	var event EventManager
-	c.currentUser.LogEngine()
 	if resp != nil {
-		event.Log(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
-		event.LogViz(resp)
+		event.LogCompletion(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.VisualLogCompletion(resp)
 	}
+	event.LogEngine(c.currentUser)
+}
 
-	return resp
+// ListModels - Get actual models available
+func (c Controller) ListModels() {
+	resp := node.prompt.GetListModels(c.currentUser)
+	for _, i := range resp.Data {
+		parameters.Models = append(parameters.Models, i.ID)
+	}
 }

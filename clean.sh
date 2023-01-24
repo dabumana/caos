@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 go clean
 # Remove cache directories
 rm -rf 'bin'

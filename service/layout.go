@@ -93,11 +93,6 @@ func OnNewTopic() {
 	engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
 	_, parameters.Engine = engine.GetCurrentOption()
 
-	if parameters.IsEditable {
-		parameters.Mode = "Text"
-		parameters.Engine = "text-davinci-003"
-	}
-
 	ValidateDetailsForm()
 	ValidateRefinementForm()
 
@@ -241,14 +236,14 @@ func OnChangeWords(option string, optionIndex int) {
 
 // OnTextAccept - Text field from input
 func OnTextAccept(textToCheck string, lastChar rune) bool {
-	textToCheck = strings.ReplaceAll(textToCheck, "\u23ce", "\u0020")
-
+	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 	if parameters.IsLoading {
 		node.layout.promptInput.SetText("...")
 		return false
 	}
 
 	ValidateDetailsForm()
+
 	if parameters.Mode == "Edit" {
 		node.agent.currentUser.promptProperties = node.agent.currentUser.SetRequestParameters(
 			parameters.PromptCtx,
@@ -300,6 +295,7 @@ func OnTextDone(key tcell.Key) {
 				defer group.Done()
 				if parameters.IsEditable {
 					parameters.Mode = "Edit"
+					parameters.Engine = "text-davinci-edit-001"
 				}
 			}()
 		}
@@ -313,13 +309,19 @@ func OnTextDone(key tcell.Key) {
 // OnEditChecked - Editable mode activation
 func OnEditChecked(state bool) {
 	parameters.IsEditable = state
+	if parameters.IsEditable {
+		parameters.Mode = "Text"
+		parameters.Engine = "text-davinci-003"
+	}
 }
 
 // OnConversationChecked - Conversation mode for friendly responses
 func OnConversationChecked(state bool) {
 	parameters.IsConversational = state
-	parameters.Mode = "Text"
-	parameters.Engine = "text-davinci-003"
+	if parameters.IsConversational {
+		parameters.Mode = "Text"
+		parameters.Engine = "text-davinci-003"
+	}
 }
 
 // OnTrainingChecked - Training mode to store the current conversation
@@ -329,6 +331,7 @@ func OnTrainingChecked(state bool) {
 
 // ValidateDetailsForm - Service layout functionality
 func ValidateDetailsForm() {
+	// Mode and engine setup
 	mode := node.layout.detailsInput.GetFormItem(0).(*tview.DropDown)
 	engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
 	for i := range parameters.Models {

@@ -3,7 +3,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -40,29 +39,6 @@ func (c Client) Connect() gpt3.Client {
 	client := gpt3.NewClient(apiKey)
 	c.client = client
 	return c.client
-}
-
-// LogClient - Log client context
-func (c Client) LogClient() {
-	fmt.Printf("-------------------------------------------\n")
-	fmt.Printf("Context: %v\nClient: %v\n", c.ctx, c.client)
-	fmt.Printf("-------------------------------------------\n")
-}
-
-// LogEngine - Log current engine
-func (c Client) LogEngine() {
-	node.layout.metadataOutput.SetText(
-		fmt.Sprintf("\nModel: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
-			c.engineProperties.Model,
-			c.engineProperties.Temperature,
-			c.engineProperties.TopP,
-			c.engineProperties.FrequencyPenalty,
-			c.engineProperties.PresencePenalty,
-			c.promptProperties.PromptContext,
-			c.promptProperties.Instruction,
-			c.promptProperties.Probabilities,
-			c.promptProperties.Results,
-			c.promptProperties.MaxTokens))
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt

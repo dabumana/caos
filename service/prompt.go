@@ -8,29 +8,12 @@ import (
 	"caos/service/parameters"
 
 	"github.com/PullRequestInc/go-gpt3"
-	"github.com/gdamore/tcell/v2"
 )
 
 // Prompt - Handle prompt request
 type Prompt struct {
 	contextualResponse *gpt3.CompletionResponse
 	extendedResponse   *gpt3.EditsResponse
-}
-
-// Errata - Generic error method
-func (c Prompt) Errata(err error) {
-	if err != nil {
-		parameters.IsNewSession = true
-		node.layout.infoOutput.SetText(err.Error())
-		node.layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
-		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
-	} else {
-		node.layout.promptInput.SetPlaceholder("Type here...")
-		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
-	}
-
-	parameters.IsLoading = false
-	node.layout.promptInput.SetText("")
 }
 
 // SendPrompt - Send task prompt
@@ -65,7 +48,8 @@ func (c Prompt) SendPrompt(service Client) *gpt3.CompletionResponse {
 		service.engineProperties.Model,
 		req)
 
-	c.Errata(err)
+	var event EventManager
+	event.Errata(err)
 
 	c.contextualResponse = resp
 	return c.contextualResponse
@@ -91,8 +75,19 @@ func (c Prompt) SendInstructionPrompt(service Client) *gpt3.EditsResponse {
 		service.ctx,
 		req)
 
-	c.Errata(err)
+	var event EventManager
+	event.Errata(err)
 
 	c.extendedResponse = resp
 	return c.extendedResponse
+}
+
+// GetListModels - Get actual list of available models
+func (c Prompt) GetListModels(service Client) *gpt3.EnginesResponse {
+	resp, err := service.client.Engines(service.ctx)
+
+	var event EventManager
+	event.Errata(err)
+
+	return resp
 }

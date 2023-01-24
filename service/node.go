@@ -29,6 +29,7 @@ type ICommand interface {
 // Start - Initialize node service
 func (c Node) Start(sandboxMode bool) {
 	var controller Controller
+	var event EventManager
 	node.agent = controller
 
 	if node.agent.currentUser.client == nil {
@@ -36,7 +37,7 @@ func (c Node) Start(sandboxMode bool) {
 	}
 
 	if node.agent.currentUser.client != nil {
-		node.agent.currentUser.LogClient()
+		event.LogClient(node.agent.currentUser)
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return

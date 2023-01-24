@@ -109,6 +109,7 @@ func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.
 
 // LogInstruction - Response details in a .json file
 func (c EventManager) LogInstruction(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EditsResponse) {
+
 	modelTrainer := model.TrainingPrompt{
 		Prompt:     body.PromptContext,
 		Completion: []string{resp.Choices[0].Text},

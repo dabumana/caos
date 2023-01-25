@@ -55,8 +55,8 @@ func (c Prompt) SendPrompt(service Client) *gpt3.CompletionResponse {
 	return c.contextualResponse
 }
 
-// SendInstructionPrompt - Send instruction prompt
-func (c Prompt) SendInstructionPrompt(service Client) *gpt3.EditsResponse {
+// SendEditPrompt - Send edit instruction prompt
+func (c Prompt) SendEditPrompt(service Client) *gpt3.EditsResponse {
 	if service.ctx == nil {
 		log.Fatalln("Context NOT found")
 	} else if service.client == nil {

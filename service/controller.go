@@ -20,7 +20,7 @@ func (c Controller) AttachProfile() Client {
 
 // InstructionRequest - Start edit request  to send a task prompt
 func (c Controller) InstructionRequest() {
-	resp := node.prompt.SendInstructionPrompt(c.currentUser)
+	resp := node.prompt.SendEditPrompt(c.currentUser)
 
 	var event EventManager
 	if resp != nil {

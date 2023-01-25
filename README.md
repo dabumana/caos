@@ -24,13 +24,17 @@ Installation steps:
 
 ### Features
 
--   Training mode: Prepare your own sets based on the interaction
+-   Test all the available models for **code/text/insert/similarity**
 
--   Edit mode: First input will be contextual the second one instructional
+-   ##### Modes:
 
--   Conversational mode: A friendly experience with the model	
+-   **Training mode**: Prepare your own sets based on the interaction
 
--   Advanced parameters like:
+-   **Edit mode**: First input will be contextual the second one instructional
+
+-   **Conversational mode**: A friendly experience with the model	
+
+-   ##### Advanced parameters like:
 
     -   Temperature
     -   Topp

@@ -236,11 +236,11 @@ func OnChangeWords(option string, optionIndex int) {
 
 // OnTextAccept - Text field from input
 func OnTextAccept(textToCheck string, lastChar rune) bool {
-	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 	if parameters.IsLoading {
-		node.layout.promptInput.SetText("...")
 		return false
 	}
+
+	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 
 	ValidateDetailsForm()
 
@@ -275,6 +275,10 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 
 // OnTextDone - Text key event
 func OnTextDone(key tcell.Key) {
+	if parameters.IsLoading {
+		return
+	}
+
 	if parameters.IsNewSession {
 		parameters.IsNewSession = false
 	}
@@ -283,27 +287,27 @@ func OnTextDone(key tcell.Key) {
 		if parameters.Mode == "Edit" {
 			group.Add(1)
 			go func() {
+				defer group.Done()
 				parameters.IsLoading = true
 				node.agent.InstructionRequest()
-				defer group.Done()
 			}()
 		} else {
 			group.Add(1)
 			go func() {
+				defer group.Done()
 				parameters.IsLoading = true
 				node.agent.CompletionRequest()
-				defer group.Done()
 				if parameters.IsEditable {
 					parameters.Mode = "Edit"
 					parameters.Engine = "text-davinci-edit-001"
 				}
 			}()
 		}
-		group.Wait()
 	}
 
 	var event EventManager
 	event.SaveLog()
+	group.Wait()
 }
 
 // OnEditChecked - Editable mode activation

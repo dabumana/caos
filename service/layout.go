@@ -234,22 +234,22 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 			int(parameters.Results),
 			int(parameters.Probabilities),
 		)
-	}
-
-	if parameters.Mode == "Edit" {
-		if parameters.IsPromptReady {
-			node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
-				parameters.PromptCtx,
+	} else {
+		if parameters.Mode == "Edit" {
+			if parameters.IsPromptReady {
+				node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
+					parameters.PromptCtx,
+					[]string{textToCheck},
+					int(parameters.MaxTokens),
+					int(parameters.Results),
+					int(parameters.Probabilities),
+				)
+			}
+		} else if parameters.Mode == "Predicted" {
+			node.agent.currentAgent.predictProperties = node.agent.currentAgent.SetPredictionParameters(
 				[]string{textToCheck},
-				int(parameters.MaxTokens),
-				int(parameters.Results),
-				int(parameters.Probabilities),
 			)
 		}
-	} else if parameters.Mode == "Predicted" {
-		node.agent.currentAgent.predictProperties = node.agent.currentAgent.SetPredictionParameters(
-			[]string{textToCheck},
-		)
 	}
 
 	return true

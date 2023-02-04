@@ -7,45 +7,71 @@ import (
 
 // Controller - Contextual client controller API
 type Controller struct {
-	currentUser Client
+	currentAgent Agent
 }
 
 // AttachProfile - Attach profile to a new service client
-func (c Controller) AttachProfile() Client {
-	var serviceClient Client
+func (c Controller) AttachProfile() Agent {
+	var serviceClient Agent
 	serviceClient = serviceClient.Initialize()
 
 	return serviceClient
 }
 
-// InstructionRequest - Start edit request  to send a task prompt
-func (c Controller) InstructionRequest() {
-	resp := node.prompt.SendEditPrompt(c.currentUser)
+// EditRequest - Start edit request  to send a task prompt
+func (c Controller) EditRequest() {
+	resp := node.prompt.SendEditPrompt(c.currentAgent)
 
 	var event EventManager
 	if resp != nil {
-		event.LogInstruction(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
-		event.VisualLogInstruction(resp)
+		event.LogEdit(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
+		event.VisualLogEdit(resp)
 	}
-	event.LogEngine(c.currentUser)
+	event.LogEngine(c.currentAgent)
 }
 
 // CompletionRequest - Start completion request to send task prompt
 func (c Controller) CompletionRequest() {
-	resp := node.prompt.SendPrompt(c.currentUser)
+	resp := node.prompt.SendCompletion(c.currentAgent)
 
 	var event EventManager
 	if resp != nil {
-		event.LogCompletion(&node.agent.currentUser.engineProperties, &node.agent.currentUser.promptProperties, resp)
+		event.LogCompletion(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
 		event.VisualLogCompletion(resp)
 	}
-	event.LogEngine(c.currentUser)
+	event.LogEngine(c.currentAgent)
+}
+
+// EmbeddingRequest - Start a embedding vector request
+func (c Controller) EmbeddingRequest() {
+	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
+
+	var event EventManager
+	if resp != nil {
+		event.LogEmbedding(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
+		event.VisualLogEmbedding(resp)
+	}
+	event.LogEngine(c.currentAgent)
+}
+
+// PredictableRequest - Start a predictable string request
+func (c Controller) PredictableRequest() {
+	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
+
+	var event EventManager
+	if resp != nil {
+		event.LogPredict(&node.agent.currentAgent.predictProperties, resp)
+		event.VisualLogPredict(resp)
+	}
+	event.LogPredictEngine(node.agent.currentAgent)
 }
 
 // ListModels - Get actual models available
 func (c Controller) ListModels() {
-	resp := node.prompt.GetListModels(c.currentUser)
-	for _, i := range resp.Data {
-		parameters.Models = append(parameters.Models, i.ID)
+	resp := node.prompt.GetListModels(c.currentAgent)
+	if resp != nil {
+		for _, i := range resp.Data {
+			parameters.Models = append(parameters.Models, i.ID)
+		}
 	}
 }

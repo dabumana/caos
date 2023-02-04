@@ -4,8 +4,6 @@ package service
 import (
 	"fmt"
 	"log"
-
-	"github.com/PullRequestInc/go-gpt3"
 )
 
 // node - Global node service
@@ -18,26 +16,18 @@ type Node struct {
 	agent  Controller
 }
 
-// ICommand - Command interface
-type ICommand interface {
-	AttachProfile() Client
-	// StartInstructionRequest Controller API
-	StartInstructionRequest() *gpt3.CompletionResponse
-	StartRequest() *gpt3.CompletionResponse
-}
-
 // Start - Initialize node service
 func (c Node) Start(sandboxMode bool) {
 	var controller Controller
 	var event EventManager
 	node.agent = controller
 
-	if node.agent.currentUser.client == nil {
-		node.agent.currentUser = c.agent.AttachProfile()
+	if node.agent.currentAgent.client == nil {
+		node.agent.currentAgent = c.agent.AttachProfile()
 	}
 
-	if node.agent.currentUser.client != nil {
-		event.LogClient(node.agent.currentUser)
+	if node.agent.currentAgent.client != nil {
+		event.LogClient(node.agent.currentAgent)
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return

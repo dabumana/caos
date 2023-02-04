@@ -33,7 +33,7 @@ type Sentence struct {
 	Sentence      string `json:"sentence"`
 }
 
-// Paragraphs - Nested paragraphs model
+// Paragraph - Nested paragraphs model
 type Paragraph struct {
 	CompletelyProb  float64 `json:"completely_generated_prob"`
 	NumberSentences int     `json:"num_sentences"`

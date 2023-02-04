@@ -1,3 +1,4 @@
+// Package parameters section
 package parameters
 
 import "caos/model"

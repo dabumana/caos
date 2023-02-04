@@ -1,2 +1,2 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 docker run --env-file=.env .

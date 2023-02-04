@@ -79,22 +79,26 @@ func OnBack() {
 	node.layout.pages.HidePage("refinement")
 	node.layout.pages.HidePage("modal")
 	// Validate layout forms
-	ValidateDetailsForm()
 	ValidateRefinementForm()
 }
 
 // OnNewTopic - Define a new conversation button event
 func OnNewTopic() {
 	parameters.IsNewSession = true
+	parameters.IsPromptReady = false
+	parameters.PromptCtx = []string{""}
 
-	mode := node.layout.detailsInput.GetFormItem(0).(*tview.DropDown)
-	_, parameters.Mode = mode.GetCurrentOption()
+	mode := node.layout.detailsInput.GetFormItem(0).(*tview.TextView)
+	parameters.Mode = mode.GetText(true)
 
 	engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
 	_, parameters.Engine = engine.GetCurrentOption()
 
-	ValidateDetailsForm()
 	ValidateRefinementForm()
+
+	if parameters.Mode == "Edit" {
+		node.layout.promptInput.SetLabel("Enter your context first: ")
+	}
 
 	if parameters.IsTraining {
 		OnTrainingTopic()
@@ -141,75 +145,47 @@ func OnExportTopic() {
 
 // OnExportTrainedTopic - Export current conversation as a trained model as a .json file
 func OnExportTrainedTopic() {
-	raw, _ := json.MarshalIndent(TrainingSessionPool, "", "\u0009")
+	raw, _ := json.MarshalIndent(parameters.TrainingSessionPool, "", "\u0009")
 	out := util.ConstructPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 
-// OnChangeMode - Dropdown from input to change mode
-func OnChangeMode(option string, optionIndex int) {
-	parameters.Mode = option
-	switch option {
-	case "Edit":
-		if !strings.Contains(parameters.Engine, "edit") {
-			parameters.Engine = "text-davinci-edit-001"
-		}
-	case "Code":
-		if !strings.Contains(parameters.Engine, "code") {
-			parameters.Engine = "code-davinci-002"
-		}
-	case "Text":
-		if !strings.Contains(parameters.Engine, "text") {
-			parameters.Engine = "text-davinci-003"
-		}
-	case "Search":
-		if !strings.Contains(parameters.Engine, "search") {
-			parameters.Engine = "curier-search-document"
-		}
-	case "Insert":
-		if !strings.Contains(parameters.Engine, "insert") {
-			parameters.Engine = "text-davinci-insert-002"
-		}
-	case "Instruct":
-		if !strings.Contains(parameters.Engine, "instruct") {
-			parameters.Engine = "curie-instruct-beta"
-		}
-	case "Similarity":
-		if !strings.Contains(parameters.Engine, "similarity") {
-			parameters.Engine = "babbage-similarity"
-		}
-	default:
-		parameters.Engine = "text-davinci-003"
-		parameters.Mode = "Text"
-	}
-}
-
 // OnChangeEngine - Dropdown from input to change engine
 func OnChangeEngine(option string, optionIndex int) {
-	mode := node.layout.detailsInput.GetFormItem(0).(*tview.DropDown)
+	if parameters.IsEditable && !parameters.IsPromptReady {
+		node.layout.promptInput.SetLabel("Retrieve en editable context sending a prompt from the selected model: ")
+	} else {
+		node.layout.promptInput.SetLabel("Enter your request: ")
+	}
+	mode := node.layout.detailsInput.GetFormItem(0).(*tview.TextView)
 	parameters.Engine = option
+
 	if strings.Contains(option, "edit") {
 		parameters.Mode = "Edit"
-		mode.SetCurrentOption(0)
+		if parameters.PromptCtx != nil &&
+			parameters.PromptCtx[0] == "" {
+			parameters.IsPromptReady = false
+		}
+		node.layout.promptInput.SetLabel("Enter your context first: ")
 	} else if strings.Contains(option, "code") {
 		parameters.Mode = "Code"
-		mode.SetCurrentOption(1)
-	} else if strings.Contains(option, "text") {
-		parameters.Mode = "Text"
-		mode.SetCurrentOption(2)
 	} else if strings.Contains(option, "search") {
 		parameters.Mode = "Search"
-		mode.SetCurrentOption(3)
 	} else if strings.Contains(option, "insert") {
 		parameters.Mode = "Insert"
-		mode.SetCurrentOption(4)
 	} else if strings.Contains(option, "instruct") {
 		parameters.Mode = "Instruct"
-		mode.SetCurrentOption(4)
 	} else if strings.Contains(option, "similarity") {
 		parameters.Mode = "Similarity"
-		mode.SetCurrentOption(5)
+	} else if strings.Contains(option, "embedding") {
+		parameters.Mode = "Embedded"
+	} else if strings.Contains(option, "zero") {
+		parameters.Mode = "Predicted"
+	} else {
+		parameters.Mode = "Text"
 	}
+
+	mode.SetText(parameters.Mode)
 }
 
 // OnChangeWords - Dropdown for tokens according to the amount of words
@@ -242,18 +218,31 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 
 	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 
-	ValidateDetailsForm()
-
 	if parameters.Mode == "Edit" {
-		node.agent.currentUser.promptProperties = node.agent.currentUser.SetRequestParameters(
-			parameters.PromptCtx,
+		if !parameters.IsPromptReady {
+			parameters.PromptCtx = []string{textToCheck}
+			node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
+				[]string{textToCheck},
+				[]string{""},
+				int(parameters.MaxTokens),
+				int(parameters.Results),
+				int(parameters.Probabilities),
+			)
+		} else {
+			node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
+				parameters.PromptCtx,
+				[]string{textToCheck},
+				int(parameters.MaxTokens),
+				int(parameters.Results),
+				int(parameters.Probabilities),
+			)
+		}
+	} else if parameters.Mode == "Predicted" {
+		node.agent.currentAgent.predictProperties = node.agent.currentAgent.SetPredictionParameters(
 			[]string{textToCheck},
-			int(parameters.MaxTokens),
-			int(parameters.Results),
-			int(parameters.Probabilities),
 		)
 	} else {
-		node.agent.currentUser.promptProperties = node.agent.currentUser.SetRequestParameters(
+		node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
 			[]string{textToCheck},
 			[]string{""},
 			int(parameters.MaxTokens),
@@ -262,7 +251,7 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 		)
 	}
 
-	node.agent.currentUser.engineProperties = node.agent.currentUser.SetEngineParameters(
+	node.agent.currentAgent.engineProperties = node.agent.currentAgent.SetEngineParameters(
 		parameters.Engine,      // "text-davinci-003",
 		parameters.Temperature, // if temperature is used set topp to 1.0
 		parameters.Topp,        // if topp is used set temperature to 1.0
@@ -285,28 +274,60 @@ func OnTextDone(key tcell.Key) {
 
 	if key == tcell.KeyEnter && !parameters.IsLoading {
 		if parameters.Mode == "Edit" {
+			if !parameters.IsPromptReady &&
+				node.layout.promptInput.GetText() != "" {
+				node.layout.promptInput.SetText("")
+				parameters.IsPromptReady = true
+			} else {
+				if parameters.IsPromptReady {
+					group.Add(1)
+					go func() {
+						parameters.IsLoading = true
+						defer group.Done()
+						defer node.agent.EditRequest()
+					}()
+				}
+			}
+		} else if parameters.Mode == "Embedded" {
 			group.Add(1)
 			go func() {
-				defer group.Done()
 				parameters.IsLoading = true
-				node.agent.InstructionRequest()
+				defer group.Done()
+				defer node.agent.EmbeddingRequest()
 			}()
+		} else if parameters.Mode == "Predicted" {
+			if !parameters.IsEditable {
+				group.Add(1)
+				go func() {
+					parameters.IsLoading = true
+					defer group.Done()
+					defer node.agent.PredictableRequest()
+				}()
+			} else {
+				node.layout.infoOutput.SetText("\nUncheck edit mode in affinity preferences and try again...")
+				node.layout.promptInput.SetText("")
+			}
 		} else {
 			group.Add(1)
 			go func() {
-				defer group.Done()
 				parameters.IsLoading = true
-				node.agent.CompletionRequest()
-				if parameters.IsEditable {
-					parameters.Mode = "Edit"
-					parameters.Engine = "text-davinci-edit-001"
-				}
+				defer group.Done()
+				defer node.agent.CompletionRequest()
 			}()
 		}
 	}
 
-	var event EventManager
-	event.SaveLog()
+	if parameters.IsEditable &&
+		parameters.Mode != "Edit" {
+		parameters.Mode = "Edit"
+		parameters.Engine = "text-davinci-edit-001"
+		parameters.IsPromptReady = true
+	}
+
+	if parameters.IsPromptReady {
+		node.layout.promptInput.SetLabel("Enter your request: ")
+	}
+
 	group.Wait()
 }
 
@@ -314,8 +335,9 @@ func OnTextDone(key tcell.Key) {
 func OnEditChecked(state bool) {
 	parameters.IsEditable = state
 	if parameters.IsEditable {
-		parameters.Mode = "Text"
-		parameters.Engine = "text-davinci-003"
+		node.layout.promptInput.SetLabel("Retrieve en editable context sending a prompt from the selected model: ")
+	} else {
+		node.layout.promptInput.SetLabel("Enter your request: ")
 	}
 }
 
@@ -331,34 +353,6 @@ func OnConversationChecked(state bool) {
 // OnTrainingChecked - Training mode to store the current conversation
 func OnTrainingChecked(state bool) {
 	parameters.IsTraining = state
-}
-
-// ValidateDetailsForm - Service layout functionality
-func ValidateDetailsForm() {
-	// Mode and engine setup
-	mode := node.layout.detailsInput.GetFormItem(0).(*tview.DropDown)
-	engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
-	for i := range parameters.Models {
-		if parameters.Models[i] == parameters.Engine {
-			engine.SetCurrentOption(i)
-			// Evaluate mode
-			if strings.Contains(parameters.Models[i], "edit") {
-				mode.SetCurrentOption(0)
-			} else if strings.Contains(parameters.Models[i], "code") {
-				mode.SetCurrentOption(1)
-			} else if strings.Contains(parameters.Models[i], "text") {
-				mode.SetCurrentOption(2)
-			} else if strings.Contains(parameters.Models[i], "search") {
-				mode.SetCurrentOption(3)
-			} else if strings.Contains(parameters.Models[i], "insert") {
-				mode.SetCurrentOption(4)
-			} else if strings.Contains(parameters.Models[i], "instruct") {
-				mode.SetCurrentOption(5)
-			} else if strings.Contains(parameters.Models[i], "similarity") {
-				mode.SetCurrentOption(6)
-			}
-		}
-	}
 }
 
 // ValidateRefinementForm - Service layout functionality
@@ -424,7 +418,8 @@ func GenerateLayoutContent() {
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkOrange.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetBorderPadding(0, 1, 1, 3)
 	node.layout.metadataOutput.
 		SetToggleHighlights(true).
 		SetLabel("Description: ").
@@ -433,7 +428,8 @@ func GenerateLayoutContent() {
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkTurquoise.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetBorderPadding(0, 1, 1, 3)
 	node.layout.promptOutput.
 		SetToggleHighlights(true).
 		SetLabel("Response: ").
@@ -442,8 +438,10 @@ func GenerateLayoutContent() {
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
-	// Engine details
+		SetDynamicColors(true).
+		SetBorderPadding(0, 3, 1, 1)
+	// Engine availables
+	parameters.Models = append(parameters.Models, "zero-gpt")
 	node.agent.ListModels()
 }
 
@@ -461,7 +459,7 @@ func CreateConsoleView() bool {
 	comSection := tview.NewFlex()
 	// Console section
 	node.layout.detailsInput.
-		AddDropDown("Mode", []string{"Edit", "Code", "Text", "Search", "Insert", "Instruct", "Similarity"}, 2, OnChangeMode).
+		AddTextView("Mode", "", 10, 2, true, false).
 		AddDropDown("Engine", parameters.Models, 11, OnChangeEngine).
 		AddDropDown("Words", []string{"\u0031", "\u0035\u0030", "\u0038\u0035", "\u0031\u0030\u0030", "\u0032\u0030\u0030", "\u0035\u0030\u0030", "\u0031\u0030\u0030\u0030", "\u0031\u0035\u0030\u0030"}, 4, OnChangeWords).
 		AddButton("Affinity", OnRefinementTopic).
@@ -608,6 +606,5 @@ func InitializeLayout() {
 	node.layout.pages.HidePage("refinement")
 	node.layout.pages.HidePage("modal")
 	// Validate forms
-	ValidateDetailsForm()
 	ValidateRefinementForm()
 }

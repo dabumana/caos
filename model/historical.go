@@ -3,8 +3,9 @@ package model
 
 // HistoricalPrompt - historical prompt
 type HistoricalPrompt struct {
-	Header EngineProperties `json:"properties"`
-	Body   PromptProperties `json:"body"`
+	Header  EngineProperties  `json:"properties"`
+	Body    PromptProperties  `json:"body"`
+	Predict PredictProperties `json:"predict"`
 }
 
 // HistoricalEvent - Session historical event

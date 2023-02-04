@@ -42,6 +42,9 @@ var IsLoading = false
 // IsConversational - Conversational mode
 var IsConversational = false
 
+// IsPredictable - Zero gpt mode
+var IsPredictable = false
+
 // IsEditable - Editable completion mode
 var IsEditable = false
 
@@ -50,3 +53,9 @@ var IsTraining = false
 
 // IsNewSession - New session
 var IsNewSession = true
+
+// IsPromptReady - Is request ready to send
+var IsPromptReady = false
+
+// ExternalBaseURL - External API URL
+var ExternalBaseURL = "https://api.gptzero.me"

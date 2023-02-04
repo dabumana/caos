@@ -218,17 +218,26 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 
 	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 
+	node.agent.currentAgent.engineProperties = node.agent.currentAgent.SetEngineParameters(
+		parameters.Engine,      // "text-davinci-003",
+		parameters.Temperature, // if temperature is used set topp to 1.0
+		parameters.Topp,        // if topp is used set temperature to 1.0
+		parameters.Penalty,     // Penalize from 0 to 1 the repeated tokens
+		parameters.Frequency,   // Frequency  of penalization
+	)
+
+	if !parameters.IsPromptReady {
+		node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
+			[]string{textToCheck},
+			[]string{""},
+			int(parameters.MaxTokens),
+			int(parameters.Results),
+			int(parameters.Probabilities),
+		)
+	}
+
 	if parameters.Mode == "Edit" {
-		if !parameters.IsPromptReady {
-			parameters.PromptCtx = []string{textToCheck}
-			node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
-				[]string{textToCheck},
-				[]string{""},
-				int(parameters.MaxTokens),
-				int(parameters.Results),
-				int(parameters.Probabilities),
-			)
-		} else {
+		if parameters.IsPromptReady {
 			node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
 				parameters.PromptCtx,
 				[]string{textToCheck},
@@ -241,23 +250,7 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 		node.agent.currentAgent.predictProperties = node.agent.currentAgent.SetPredictionParameters(
 			[]string{textToCheck},
 		)
-	} else {
-		node.agent.currentAgent.promptProperties = node.agent.currentAgent.SetPromptParameters(
-			[]string{textToCheck},
-			[]string{""},
-			int(parameters.MaxTokens),
-			int(parameters.Results),
-			int(parameters.Probabilities),
-		)
 	}
-
-	node.agent.currentAgent.engineProperties = node.agent.currentAgent.SetEngineParameters(
-		parameters.Engine,      // "text-davinci-003",
-		parameters.Temperature, // if temperature is used set topp to 1.0
-		parameters.Topp,        // if topp is used set temperature to 1.0
-		parameters.Penalty,     // Penalize from 0 to 1 the repeated tokens
-		parameters.Frequency,   // Frequency  of penalization
-	)
 
 	return true
 }
@@ -440,7 +433,7 @@ func GenerateLayoutContent() {
 		SetRegions(true).
 		SetDynamicColors(true).
 		SetBorderPadding(0, 3, 1, 1)
-	// Engine availables
+	// Model ingestion
 	parameters.Models = append(parameters.Models, "zero-gpt")
 	node.agent.ListModels()
 }

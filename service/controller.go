@@ -69,7 +69,9 @@ func (c Controller) PredictableRequest() {
 // ListModels - Get actual models available
 func (c Controller) ListModels() {
 	resp := node.prompt.GetListModels(c.currentAgent)
-	for _, i := range resp.Data {
-		parameters.Models = append(parameters.Models, i.ID)
+	if resp != nil {
+		for _, i := range resp.Data {
+			parameters.Models = append(parameters.Models, i.ID)
+		}
 	}
 }

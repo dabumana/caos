@@ -41,7 +41,7 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	isValid := IsContextValid(service)
 	if isValid {
 		var prompt []string
-		if parameters.IsConversational {
+		if node.controller.currentAgent.preferences.IsConversational {
 			prompt = []string{fmt.Sprintf("Human: %v \nAI:", service.promptProperties.PromptContext)}
 		} else {
 			prompt = service.promptProperties.PromptContext
@@ -60,7 +60,7 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			Echo:             true}
 
 		resp, err := service.client.CompletionWithEngine(
-			node.agent.currentAgent.ctx,
+			node.controller.currentAgent.ctx,
 			service.engineProperties.Model,
 			req)
 

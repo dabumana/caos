@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"caos/model"
+	"caos/service/parameters"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
@@ -21,12 +22,34 @@ type Agent struct {
 	engineProperties  model.EngineProperties
 	promptProperties  model.PromptProperties
 	predictProperties model.PredictProperties
+	preferences       parameters.GlobalPreferences
 }
 
 // Initialize - Creates context background to be used along with the client
 func (c Agent) Initialize() Agent {
+	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
+	// Global preferences
+	c.preferences.Engine = "text-davinci-003"
+	c.preferences.Frequency = 0.5
+	c.preferences.Penalty = 0.5
+	c.preferences.MaxTokens = 250
+	c.preferences.Mode = "Text"
+	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
+	c.preferences.Probabilities = 1
+	c.preferences.Results = 1
+	c.preferences.Temperature = 0.4
+	c.preferences.Topp = 0.6
+	// Mode selection
+	c.preferences.IsConversational = false
+	c.preferences.IsEditable = false
+	c.preferences.IsLoading = false
+	c.preferences.IsNewSession = true
+	c.preferences.IsPredictable = false
+	c.preferences.IsPromptReady = false
+	c.preferences.IsTraining = false
+	// Return created client
 	return c
 }
 

@@ -1,10 +1,6 @@
 // Package service section
 package service
 
-import (
-	"caos/service/parameters"
-)
-
 // Controller - Contextual client controller API
 type Controller struct {
 	currentAgent Agent
@@ -24,7 +20,7 @@ func (c Controller) EditRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogEdit(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
+		event.LogEdit(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEdit(resp)
 	}
 	event.LogEngine(c.currentAgent)
@@ -36,7 +32,7 @@ func (c Controller) CompletionRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogCompletion(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
+		event.LogCompletion(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogCompletion(resp)
 	}
 	event.LogEngine(c.currentAgent)
@@ -48,7 +44,7 @@ func (c Controller) EmbeddingRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogEmbedding(&node.agent.currentAgent.engineProperties, &node.agent.currentAgent.promptProperties, resp)
+		event.LogEmbedding(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEmbedding(resp)
 	}
 	event.LogEngine(c.currentAgent)
@@ -60,10 +56,10 @@ func (c Controller) PredictableRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogPredict(&node.agent.currentAgent.predictProperties, resp)
+		event.LogPredict(&node.controller.currentAgent.predictProperties, resp)
 		event.VisualLogPredict(resp)
 	}
-	event.LogPredictEngine(node.agent.currentAgent)
+	event.LogPredictEngine(node.controller.currentAgent)
 }
 
 // ListModels - Get actual models available
@@ -71,7 +67,7 @@ func (c Controller) ListModels() {
 	resp := node.prompt.GetListModels(c.currentAgent)
 	if resp != nil {
 		for _, i := range resp.Data {
-			parameters.Models = append(parameters.Models, i.ID)
+			node.controller.currentAgent.preferences.Models = append(node.controller.currentAgent.preferences.Models, i.ID)
 		}
 	}
 }

@@ -19,12 +19,20 @@ import (
 type EventManager struct {
 	event   model.HistoricalEvent
 	session model.HistoricalSession
+	handler parameters.PoolManager
+}
+
+// SaveTraining - Export training in JSON format
+func (c EventManager) SaveTraining() {
+	raw, _ := json.MarshalIndent(c.handler.TrainingSessionPool, "", "\u0009")
+	out := util.ConstructPathFileTo("training", "json")
+	out.WriteString(string(raw))
 }
 
 // SaveLog - Save log with actual historic detail
 func (c EventManager) SaveLog() {
-	if parameters.SessionPool != nil {
-		raw, _ := json.MarshalIndent(parameters.SessionPool[len(parameters.SessionPool)-1], "", "\u0009")
+	if c.handler.SessionPool != nil {
+		raw, _ := json.MarshalIndent(c.handler.SessionPool[len(c.handler.SessionPool)-1], "", "\u0009")
 		out := util.ConstructPathFileTo("log", "json")
 		out.WriteString(string(raw))
 	}
@@ -32,10 +40,10 @@ func (c EventManager) SaveLog() {
 
 // ClearSession - Clear all the pools
 func (c EventManager) ClearSession() {
-	parameters.EventPool = nil
-	parameters.SessionPool = nil
-	parameters.TrainingEventPool = nil
-	parameters.TrainingSessionPool = nil
+	c.handler.EventPool = nil
+	c.handler.SessionPool = nil
+	c.handler.TrainingEventPool = nil
+	c.handler.TrainingSessionPool = nil
 }
 
 // AppendToSession - Add a set of events as a session
@@ -64,36 +72,35 @@ func (c EventManager) AppendToSession(header *model.EngineProperties, body *mode
 
 	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
 
-	parameters.EventPool = append(parameters.EventPool, c.event)
+	c.handler.EventPool = append(c.handler.EventPool, c.event)
 
 	c.session.ID = id
-	c.session.Session = parameters.EventPool
+	c.session.Session = c.handler.EventPool
 
-	if parameters.IsTraining {
+	if node.controller.currentAgent.preferences.IsTraining {
 
 		event := model.HistoricalTrainingEvent{
 			Timestamp: c.event.Timestamp,
 			Event:     train,
 		}
 
-		parameters.TrainingEventPool = append(parameters.TrainingEventPool, event)
+		c.handler.TrainingEventPool = append(c.handler.TrainingEventPool, event)
 
 		session := model.HistoricalTrainingSession{
 			ID:      c.session.ID,
 			Session: []model.HistoricalTrainingEvent{event},
 		}
 
-		parameters.TrainingSessionPool = append(parameters.TrainingSessionPool, session)
+		c.handler.TrainingSessionPool = append(c.handler.TrainingSessionPool, session)
 	}
 
-	parameters.SessionPool = append(parameters.SessionPool, c.session)
+	c.handler.SessionPool = append(c.handler.SessionPool, c.session)
 
 	c.SaveLog()
 }
 
 // AppendToLayout - Append and visualize content in console page view
 func (c EventManager) AppendToLayout(responses []string) {
-	parameters.PromptCtx = responses
 	log := strings.Join(responses, "")
 	log = strings.ReplaceAll(log, "[]", "\n")
 	node.layout.promptOutput.SetText(log)
@@ -125,9 +132,9 @@ func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.E
 
 // LogCompletion - Response details in a .json file
 func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.CompletionResponse) {
-	if parameters.IsNewSession {
+	if node.controller.currentAgent.preferences.IsNewSession {
 		c.ClearSession()
-		parameters.IsNewSession = false
+		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
 	for i := range resp.Choices {
@@ -140,7 +147,7 @@ func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.
 		c.AppendToSession(header, body, predict, resp.ID, modelTrainer)
 	}
 
-	parameters.CurrentID = resp.ID
+	node.controller.currentAgent.preferences.CurrentID = resp.ID
 }
 
 // LogEdit - Response details in a .json file
@@ -151,7 +158,7 @@ func (c EventManager) LogEdit(header *model.EngineProperties, body *model.Prompt
 		Completion: []string{resp.Choices[0].Text},
 	}
 
-	c.AppendToSession(header, body, predict, parameters.CurrentID, modelTrainer)
+	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
 }
 
 // LogEmbedding - Response details in a .json file
@@ -162,7 +169,7 @@ func (c EventManager) LogEmbedding(header *model.EngineProperties, body *model.P
 		Completion: []string{fmt.Sprintf("%v", resp.Data[0])},
 	}
 
-	c.AppendToSession(header, body, predict, parameters.CurrentID, modelTrainer)
+	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
 }
 
 // LogPredict - ResponseDetails in a .json file
@@ -178,7 +185,7 @@ func (c EventManager) LogPredict(predict *model.PredictProperties, resp *model.P
 		predict.Details.Documents = append(predict.Details.Documents, resp.Documents[i])
 	}
 
-	c.AppendToSession(header, body, predict, parameters.CurrentID, modelTrainer)
+	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
 }
 
 // VisualLogCompletion - Response details
@@ -354,18 +361,26 @@ func (c EventManager) LogEngine(client Agent) {
 
 // LogPredictEngine - Log current predict engine
 func (c EventManager) LogPredictEngine(client Agent) {
+	var out string
+	if client.predictProperties.Details.Documents[0].AverageProb >= 0.5 {
+		out = "Probably generated by AI"
+	} else {
+		out = "Mostly human generated content"
+	}
+
 	node.layout.metadataOutput.SetText(
-		fmt.Sprintf("\nModel: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n",
+		fmt.Sprintf("\nModel: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
 			client.engineProperties.Model,
 			client.predictProperties.Details.Documents[0].AverageProb,
 			client.predictProperties.Details.Documents[0].CompletelyProb,
-			client.predictProperties.Details.Documents[0].OverallBurstiness))
+			client.predictProperties.Details.Documents[0].OverallBurstiness,
+			out))
 }
 
 // Errata - Generic error method
 func (c EventManager) Errata(err error) {
 	if err != nil {
-		parameters.IsNewSession = true
+		node.controller.currentAgent.preferences.IsNewSession = true
 		node.layout.infoOutput.SetText(err.Error())
 		node.layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
 		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
@@ -374,6 +389,6 @@ func (c EventManager) Errata(err error) {
 		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
 	}
 
-	parameters.IsLoading = false
+	node.controller.currentAgent.preferences.IsLoading = false
 	node.layout.promptInput.SetText("")
 }

@@ -11,23 +11,23 @@ var node Node
 
 // Node - Node manager
 type Node struct {
-	prompt Prompt
-	layout Layout
-	agent  Controller
+	prompt     Prompt
+	layout     Layout
+	controller Controller
 }
 
 // Start - Initialize node service
 func (c Node) Start(sandboxMode bool) {
 	var controller Controller
 	var event EventManager
-	node.agent = controller
+	node.controller = controller
 
-	if node.agent.currentAgent.client == nil {
-		node.agent.currentAgent = c.agent.AttachProfile()
+	if node.controller.currentAgent.client == nil {
+		node.controller.currentAgent = c.controller.AttachProfile()
 	}
 
-	if node.agent.currentAgent.client != nil {
-		event.LogClient(node.agent.currentAgent)
+	if node.controller.currentAgent.client != nil {
+		event.LogClient(node.controller.currentAgent)
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return

@@ -36,12 +36,22 @@ Installation steps:
 
 -   ##### Advanced parameters like:
 
+    #### Completion>
     -   Temperature
     -   Topp
     -   Penalty
     -   Frequency penalty
     -   Max tokens
     -   Engine
+
+    #### Edit>
+    -   Contextual input
+
+    #### Embedded>
+    -   Nested input to analize embeddings
+
+    #### Predict>
+    -   Nested input to analize text (Powered by GPTZero)
 
 -   Multiple results and probabilities
 
@@ -62,7 +72,7 @@ also includes advanced modes that allow users to modify the contextual informati
 
 #### General parameters:
 
--   **Mode**: Modify the actual mode, select between (TEXT/EDIT/CODE)
+-   **Mode**: Modify the actual mode, select between **(TEXT/EDIT/CODE)**
 -   **Engine**: Modify the model that you want to test
 -   **Results**: Modify the amount of results displayed for each prompt
 -   **Probabilities**: According to your setup of the temperature and topp, probably you will need to use this field to populate a more accurate response according to the possibilities of results

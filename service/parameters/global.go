@@ -28,4 +28,5 @@ type GlobalPreferences struct {
 	CurrentID string
 }
 
+// ExternalBaseURL - External API endpoint
 const ExternalBaseURL = "https://api.gptzero.me"

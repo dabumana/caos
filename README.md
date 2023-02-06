@@ -47,11 +47,17 @@ Installation steps:
     #### Edit>
     -   Contextual input
 
+    ![console.gif](docs%2Fmedia%2Fedit.gif)
+
     #### Embedded>
     -   Nested input to analize embeddings
 
+    ![console.gif](docs%2Fmedia%2Fembedded.gif)
+
     #### Predict>
     -   Nested input to analize text (Powered by GPTZero)
+
+    ![console.gif](docs%2Fmedia%2Fzero.gif)
 
 -   Multiple results and probabilities
 
@@ -68,7 +74,7 @@ The OpenAI API provides access to a range of AI-powered services, including natu
 The terminal app have a conversational assistant that is designed to work with OpenAI services, able to understand natural language queries and provide accurate results,
 also includes advanced modes that allow users to modify the contextual information for specific uses for example, users can adjust the engine, results, probabilities according to the amount of words used in the query, this allows for more accurate results when using longer queries.
 
-![console.gif](docs%2Fmedia%2Fconsole.gif)
+![console.gif](docs%2Fmedia%2Fgeneral.gif)
 
 #### General parameters:
 

@@ -1,7 +1,7 @@
-// Package parameters section
+// Package model section
 package model
 
-// PoolManager - Session pool management
+// PoolProperties - Session pool management
 type PoolProperties struct {
 	Event           []HistoricalEvent           `json:"events"`
 	Session         []HistoricalSession         `json:"sessions"`

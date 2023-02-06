@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"caos/model"
-	"caos/service/parameters"
 	"caos/util"
 
 	"github.com/PullRequestInc/go-gpt3"
@@ -19,20 +18,20 @@ import (
 type EventManager struct {
 	event   model.HistoricalEvent
 	session model.HistoricalSession
-	handler parameters.PoolManager
+	pool    model.PoolProperties
 }
 
 // SaveTraining - Export training in JSON format
 func (c EventManager) SaveTraining() {
-	raw, _ := json.MarshalIndent(c.handler.TrainingSessionPool, "", "\u0009")
+	raw, _ := json.MarshalIndent(c.pool.TrainingSession, "", "\u0009")
 	out := util.ConstructPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 
 // SaveLog - Save log with actual historic detail
 func (c EventManager) SaveLog() {
-	if c.handler.SessionPool != nil {
-		raw, _ := json.MarshalIndent(c.handler.SessionPool[len(c.handler.SessionPool)-1], "", "\u0009")
+	if c.pool.Session != nil {
+		raw, _ := json.MarshalIndent(c.pool.Session[len(c.pool.Session)-1], "", "\u0009")
 		out := util.ConstructPathFileTo("log", "json")
 		out.WriteString(string(raw))
 	}
@@ -40,10 +39,10 @@ func (c EventManager) SaveLog() {
 
 // ClearSession - Clear all the pools
 func (c EventManager) ClearSession() {
-	c.handler.EventPool = nil
-	c.handler.SessionPool = nil
-	c.handler.TrainingEventPool = nil
-	c.handler.TrainingSessionPool = nil
+	c.pool.Event = nil
+	c.pool.Session = nil
+	c.pool.TrainingEvent = nil
+	c.pool.TrainingSession = nil
 }
 
 // AppendToSession - Add a set of events as a session
@@ -72,10 +71,10 @@ func (c EventManager) AppendToSession(header *model.EngineProperties, body *mode
 
 	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
 
-	c.handler.EventPool = append(c.handler.EventPool, c.event)
+	c.pool.Event = append(c.pool.Event, c.event)
 
 	c.session.ID = id
-	c.session.Session = c.handler.EventPool
+	c.session.Session = c.pool.Event
 
 	if node.controller.currentAgent.preferences.IsTraining {
 
@@ -84,17 +83,17 @@ func (c EventManager) AppendToSession(header *model.EngineProperties, body *mode
 			Event:     train,
 		}
 
-		c.handler.TrainingEventPool = append(c.handler.TrainingEventPool, event)
+		c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
 
 		session := model.HistoricalTrainingSession{
 			ID:      c.session.ID,
 			Session: []model.HistoricalTrainingEvent{event},
 		}
 
-		c.handler.TrainingSessionPool = append(c.handler.TrainingSessionPool, session)
+		c.pool.TrainingSession = append(c.pool.TrainingSession, session)
 	}
 
-	c.handler.SessionPool = append(c.handler.SessionPool, c.session)
+	c.pool.Session = append(c.pool.Session, c.session)
 
 	c.SaveLog()
 }

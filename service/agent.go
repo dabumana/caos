@@ -9,6 +9,7 @@ import (
 
 	"caos/model"
 	"caos/service/parameters"
+	"caos/util"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
@@ -32,15 +33,15 @@ func (c Agent) Initialize() Agent {
 	c.client, c.exClient = c.Connect()
 	// Global preferences
 	c.preferences.Engine = "text-davinci-003"
-	c.preferences.Frequency = 0.5
-	c.preferences.Penalty = 0.5
-	c.preferences.MaxTokens = 250
+	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
+	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
+	c.preferences.MaxTokens = util.ParseInt64("\u0032\u0035\u0030")
 	c.preferences.Mode = "Text"
 	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
-	c.preferences.Probabilities = 1
-	c.preferences.Results = 1
-	c.preferences.Temperature = 0.4
-	c.preferences.Topp = 0.6
+	c.preferences.Probabilities = util.ParseInt32("\u0031")
+	c.preferences.Results = util.ParseInt32("\u0031")
+	c.preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
+	c.preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
 	// Mode selection
 	c.preferences.IsConversational = false
 	c.preferences.IsEditable = false

@@ -47,17 +47,25 @@ Installation steps:
     #### Edit>
     -   Contextual input
 
+    ![console.gif](docs%2Fmedia%2Fedit.gif)
+
     #### Embedded>
     -   Nested input to analize embeddings
 
+    ![console.gif](docs%2Fmedia%2Fembedded.gif)
+
     #### Predict>
     -   Nested input to analize text (Powered by GPTZero)
+
+    ![console.gif](docs%2Fmedia%2Fzero.gif)
 
 -   Multiple results and probabilities
 
 -   Detailed log according to UTC
 
 ### How to use?
+
+![console.gif](docs%2Fmedia%2Fgeneral.gif)
 
 The OpenAI API provides access to a range of AI-powered services, including natural language processing (NLP), computer vision, and reinforcement learning.
 
@@ -68,9 +76,9 @@ The OpenAI API provides access to a range of AI-powered services, including natu
 The terminal app have a conversational assistant that is designed to work with OpenAI services, able to understand natural language queries and provide accurate results,
 also includes advanced modes that allow users to modify the contextual information for specific uses for example, users can adjust the engine, results, probabilities according to the amount of words used in the query, this allows for more accurate results when using longer queries.
 
-![console.gif](docs%2Fmedia%2Fconsole.gif)
-
 #### General parameters:
+
+![details.png](docs%2Fmedia%2Fdetails.png)
 
 -   **Mode**: Modify the actual mode, select between **(TEXT/EDIT/CODE)**
 -   **Engine**: Modify the model that you want to test
@@ -87,8 +95,6 @@ also includes advanced modes that allow users to modify the contextual informati
 -   **Edit Mode**: Use Edit mode for all the requests
     -   Press `New Conversation` and select `Edit mode` the first request will be for a completion endpoint the second based on the first request will continue editing the content in the parameters that you ask.
 -   **Conversational Mode**: Use conversational AI mode request for a friendly interaction.
-
-![details.png](docs%2Fmedia%2Fdetails.png)
 
 ### Disclaimer :warning:
 

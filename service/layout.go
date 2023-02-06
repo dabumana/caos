@@ -80,6 +80,10 @@ func OnBack() {
 	node.layout.pages.HidePage("modal")
 	// Validate layout forms
 	ValidateRefinementForm()
+	// Clean input
+	if node.controller.currentAgent.preferences.Mode == "Edit" {
+		node.layout.promptInput.SetLabel("Enter your context first: ")
+	}
 }
 
 // OnNewTopic - Define a new conversation button event
@@ -133,7 +137,9 @@ func OnExportTopic() {
 
 // OnExportTrainedTopic - Export current conversation as a trained model as a .json file
 func OnExportTrainedTopic() {
-	node.layout.eventManager.SaveTraining()
+	if node.controller.currentAgent.preferences.IsTraining {
+		node.layout.eventManager.SaveTraining()
+	}
 }
 
 // OnChangeEngine - Dropdown from input to change engine
@@ -183,21 +189,21 @@ func OnChangeEngine(option string, optionIndex int) {
 // OnChangeWords - Dropdown for tokens according to the amount of words
 func OnChangeWords(option string, optionIndex int) {
 	switch option {
-	case "1":
+	case "\u0031":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031")
-	case "50":
+	case "\u0035\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0033\u0031")
-	case "85":
+	case "\u0038\u0035":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0036\u0034")
-	case "100":
+	case "\u0031\u0030\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0037\u0035")
-	case "200":
+	case "\u0032\u0030\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031\u0035\u0030")
-	case "500":
+	case "\u0035\u0030\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0033\u0037\u0035")
-	case "1000":
+	case "\u0031\u0030\u0030\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0037\u0035\u0030")
-	case "1500":
+	case "\u0031\u0035\u0030\u0030":
 		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031\u0031\u0032\u0035")
 	}
 }

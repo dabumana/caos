@@ -11,7 +11,6 @@ import (
 	"caos/util"
 
 	"github.com/PullRequestInc/go-gpt3"
-	"github.com/gdamore/tcell/v2"
 )
 
 // EventManager - Log event service
@@ -189,15 +188,21 @@ func (c EventManager) LogPredict(predict *model.PredictProperties, resp *model.P
 
 // VisualLogCompletion - Response details
 func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
-	c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil))
+	if resp.Choices == nil {
+		return
+	}
+
+	if !node.controller.currentAgent.preferences.IsPromptStreaming {
+		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil))
+	}
+
 	node.layout.infoOutput.SetText(
-		fmt.Sprintf("\nID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\n",
+		fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\n",
 			resp.ID,
 			resp.Model,
 			resp.Created,
 			resp.Object,
-			resp.Usage.
-				CompletionTokens,
+			resp.Usage.CompletionTokens,
 			resp.Usage.PromptTokens,
 			resp.Usage.TotalTokens,
 			resp.Choices[0].FinishReason,
@@ -208,7 +213,7 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 // VisualLogEdit - Log edited response details
 func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 	c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil))
-	node.layout.infoOutput.SetText(fmt.Sprintf("\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
+	node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Created,
 		resp.Object,
 		resp.Usage.CompletionTokens,
@@ -220,7 +225,7 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 // VisualLogEmbedding - Log embedding response details
 func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 	c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil))
-	node.layout.infoOutput.SetText(fmt.Sprintf("\nObject: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
+	node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Object,
 		resp.Usage.PromptTokens,
 		resp.Usage.TotalTokens,
@@ -233,14 +238,14 @@ func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 	for i := range resp.Documents {
 		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, &resp.Documents[i]))
 
-		details := fmt.Sprintf("\nAverage probability: %v\nCompletely generated probability: %v\nOverall burstiness: %v",
+		details := fmt.Sprintf("Average probability: %v\nCompletely generated probability: %v\nOverall burstiness: %v",
 			resp.Documents[i].AverageProb,
 			resp.Documents[i].CompletelyProb,
 			resp.Documents[i].OverallBurstiness)
 		buffer = append(buffer, details, "\n")
 
 		for o := range resp.Documents[i].Paragraphs {
-			paragraphs := fmt.Sprintf("\nCompletely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
+			paragraphs := fmt.Sprintf("Completely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
 				resp.Documents[i].Paragraphs[o].CompletelyProb,
 				resp.Documents[i].Paragraphs[o].Index,
 				resp.Documents[i].Paragraphs[o].NumberSentences)
@@ -248,7 +253,7 @@ func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 		}
 
 		for o := range resp.Documents[i].Sentences {
-			sentence := fmt.Sprintf("\nGenerated probability:%v\nPerplexity: %v\nSentence: %v",
+			sentence := fmt.Sprintf("Generated probability:%v\nPerplexity: %v\nSentence: %v",
 				resp.Documents[i].Sentences[o].GeneratedProb,
 				resp.Documents[i].Sentences[o].Perplexity,
 				resp.Documents[i].Sentences[o].Sentence)
@@ -345,7 +350,7 @@ func (c EventManager) LogClient(client Agent) {
 // LogEngine - Log current engine
 func (c EventManager) LogEngine(client Agent) {
 	node.layout.metadataOutput.SetText(
-		fmt.Sprintf("\nModel: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
+		fmt.Sprintf("Model: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
 			client.engineProperties.Model,
 			client.engineProperties.Temperature,
 			client.engineProperties.TopP,
@@ -368,7 +373,7 @@ func (c EventManager) LogPredictEngine(client Agent) {
 	}
 
 	node.layout.metadataOutput.SetText(
-		fmt.Sprintf("\nModel: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
+		fmt.Sprintf("Model: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
 			client.engineProperties.Model,
 			client.predictProperties.Details.Documents[0].AverageProb,
 			client.predictProperties.Details.Documents[0].CompletelyProb,
@@ -381,13 +386,21 @@ func (c EventManager) Errata(err error) {
 	if err != nil {
 		node.controller.currentAgent.preferences.IsNewSession = true
 		node.layout.infoOutput.SetText(err.Error())
-		node.layout.promptInput.SetPlaceholder("Press ENTER again to repeat the request.")
-		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorDarkOrange)
+		node.layout.promptArea.SetPlaceholder("Press CTRL+SPACE again to repeat the request.")
 	} else {
-		node.layout.promptInput.SetPlaceholder("Type here...")
-		node.layout.promptInput.SetPlaceholderTextColor(tcell.ColorBlack)
+		node.layout.promptArea.SetPlaceholder("Type here...")
 	}
 
 	node.controller.currentAgent.preferences.IsLoading = false
-	node.layout.promptInput.SetText("")
+	node.layout.promptArea.SetText("", true)
+}
+
+// Loader - Generic loading animation
+func (c EventManager) Loader() {
+	go func() {
+		fmt.Println(`
+		🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
+		⬜🟧🟧🟧⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜🟧🟧🟧⬜
+		🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧`)
+	}()
 }

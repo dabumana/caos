@@ -17,15 +17,17 @@ type GlobalPreferences struct {
 	Frequency     float32
 	PromptCtx     []string
 	// Modes
-	IsLoading        bool
-	IsConversational bool
-	IsPredictable    bool
-	IsEditable       bool
-	IsTraining       bool
-	IsNewSession     bool
-	IsPromptReady    bool
+	IsLoading         bool
+	IsConversational  bool
+	IsPredictable     bool
+	IsEditable        bool
+	IsTraining        bool
+	IsNewSession      bool
+	IsPromptReady     bool
+	IsPromptStreaming bool
 	// Utilitaries
-	CurrentID string
+	CurrentID  string
+	InlineText chan string
 }
 
 // ExternalBaseURL - External API endpoint

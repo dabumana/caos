@@ -1,6 +1,8 @@
 // Package service section
 package service
 
+import "github.com/PullRequestInc/go-gpt3"
+
 // Controller - Contextual client controller API
 type Controller struct {
 	currentAgent Agent
@@ -28,7 +30,13 @@ func (c Controller) EditRequest() {
 
 // CompletionRequest - Start completion request to send task prompt
 func (c Controller) CompletionRequest() {
-	resp := node.prompt.SendCompletion(c.currentAgent)
+
+	var resp *gpt3.CompletionResponse
+	if c.currentAgent.preferences.IsPromptStreaming {
+		resp = node.prompt.SendStreamingCompletion(c.currentAgent)
+	} else {
+		resp = node.prompt.SendCompletion(c.currentAgent)
+	}
 
 	var event EventManager
 	if resp != nil {
@@ -59,7 +67,7 @@ func (c Controller) PredictableRequest() {
 		event.LogPredict(&node.controller.currentAgent.predictProperties, resp)
 		event.VisualLogPredict(resp)
 	}
-	event.LogPredictEngine(node.controller.currentAgent)
+	event.LogPredictEngine(c.currentAgent)
 }
 
 // ListModels - Get actual models available

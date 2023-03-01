@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"caos/model"
 	"caos/service/parameters"
@@ -50,6 +51,8 @@ func (c Agent) Initialize() Agent {
 	c.preferences.IsPredictable = false
 	c.preferences.IsPromptReady = false
 	c.preferences.IsTraining = false
+	c.preferences.IsPromptStreaming = true
+	c.preferences.InlineText = make(chan string)
 	// Return created client
 	return c
 }
@@ -63,10 +66,13 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 		log.Fatalln("Missing API KEY")
 	}
 
-	client := gpt3.NewClient(apiKey)
 	externalClient := http.Client{
 		Transport: http.DefaultTransport,
+		Timeout:   time.Duration(12 * time.Second),
 	}
+
+	option := gpt3.WithHTTPClient(&externalClient)
+	client := gpt3.NewClient(apiKey, option)
 
 	c.client = client
 	c.exClient = &externalClient

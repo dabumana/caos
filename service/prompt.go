@@ -73,6 +73,79 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	return nil
 }
 
+// SendStreamingCompletion - Send task prompt on stream mode
+func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
+	isValid := IsContextValid(service)
+	if isValid {
+		var prompt []string
+		if node.controller.currentAgent.preferences.IsConversational {
+			prompt = []string{fmt.Sprintf("Human: %v \nAI:", service.promptProperties.PromptContext)}
+		} else {
+			prompt = service.promptProperties.PromptContext
+		}
+
+		var eventManager EventManager
+		resp := gpt3.CompletionResponse{}
+
+		req := gpt3.CompletionRequest{
+			Prompt:           prompt,
+			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
+			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
+			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
+			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
+			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
+			Stream:           false,
+			N:                gpt3.IntPtr(service.promptProperties.Results),
+			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
+			Echo:             true}
+
+		bWriter := node.layout.promptOutput.BatchWriter()
+		defer bWriter.Close()
+		bWriter.Clear()
+
+		var isOnce bool = false
+		err := service.client.CompletionStreamWithEngine(
+			node.controller.currentAgent.ctx,
+			service.engineProperties.Model,
+			req, func(out *gpt3.CompletionResponse) {
+				go func(in chan string) {
+					if !isOnce {
+						resp.ID = out.ID
+						resp.Choices = out.Choices
+						resp.Created = out.Created
+						resp.Model = out.Model
+						resp.Object = out.Object
+						resp.Usage = out.Usage
+						isOnce = true
+					}
+
+					resp.Choices[0].FinishReason = out.Choices[0].FinishReason
+					resp.Choices[0].Index = out.Choices[0].Index
+
+					for i := range out.Choices {
+						resp.Choices = append(resp.Choices, out.Choices[i])
+						resp.Choices[i].LogProbs.TextOffset = append(resp.Choices[i].LogProbs.TextOffset, out.Choices[i].LogProbs.TextOffset...)
+						resp.Choices[i].LogProbs.TokenLogprobs = append(resp.Choices[i].LogProbs.TokenLogprobs, out.Choices[i].LogProbs.TokenLogprobs...)
+						resp.Choices[i].LogProbs.Tokens = append(resp.Choices[i].LogProbs.Tokens, out.Choices[i].LogProbs.Tokens...)
+						resp.Choices[i].LogProbs.TopLogprobs = append(resp.Choices[i].LogProbs.TopLogprobs, out.Choices[i].LogProbs.TopLogprobs...)
+						in <- out.Choices[i].Text
+					}
+				}(node.controller.currentAgent.preferences.InlineText)
+				bWriter.Write([]byte(<-node.controller.currentAgent.preferences.InlineText))
+				eventManager.Loader()
+			})
+
+		node.layout.app.Sync()
+
+		var event EventManager
+		event.Errata(err)
+
+		c.contextualResponse = &resp
+		return c.contextualResponse
+	}
+	return nil
+}
+
 // SendEditPrompt - Send edit instruction task prompt
 func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 	isValid := IsContextValid(service)

@@ -58,18 +58,6 @@ func (c Controller) EmbeddingRequest() {
 	event.LogEngine(c.currentAgent)
 }
 
-// PredictableRequest - Start a predictable string request
-func (c Controller) PredictableRequest() {
-	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
-
-	var event EventManager
-	if resp != nil {
-		event.LogPredict(&node.controller.currentAgent.predictProperties, resp)
-		event.VisualLogPredict(resp)
-	}
-	event.LogPredictEngine(c.currentAgent)
-}
-
 // ListModels - Get actual models available
 func (c Controller) ListModels() {
 	resp := node.prompt.GetListModels(c.currentAgent)

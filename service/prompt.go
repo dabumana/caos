@@ -2,25 +2,17 @@
 package service
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
-
-	"caos/model"
-	"caos/service/parameters"
 
 	"github.com/PullRequestInc/go-gpt3"
 )
 
 // Prompt - Handle prompt request
 type Prompt struct {
-	contextualResponse  *gpt3.CompletionResponse
-	extendedResponse    *gpt3.EditsResponse
-	embeddingResponse   *gpt3.EmbeddingsResponse
-	predictableResponse *model.PredictResponse
+	contextualResponse *gpt3.CompletionResponse
+	extendedResponse   *gpt3.EditsResponse
+	embeddingResponse  *gpt3.EmbeddingsResponse
 }
 
 // IsContextValid - Client context validation
@@ -189,63 +181,6 @@ func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 
 		c.embeddingResponse = resp
 		return c.embeddingResponse
-	}
-	return nil
-}
-
-// SendPredictablePrompt - Send a predictable request
-func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
-	isValid := IsContextValid(service)
-	if isValid {
-		req := model.PredictRequest{
-			Document: string(service.predictProperties.Input[0]),
-		}
-
-		var event EventManager
-		out, err := json.Marshal(req)
-		if err != nil {
-			CleanConsoleView()
-			event.Errata(err)
-			return nil
-		}
-
-		var body io.Reader = bytes.NewBuffer(out)
-		path := parameters.ExternalBaseURL + string("/v2/predict/text")
-
-		if out != nil {
-			req, err := http.NewRequestWithContext(service.ctx, "POST", path, body)
-			if err != nil {
-				println(err)
-				CleanConsoleView()
-				event.Errata(err)
-				return nil
-			}
-
-			if req != nil {
-				req.Header.Set("Content-type", "application/json")
-
-				resp, err := service.exClient.Do(req)
-				if err != nil {
-					CleanConsoleView()
-					event.Errata(err)
-					return nil
-				}
-
-				if resp != nil {
-					defer resp.Body.Close()
-					data, _ := io.ReadAll(resp.Body)
-					var dataReader io.Reader = bytes.NewBuffer(data)
-
-					in := new(model.PredictResponse)
-					json.NewDecoder(dataReader).Decode(in)
-
-					event.Errata(err)
-
-					c.predictableResponse = in
-					return c.predictableResponse
-				}
-			}
-		}
 	}
 	return nil
 }

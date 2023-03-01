@@ -54,11 +54,6 @@ Installation steps:
 
     ![console.gif](docs%2Fmedia%2Fembedded.gif)
 
-    #### Predict>
-    -   Nested input to analize text (Powered by GPTZero)
-
-    ![console.gif](docs%2Fmedia%2Fzero.gif)
-
 -   Multiple results and probabilities
 
 -   Detailed log according to UTC

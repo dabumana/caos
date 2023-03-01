@@ -45,7 +45,7 @@ func (c EventManager) ClearSession() {
 }
 
 // AppendToSession - Add a set of events as a session
-func (c EventManager) AppendToSession(header *model.EngineProperties, body *model.PromptProperties, predict *model.PredictProperties, id string, train model.TrainingPrompt) {
+func (c EventManager) AppendToSession(header *model.EngineProperties, body *model.PromptProperties, id string, train model.TrainingPrompt) {
 	valid := func(eventType any) bool {
 		return eventType != nil
 	}
@@ -60,12 +60,6 @@ func (c EventManager) AppendToSession(header *model.EngineProperties, body *mode
 		c.event.Event.Body = *body
 	} else {
 		c.event.Event.Body = *new(model.PromptProperties)
-	}
-
-	if valid(predict) {
-		c.event.Event.Predict = *predict
-	} else {
-		c.event.Event.Predict = *new(model.PredictProperties)
 	}
 
 	c.event.Timestamp = fmt.Sprint(time.Now().UnixMilli())
@@ -105,20 +99,16 @@ func (c EventManager) AppendToLayout(responses []string) {
 }
 
 // AppendToChoice - Append choice to response
-func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, predict *model.Predict) []string {
+func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse) []string {
 	var responses []string
 	responses = append(responses, "\n")
-	if comp != nil && edit == nil && search == nil && predict == nil {
+	if comp != nil && edit == nil && search == nil {
 		for i := range comp.Choices {
 			responses = append(responses, comp.Choices[i].Text, "\n\n###\n\n")
 		}
-	} else if edit != nil && comp == nil && search == nil && predict == nil {
+	} else if edit != nil && comp == nil && search == nil {
 		for i := range edit.Choices {
 			responses = append(responses, edit.Choices[i].Text, "\n\n###\n\n")
-		}
-	} else if predict != nil && edit == nil && comp == nil && search == nil {
-		for i := range predict.Sentences {
-			responses = append(responses, predict.Sentences[i].Sentence, "\n\n###\n\n")
 		}
 	} else {
 		for i := range search.Data {
@@ -136,13 +126,12 @@ func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.
 	}
 
 	for i := range resp.Choices {
-		predict := new(model.PredictProperties)
 		modelTrainer := model.TrainingPrompt{
 			Prompt:     body.PromptContext,
 			Completion: []string{resp.Choices[i].Text},
 		}
 
-		c.AppendToSession(header, body, predict, resp.ID, modelTrainer)
+		c.AppendToSession(header, body, resp.ID, modelTrainer)
 	}
 
 	node.controller.currentAgent.preferences.CurrentID = resp.ID
@@ -150,40 +139,22 @@ func (c EventManager) LogCompletion(header *model.EngineProperties, body *model.
 
 // LogEdit - Response details in a .json file
 func (c EventManager) LogEdit(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EditsResponse) {
-	predict := new(model.PredictProperties)
 	modelTrainer := model.TrainingPrompt{
 		Prompt:     body.PromptContext,
 		Completion: []string{resp.Choices[0].Text},
 	}
 
-	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
+	c.AppendToSession(header, body, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
 }
 
 // LogEmbedding - Response details in a .json file
 func (c EventManager) LogEmbedding(header *model.EngineProperties, body *model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
-	predict := new(model.PredictProperties)
 	modelTrainer := model.TrainingPrompt{
 		Prompt:     body.PromptContext,
 		Completion: []string{fmt.Sprintf("%v", resp.Data[0])},
 	}
 
-	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
-}
-
-// LogPredict - ResponseDetails in a .json file
-func (c EventManager) LogPredict(predict *model.PredictProperties, resp *model.PredictResponse) {
-	header := new(model.EngineProperties)
-	body := new(model.PromptProperties)
-	modelTrainer := model.TrainingPrompt{
-		Prompt:     predict.Input,
-		Completion: []string{fmt.Sprintf("%v", resp.Documents[0])},
-	}
-
-	for i := range resp.Documents {
-		predict.Details.Documents = append(predict.Details.Documents, resp.Documents[i])
-	}
-
-	c.AppendToSession(header, body, predict, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
+	c.AppendToSession(header, body, node.controller.currentAgent.preferences.CurrentID, modelTrainer)
 }
 
 // VisualLogCompletion - Response details
@@ -193,7 +164,7 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	}
 
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil))
+		c.AppendToLayout(c.AppendToChoice(resp, nil, nil))
 	}
 
 	node.layout.infoOutput.SetText(
@@ -212,7 +183,7 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 
 // VisualLogEdit - Log edited response details
 func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
-	c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil))
+	c.AppendToLayout(c.AppendToChoice(nil, resp, nil))
 	node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Created,
 		resp.Object,
@@ -224,46 +195,12 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 
 // VisualLogEmbedding - Log embedding response details
 func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
-	c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil))
+	c.AppendToLayout(c.AppendToChoice(nil, nil, resp))
 	node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Object,
 		resp.Usage.PromptTokens,
 		resp.Usage.TotalTokens,
 		resp.Data[0].Index))
-}
-
-// VisualLogPredict - Log predicted response details
-func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
-	var buffer []string
-	for i := range resp.Documents {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, &resp.Documents[i]))
-
-		details := fmt.Sprintf("Average probability: %v\nCompletely generated probability: %v\nOverall burstiness: %v",
-			resp.Documents[i].AverageProb,
-			resp.Documents[i].CompletelyProb,
-			resp.Documents[i].OverallBurstiness)
-		buffer = append(buffer, details, "\n")
-
-		for o := range resp.Documents[i].Paragraphs {
-			paragraphs := fmt.Sprintf("Completely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
-				resp.Documents[i].Paragraphs[o].CompletelyProb,
-				resp.Documents[i].Paragraphs[o].Index,
-				resp.Documents[i].Paragraphs[o].NumberSentences)
-			buffer = append(buffer, paragraphs, "\n")
-		}
-
-		for o := range resp.Documents[i].Sentences {
-			sentence := fmt.Sprintf("Generated probability:%v\nPerplexity: %v\nSentence: %v",
-				resp.Documents[i].Sentences[o].GeneratedProb,
-				resp.Documents[i].Sentences[o].Perplexity,
-				resp.Documents[i].Sentences[o].Sentence)
-			buffer = append(buffer, sentence, "\n")
-		}
-	}
-	inline := fmt.Sprintf("%v", buffer)
-	output := strings.ReplaceAll(inline, "[", "")
-	output = strings.ReplaceAll(output, "]", "")
-	node.layout.infoOutput.SetText(output)
 }
 
 // LogClient - Log client context
@@ -361,24 +298,6 @@ func (c EventManager) LogEngine(client Agent) {
 			client.promptProperties.Probabilities,
 			client.promptProperties.Results,
 			client.promptProperties.MaxTokens))
-}
-
-// LogPredictEngine - Log current predict engine
-func (c EventManager) LogPredictEngine(client Agent) {
-	var out string
-	if client.predictProperties.Details.Documents[0].AverageProb >= 0.5 {
-		out = "Probably generated by AI"
-	} else {
-		out = "Mostly human generated content"
-	}
-
-	node.layout.metadataOutput.SetText(
-		fmt.Sprintf("Model: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
-			client.engineProperties.Model,
-			client.predictProperties.Details.Documents[0].AverageProb,
-			client.predictProperties.Details.Documents[0].CompletelyProb,
-			client.predictProperties.Details.Documents[0].OverallBurstiness,
-			out))
 }
 
 // Errata - Generic error method

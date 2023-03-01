@@ -172,9 +172,6 @@ func OnChangeEngine(option string, optionIndex int) {
 	} else if strings.Contains(option, "embedding") {
 		node.controller.currentAgent.preferences.Mode = "Embedded"
 		node.layout.promptArea.SetLabel("Enter the text to search for relatedness: ")
-	} else if strings.Contains(option, "zero") {
-		node.controller.currentAgent.preferences.Mode = "Predicted"
-		node.layout.promptArea.SetLabel("Enter the text that you want to analyze: ")
 	} else if strings.Contains(option, "turbo") {
 		node.controller.currentAgent.preferences.Mode = "NOT SUPPORTED"
 	} else {
@@ -235,12 +232,6 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 				int(node.controller.currentAgent.preferences.Probabilities),
 			)
 		}
-	} else if node.controller.currentAgent.preferences.Mode == "Predicted" {
-		if !node.controller.currentAgent.preferences.IsPromptReady {
-			node.controller.currentAgent.predictProperties = node.controller.currentAgent.SetPredictionParameters(
-				[]string{textToCheck},
-			)
-		}
 	}
 
 	if !node.controller.currentAgent.preferences.IsPromptReady {
@@ -289,17 +280,6 @@ func OnTextDone(key tcell.Key) {
 					node.controller.currentAgent.preferences.IsLoading = true
 					defer group.Done()
 					node.controller.EmbeddingRequest()
-				}()
-			} else {
-				err()
-			}
-		} else if node.controller.currentAgent.preferences.Mode == "Predicted" {
-			if !node.controller.currentAgent.preferences.IsEditable {
-				group.Add(1)
-				go func() {
-					node.controller.currentAgent.preferences.IsLoading = true
-					defer group.Done()
-					node.controller.PredictableRequest()
 				}()
 			} else {
 				err()

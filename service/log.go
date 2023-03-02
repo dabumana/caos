@@ -15,9 +15,10 @@ import (
 
 // EventManager - Log event service
 type EventManager struct {
-	event   model.HistoricalEvent
-	session model.HistoricalSession
-	pool    model.PoolProperties
+	event     model.HistoricalEvent
+	session   model.HistoricalSession
+	pool      model.PoolProperties
+	isRunning bool
 }
 
 // SaveTraining - Export training in JSON format
@@ -315,7 +316,7 @@ func (c EventManager) Errata(err error) {
 }
 
 // Loader - Generic loading animation
-func (c EventManager) Loader() {
+func (c EventManager) LoaderStreaming() {
 	go func() {
 		fmt.Println(`
 		🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧

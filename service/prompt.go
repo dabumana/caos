@@ -56,6 +56,7 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			service.engineProperties.Model,
 			req)
 
+		node.layout.app.Sync()
 		var event EventManager
 		event.Errata(err)
 
@@ -76,7 +77,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 			prompt = service.promptProperties.PromptContext
 		}
 
-		var eventManager EventManager
+		var event EventManager
 		resp := gpt3.CompletionResponse{}
 
 		req := gpt3.CompletionRequest{
@@ -95,6 +96,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		defer bWriter.Close()
 		bWriter.Clear()
 
+		bWriter.Write([]byte("\n"))
 		var isOnce bool = false
 		err := service.client.CompletionStreamWithEngine(
 			node.controller.currentAgent.ctx,
@@ -123,13 +125,13 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 						in <- out.Choices[i].Text
 					}
 				}(node.controller.currentAgent.preferences.InlineText)
+				// Write buffer
 				bWriter.Write([]byte(<-node.controller.currentAgent.preferences.InlineText))
-				eventManager.Loader()
+				event.LoaderStreaming()
 			})
 
+		bWriter.Write([]byte("\n\n###\n\n"))
 		node.layout.app.Sync()
-
-		var event EventManager
 		event.Errata(err)
 
 		c.contextualResponse = &resp
@@ -154,6 +156,7 @@ func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 			service.ctx,
 			req)
 
+		node.layout.app.Sync()
 		var event EventManager
 		event.Errata(err)
 
@@ -176,6 +179,7 @@ func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 			service.ctx,
 			req)
 
+		node.layout.app.Sync()
 		var event EventManager
 		event.Errata(err)
 

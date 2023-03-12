@@ -22,15 +22,36 @@ func (c Controller) EditRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogEdit(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
+		event.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEdit(resp)
 	}
 	event.LogEngine(c.currentAgent)
 }
 
+// ChatCompletionRequest - Chat completion request to send task prompt
+func (c Controller) ChatCompletionRequest() {
+	var resp *gpt3.ChatCompletionResponse
+	var cresp *gpt3.ChatCompletionStreamResponse
+	if c.currentAgent.preferences.IsPromptStreaming {
+		cresp = node.prompt.SendStreamingChatCompletion(c.currentAgent)
+	} else {
+		resp = node.prompt.SendChatCompletion(c.currentAgent)
+	}
+
+	var event EventManager
+	if resp != nil && cresp == nil {
+		event.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
+		event.VisualLogChatCompletion(resp, nil)
+	} else if cresp != nil && resp == nil {
+		event.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
+		event.VisualLogChatCompletion(nil, cresp)
+	}
+
+	event.LogEngine(c.currentAgent)
+}
+
 // CompletionRequest - Start completion request to send task prompt
 func (c Controller) CompletionRequest() {
-
 	var resp *gpt3.CompletionResponse
 	if c.currentAgent.preferences.IsPromptStreaming {
 		resp = node.prompt.SendStreamingCompletion(c.currentAgent)
@@ -40,7 +61,7 @@ func (c Controller) CompletionRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogCompletion(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
+		event.LogCompletion(c.currentAgent.engineProperties, c.currentAgent.promptProperties, resp)
 		event.VisualLogCompletion(resp)
 	}
 	event.LogEngine(c.currentAgent)
@@ -52,7 +73,7 @@ func (c Controller) EmbeddingRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogEmbedding(&node.controller.currentAgent.engineProperties, &node.controller.currentAgent.promptProperties, resp)
+		event.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEmbedding(resp)
 	}
 	event.LogEngine(c.currentAgent)

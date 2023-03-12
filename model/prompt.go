@@ -5,6 +5,7 @@ package model
 type PromptProperties struct {
 	PromptContext []string `json:"prompt"`
 	Instruction   []string `json:"instruction"`
+	Content       []string `json:"content"`
 	MaxTokens     int      `json:"token_ammount"`
 	Results       int      `json:"results"`
 	Probabilities int      `json:"probabilities"`

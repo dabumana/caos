@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"caos/model"
 	"caos/util"
 
 	"github.com/gdamore/tcell/v2"
@@ -25,6 +26,7 @@ type Layout struct {
 	// User form
 	refinementInput *tview.Form
 	detailsInput    *tview.Form
+	idInput         *tview.Form
 	// User modal
 	modalInput *tview.Modal
 	// User input
@@ -76,9 +78,7 @@ func OnTypeAccept(text string, lastChar rune) bool {
 // OnBack - Button event to return to the main page
 func OnBack() {
 	// Console view
-	node.layout.pages.ShowPage("console")
-	node.layout.pages.HidePage("refinement")
-	node.layout.pages.HidePage("modal")
+	ReturnToPage(1)
 	// Validate layout forms
 	ValidateRefinementForm()
 	// Clean input
@@ -98,11 +98,11 @@ func OnNewTopic() {
 		return
 	}
 
-	CleanConsoleView()
+	ClearConsoleView()
 }
 
-// CleanConsoleView - Clean input-output fields
-func CleanConsoleView() {
+// ClearConsoleView - Clean input-output fields
+func ClearConsoleView() {
 	node.layout.infoOutput.SetText("")
 	node.layout.metadataOutput.SetText("")
 	node.layout.promptOutput.SetText("")
@@ -113,17 +113,13 @@ func CleanConsoleView() {
 // OnRefinementTopic - Refinement view button event
 func OnRefinementTopic() {
 	// Refinement view
-	node.layout.pages.HidePage("console")
-	node.layout.pages.ShowPage("refinement")
-	node.layout.pages.HidePage("modal")
+	ReturnToPage(2)
 }
 
 // OnTrainingTopic - Modal confirmation to export training
 func OnTrainingTopic() {
 	// Training modal view
-	node.layout.pages.HidePage("console")
-	node.layout.pages.HidePage("refinement")
-	node.layout.pages.ShowPage("modal")
+	ReturnToPage(3)
 }
 
 // OnExportTopic - Export current conversation as a file .txt
@@ -140,6 +136,17 @@ func OnExportTopic() {
 func OnExportTrainedTopic() {
 	if node.controller.currentAgent.preferences.IsTraining {
 		node.layout.eventManager.SaveTraining()
+	}
+}
+
+// OnChangeRoles - Dropdown from input to change role
+func OnChangeRoles(option string, optionIndex int) {
+	if strings.Contains(option, string(model.User)) {
+		node.controller.currentAgent.preferences.Role = model.User
+	} else if strings.Contains(option, string(model.Assistant)) {
+		node.controller.currentAgent.preferences.Role = model.Assistant
+	} else if strings.Contains(option, string(model.System)) {
+		node.controller.currentAgent.preferences.Role = model.System
 	}
 }
 
@@ -173,7 +180,7 @@ func OnChangeEngine(option string, optionIndex int) {
 		node.controller.currentAgent.preferences.Mode = "Embedded"
 		node.layout.promptArea.SetLabel("Enter the text to search for relatedness: ")
 	} else if strings.Contains(option, "turbo") {
-		node.controller.currentAgent.preferences.Mode = "NOT SUPPORTED"
+		node.controller.currentAgent.preferences.Mode = "Turbo"
 	} else {
 		node.controller.currentAgent.preferences.Mode = "Text"
 	}
@@ -206,8 +213,8 @@ func OnChangeWords(option string, optionIndex int) {
 	}
 }
 
-// OnTextAccept - Text field from input
-func OnTextAccept(textToCheck string, lastChar rune) bool {
+// OnTextChange - Text field from input
+func OnTextChange(textToCheck string, lastChar rune) bool {
 	if node.controller.currentAgent.preferences.IsLoading {
 		return false
 	}
@@ -215,24 +222,14 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 
 	node.controller.currentAgent.engineProperties = node.controller.currentAgent.SetEngineParameters(
-		node.controller.currentAgent.preferences.Engine,      // "text-davinci-003",
+		node.controller.currentAgent.id,
+		node.controller.currentAgent.preferences.Engine, // "text-davinci-003",
+		node.controller.currentAgent.preferences.Role,
 		node.controller.currentAgent.preferences.Temperature, // if temperature is used set topp to 1.0
 		node.controller.currentAgent.preferences.Topp,        // if topp is used set temperature to 1.0
 		node.controller.currentAgent.preferences.Penalty,     // Penalize from 0 to 1 the repeated tokens
 		node.controller.currentAgent.preferences.Frequency,   // Frequency  of penalization
 	)
-
-	if node.controller.currentAgent.preferences.Mode == "Edit" {
-		if node.controller.currentAgent.preferences.IsPromptReady {
-			node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
-				node.controller.currentAgent.preferences.PromptCtx,
-				[]string{textToCheck},
-				int(node.controller.currentAgent.preferences.MaxTokens),
-				int(node.controller.currentAgent.preferences.Results),
-				int(node.controller.currentAgent.preferences.Probabilities),
-			)
-		}
-	}
 
 	if !node.controller.currentAgent.preferences.IsPromptReady {
 		node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
@@ -243,13 +240,24 @@ func OnTextAccept(textToCheck string, lastChar rune) bool {
 			int(node.controller.currentAgent.preferences.Probabilities),
 		)
 		node.controller.currentAgent.preferences.PromptCtx = []string{textToCheck}
+	} else {
+		if node.controller.currentAgent.preferences.IsPromptReady &&
+			node.controller.currentAgent.preferences.Mode == "Edit" {
+			node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
+				node.controller.currentAgent.preferences.PromptCtx,
+				[]string{textToCheck},
+				int(node.controller.currentAgent.preferences.MaxTokens),
+				int(node.controller.currentAgent.preferences.Results),
+				int(node.controller.currentAgent.preferences.Probabilities),
+			)
+		}
 	}
 
 	return true
 }
 
-// OnTextDone - Text key event
-func OnTextDone(key tcell.Key) {
+// OnTextAccept - Text key event
+func OnTextAccept(key tcell.Key) {
 	if node.controller.currentAgent.preferences.IsLoading {
 		return
 	}
@@ -284,6 +292,13 @@ func OnTextDone(key tcell.Key) {
 			} else {
 				err()
 			}
+		} else if node.controller.currentAgent.preferences.Mode == "Turbo" {
+			group.Add(1)
+			go func() {
+				node.controller.currentAgent.preferences.IsLoading = true
+				defer group.Done()
+				node.controller.ChatCompletionRequest()
+			}()
 		} else {
 			group.Add(1)
 			go func() {
@@ -386,6 +401,39 @@ func ValidateRefinementForm() {
 	}
 }
 
+// ReturnToPage - Switch to page according to their index
+func ReturnToPage(index int) {
+	switch index {
+	case 1:
+		node.layout.pages.ShowPage("console")
+		node.layout.pages.HidePage("refinement")
+		node.layout.pages.HidePage("training")
+		node.layout.pages.HidePage("id")
+	case 2:
+		node.layout.pages.HidePage("console")
+		node.layout.pages.ShowPage("refinement")
+		node.layout.pages.HidePage("training")
+		node.layout.pages.HidePage("id")
+	case 3:
+		node.layout.pages.HidePage("console")
+		node.layout.pages.HidePage("refinement")
+		node.layout.pages.ShowPage("training")
+		node.layout.pages.HidePage("id")
+	case 4:
+		node.layout.pages.HidePage("console")
+		node.layout.pages.HidePage("refinement")
+		node.layout.pages.HidePage("training")
+		node.layout.pages.ShowPage("id")
+	default:
+		node.layout.pages.ShowPage("console")
+		node.layout.pages.HidePage("refinement")
+		node.layout.pages.HidePage("training")
+		node.layout.pages.HidePage("id")
+	}
+	// Clear console
+	ClearConsoleView()
+}
+
 // GenerateLayoutContent - Layout content for console view
 func GenerateLayoutContent() {
 	// COM
@@ -431,6 +479,10 @@ func GenerateLayoutContent() {
 		SetTitleColor(tcell.ColorDarkCyan)
 	// List models
 	node.controller.ListModels()
+	// Add types
+	node.controller.currentAgent.preferences.Roles = append(node.controller.currentAgent.preferences.Roles, string(model.User))
+	node.controller.currentAgent.preferences.Roles = append(node.controller.currentAgent.preferences.Roles, string(model.Assistant))
+	node.controller.currentAgent.preferences.Roles = append(node.controller.currentAgent.preferences.Roles, string(model.System))
 }
 
 // CreateConsoleView - Create console view page
@@ -449,8 +501,9 @@ func CreateConsoleView() bool {
 	node.layout.promptArea.
 		SetBorderPadding(1, 2, 2, 4)
 	node.layout.detailsInput.
-		AddTextView("Mode", "", 15, 2, true, false).
+		AddTextView("Mode", "", 12, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, OnChangeEngine).
+		AddDropDown("Role", node.controller.currentAgent.preferences.Roles, 1, OnChangeRoles).
 		AddDropDown("Words", []string{"\u0031", "\u0035\u0030", "\u0038\u0035", "\u0031\u0030\u0030", "\u0032\u0030\u0030", "\u0035\u0030\u0030", "\u0031\u0030\u0030\u0030", "\u0031\u0035\u0030\u0030"}, 4, OnChangeWords).
 		AddButton("Affinity", OnRefinementTopic).
 		AddButton("New conversation", OnNewTopic).
@@ -498,8 +551,8 @@ func CreateConsoleView() bool {
 	// Key event
 	_ = node.layout.promptArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlSpace {
-			if OnTextAccept(node.layout.promptArea.GetText(), rune(event.Key())) {
-				OnTextDone(event.Key())
+			if OnTextChange(node.layout.promptArea.GetText(), rune(event.Key())) {
+				OnTextAccept(event.Key())
 				node.layout.promptArea.SetText("", true)
 				return nil
 			}
@@ -540,7 +593,7 @@ func CreateRefinementView() bool {
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetTitle("Improve your search criteria: ").
 		SetTitleAlign(tview.AlignLeft).
-		SetTitleColor(tcell.ColorDarkCyan.TrueColor()).
+		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetBorderPadding(1, 1, 18, 18)
@@ -562,8 +615,8 @@ func CreateRefinementView() bool {
 	return node.layout.affinityView != nil
 }
 
-// CreateModalView - Create modal view for training mode
-func CreateModalView() {
+// CreateTrainingModalView - Create modal view for training mode
+func CreateTrainingModalView() {
 	// Modal layout
 	node.layout.modalInput = tview.NewModal()
 	// Modal section
@@ -576,13 +629,32 @@ func CreateModalView() {
 			if buttonLabel == "Ok" {
 				OnExportTrainedTopic()
 			}
-
-			node.layout.pages.ShowPage("console")
-			node.layout.pages.HidePage("refinement")
-			node.layout.pages.HidePage("modal")
-
-			CleanConsoleView()
+			ReturnToPage(1)
 		})
+}
+
+// CreateIdModalView - Create modal view for training mode
+func CreateIdModalView() {
+	// Form layout
+	node.layout.idInput = tview.NewForm()
+	// Form section
+	node.layout.idInput.
+		AddInputField("Enter your name: ", node.controller.currentAgent.id, 12, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.id = textToCheck
+			return true
+		}, nil).
+		AddButton("Save", func() {
+			ReturnToPage(2)
+		}).
+		AddButton("Cancel", func() {
+			ReturnToPage(1)
+		}).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
+		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
+		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
+		SetBorderPadding(25, 25, 30, 30).
+		SetTitleAlign(tview.AlignCenter)
 }
 
 // InitializeLayout - Create service layout for terminal session
@@ -592,13 +664,15 @@ func InitializeLayout() {
 	// Create views
 	CreateConsoleView()
 	CreateRefinementView()
-	CreateModalView()
+	CreateTrainingModalView()
+	CreateIdModalView()
 	// Window frame
 	node.layout.pages = tview.NewPages()
 	node.layout.pages.
 		AddAndSwitchToPage("console", node.layout.consoleView, true).
 		AddAndSwitchToPage("refinement", node.layout.affinityView, true).
-		AddAndSwitchToPage("modal", node.layout.modalInput, true)
+		AddAndSwitchToPage("training", node.layout.modalInput, true).
+		AddAndSwitchToPage("id", node.layout.idInput, true)
 	// Main executor
 	node.layout.app = tview.NewApplication()
 	// Inline
@@ -612,9 +686,7 @@ func InitializeLayout() {
 		SetFocus(node.layout.promptArea).
 		EnableMouse(true)
 	// Console view
-	node.layout.pages.ShowPage("console")
-	node.layout.pages.HidePage("refinement")
-	node.layout.pages.HidePage("modal")
+	ReturnToPage(4)
 	// Validate forms
 	ValidateRefinementForm()
 }

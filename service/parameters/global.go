@@ -1,12 +1,15 @@
 // Package parameters section
 package parameters
 
+import "caos/model"
+
 // GlobalPreferences - General
 type GlobalPreferences struct {
 	// Engine properties
 	Engine string
 	Mode   string
 	Models []string
+	Roles  []string
 	// Prompt properties
 	Probabilities int32
 	Results       int32
@@ -25,7 +28,9 @@ type GlobalPreferences struct {
 	IsNewSession      bool
 	IsPromptReady     bool
 	IsPromptStreaming bool
+	IsTurbo           bool
 	// Utilitaries
+	Role       model.Roles
 	CurrentID  string
 	InlineText chan string
 }

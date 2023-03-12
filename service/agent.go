@@ -18,6 +18,7 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
+	id               string
 	ctx              context.Context
 	client           gpt3.Client
 	exClient         *http.Client
@@ -28,6 +29,10 @@ type Agent struct {
 
 // Initialize - Creates context background to be used along with the client
 func (c Agent) Initialize() Agent {
+	// ID
+	c.id = "anon"
+	// Role
+	c.preferences.Role = model.Assistant
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
@@ -49,6 +54,7 @@ func (c Agent) Initialize() Agent {
 	c.preferences.IsPromptReady = false
 	c.preferences.IsTraining = false
 	c.preferences.IsPromptStreaming = true
+	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
 	// Return created client
 	return c
@@ -78,9 +84,11 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt
-func (c Agent) SetEngineParameters(pmodel string, temperature float32, topp float32, penalty float32, frequency float32) model.EngineProperties {
+func (c Agent) SetEngineParameters(id string, pmodel string, role model.Roles, temperature float32, topp float32, penalty float32, frequency float32) model.EngineProperties {
 	properties := model.EngineProperties{
+		UserId:           id,
 		Model:            pmodel,
+		Role:             role,
 		Temperature:      temperature,
 		TopP:             topp,
 		PresencePenalty:  penalty,

@@ -2,6 +2,7 @@
 package caos
 
 import (
+	"caos/model"
 	"caos/service"
 	"testing"
 )
@@ -20,13 +21,17 @@ func TestConnect(t *testing.T) {
 
 func TestSetEngineParameters(t *testing.T) {
 	var service service.Agent
+	id := "test_user"
+	role := model.Assistant
 	model := "text-davinci-003"
 	temperature := 1.0
 	topp := 0.4
 	penalty := 0.5
 	frequency := 0.5
 	engineProperties := service.SetEngineParameters(
+		id,
 		model,
+		role,
 		float32(temperature),
 		float32(topp),
 		float32(penalty),

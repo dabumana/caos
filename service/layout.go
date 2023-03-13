@@ -633,8 +633,8 @@ func CreateTrainingModalView() {
 		})
 }
 
-// CreateIdModalView - Create modal view for training mode
-func CreateIdModalView() {
+// CreateIDModalView - Create modal view for training mode
+func CreateIDModalView() {
 	// Form layout
 	node.layout.idInput = tview.NewForm()
 	// Form section
@@ -665,7 +665,7 @@ func InitializeLayout() {
 	CreateConsoleView()
 	CreateRefinementView()
 	CreateTrainingModalView()
-	CreateIdModalView()
+	CreateIDModalView()
 	// Window frame
 	node.layout.pages = tview.NewPages()
 	node.layout.pages.

@@ -402,7 +402,7 @@ func (c EventManager) Errata(err error) {
 	node.layout.promptArea.SetText("", true)
 }
 
-// Loader - Generic loading animation
+// LoaderStreaming - Generic loading animation
 func (c EventManager) LoaderStreaming(in string) {
 	go func() {
 		fmt.Println(in + "/ \\ _ / \\ \n (  o . o  )")

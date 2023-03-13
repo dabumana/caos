@@ -199,7 +199,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		bWriter.Write([]byte("\n"))
 		buffer = append(buffer, "\n")
 
-		var isOnce bool = false
+		isOnce := false
 		err := service.client.CompletionStreamWithEngine(
 			node.controller.currentAgent.ctx,
 			service.engineProperties.Model,

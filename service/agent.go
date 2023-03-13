@@ -86,7 +86,7 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 // SetEngineParameters - Set engine parameters for the current prompt
 func (c Agent) SetEngineParameters(id string, pmodel string, role model.Roles, temperature float32, topp float32, penalty float32, frequency float32) model.EngineProperties {
 	properties := model.EngineProperties{
-		UserId:           id,
+		UserID:           id,
 		Model:            pmodel,
 		Role:             role,
 		Temperature:      temperature,

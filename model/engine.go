@@ -4,15 +4,16 @@ package model
 // Roles - Assignation roles
 type Roles string
 
+// const - Select Roles
 const (
-	System    Roles = "system"
-	Assistant Roles = "assistant"
-	User      Roles = "user"
+	System    Roles = "system"    // System role
+	Assistant Roles = "assistant" // Assistant role
+	User      Roles = "user"      // User role
 )
 
 // EngineProperties - Engine preferences
 type EngineProperties struct {
-	UserId           string  `json:"user_id"`
+	UserID           string  `json:"user_id"`
 	Model            string  `json:"model"`
 	Role             Roles   `json:"role"`
 	Temperature      float32 `json:"temperature"`

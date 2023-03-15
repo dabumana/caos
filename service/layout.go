@@ -181,6 +181,8 @@ func OnChangeEngine(option string, optionIndex int) {
 		node.layout.promptArea.SetLabel("Enter the text to search for relatedness: ")
 	} else if strings.Contains(option, "turbo") {
 		node.controller.currentAgent.preferences.Mode = "Turbo"
+	} else if strings.Contains(option, "whisper") {
+		node.controller.currentAgent.preferences.Mode = "NOT_SUPPORTED"
 	} else {
 		node.controller.currentAgent.preferences.Mode = "Text"
 	}
@@ -501,7 +503,7 @@ func CreateConsoleView() bool {
 	node.layout.promptArea.
 		SetBorderPadding(1, 2, 2, 4)
 	node.layout.detailsInput.
-		AddTextView("Mode", "", 12, 2, true, false).
+		AddTextView("Mode", "", 15, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, OnChangeEngine).
 		AddDropDown("Role", node.controller.currentAgent.preferences.Roles, 1, OnChangeRoles).
 		AddDropDown("Words", []string{"\u0031", "\u0035\u0030", "\u0038\u0035", "\u0031\u0030\u0030", "\u0032\u0030\u0030", "\u0035\u0030\u0030", "\u0031\u0030\u0030\u0030", "\u0031\u0035\u0030\u0030"}, 4, OnChangeWords).
@@ -596,21 +598,20 @@ func CreateRefinementView() bool {
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(1, 1, 18, 18)
+		SetBorderPadding(1, 1, 10, 10)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
-	node.layout.affinityView = tview.NewGrid().
-		SetBorders(true)
+	node.layout.affinityView = tview.NewGrid()
 	// Affinity
 	node.layout.affinityView.
-		SetSize(1, 3, 25, 55).
-		AddItem(affinitySection, 0, 0, 1, 2, 0, 0, true).
+		SetSize(1, 3, 25, 75).
+		AddItem(affinitySection, 0, 0, 1, 3, 0, 0, true).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(12, 12, 15, 15)
+		SetBorderPadding(12, 12, 24, 24)
 	// Validate view
 	return node.layout.affinityView != nil
 }
@@ -639,7 +640,7 @@ func CreateIDModalView() {
 	node.layout.idInput = tview.NewForm()
 	// Form section
 	node.layout.idInput.
-		AddInputField("Enter your name: ", node.controller.currentAgent.id, 12, func(textToCheck string, lastChar rune) bool {
+		AddInputField("Enter your name: ", node.controller.currentAgent.id, 30, func(textToCheck string, lastChar rune) bool {
 			node.controller.currentAgent.id = textToCheck
 			return true
 		}, nil).
@@ -649,12 +650,15 @@ func CreateIDModalView() {
 		AddButton("Cancel", func() {
 			ReturnToPage(1)
 		}).
+		SetLabelColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetButtonsAlign(tview.AlignCenter).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
-		SetBorderPadding(25, 25, 30, 30).
+		SetBorderPadding(10, 10, 35, 35).
 		SetTitleAlign(tview.AlignCenter)
+
 }
 
 // InitializeLayout - Create service layout for terminal session

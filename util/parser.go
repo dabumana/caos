@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -72,15 +73,20 @@ func MatchNumber(text string) bool {
 
 // MatchToken - Match token amount
 func MatchToken(text []string) int64 {
-	var countChar int64
-	var maxTokens int64
-	for i, _ := range text {
-		i += int(countChar)
-		if countChar%4 == 1 {
+	var maxTokens int64 = 0
+	for i, _ := range []byte(text[0]) {
+		if i%4 == 1 {
 			maxTokens++
 		}
 	}
 	return maxTokens
+}
+
+// RemoveWrapper - Remove wrapper from string
+func RemoveWrapper(text string) string {
+	out := strings.TrimSuffix(text, "]")
+	out = strings.TrimPrefix(out, "[")
+	return out
 }
 
 // CalcTokenPrompt - Token prompt calculation

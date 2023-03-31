@@ -183,6 +183,9 @@ func OnChangeEngine(option string, optionIndex int) {
 		node.controller.currentAgent.preferences.Mode = "Turbo"
 	} else if strings.Contains(option, "text") {
 		node.controller.currentAgent.preferences.Mode = "Text"
+	} else if strings.Contains(option, "zero") {
+		node.controller.currentAgent.preferences.Mode = "Predicted"
+		node.layout.promptArea.SetLabel("Enter the text that you want to analyze if iincludes GPT: ")
 	} else {
 		node.controller.currentAgent.preferences.Mode = "NOT_SUPPORTED"
 	}
@@ -216,7 +219,8 @@ func OnTextChange(textToCheck string, lastChar rune) bool {
 		node.controller.currentAgent.preferences.Frequency,   // Frequency  of penalization
 	)
 
-	if !node.controller.currentAgent.preferences.IsPromptReady {
+	if !node.controller.currentAgent.preferences.IsPromptReady &&
+		node.controller.currentAgent.preferences.Mode != "Predicted" {
 		node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
 			[]string{textToCheck},
 			[]string{""},
@@ -234,6 +238,11 @@ func OnTextChange(textToCheck string, lastChar rune) bool {
 				int(node.controller.currentAgent.preferences.MaxTokens),
 				int(node.controller.currentAgent.preferences.Results),
 				int(node.controller.currentAgent.preferences.Probabilities),
+			)
+		} else if node.controller.currentAgent.preferences.Mode == "Predicted" &&
+			!node.controller.currentAgent.preferences.IsPromptReady {
+			node.controller.currentAgent.predictProperties = node.controller.currentAgent.SetPredictionParameters(
+				[]string{textToCheck},
 			)
 		}
 	}
@@ -288,6 +297,17 @@ func OnTextAccept(key tcell.Key) {
 				defer group.Done()
 				node.controller.ChatCompletionRequest()
 			}()
+		} else if node.controller.currentAgent.preferences.Mode == "Predicted" {
+			if !node.controller.currentAgent.preferences.IsEditable {
+				group.Add(1)
+				go func() {
+					node.controller.currentAgent.preferences.IsLoading = true
+					defer group.Done()
+					node.controller.PredictableRequest()
+				}()
+			} else {
+				err()
+			}
 		} else {
 			group.Add(1)
 			go func() {
@@ -328,10 +348,11 @@ func OnEditChecked(state bool) {
 // OnConversationChecked - Conversation mode for friendly responses
 func OnConversationChecked(state bool) {
 	node.controller.currentAgent.preferences.IsConversational = state
-	if node.controller.currentAgent.preferences.IsConversational {
-		node.controller.currentAgent.preferences.Mode = "Text"
-		node.controller.currentAgent.preferences.Engine = "text-davinci-003"
-	}
+}
+
+// OnDeveloperChecked - Developer mode for uncensored responses
+func OnDeveloperChecked(state bool) {
+	node.controller.currentAgent.preferences.IsDeveloper = state
 }
 
 // OnTrainingChecked - Training mode to store the current conversation
@@ -584,9 +605,10 @@ func CreateRefinementView() bool {
 		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, OnTypeAccept, OnPenaltyChange).
 		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, OnTypeAccept, OnFrequencyChange).
 		AddCheckbox("Edit mode (edit and improve the previous response)", false, OnEditChecked).
-		AddCheckbox("Conversational mode (on Text mode only)", false, OnConversationChecked).
+		AddCheckbox("Conversational mode (on Text and Turbo mode only)", false, OnConversationChecked).
+		AddCheckbox("Developer mode (on Text and Turbo mode only)", false, OnDeveloperChecked).
+		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, OnStreamingChecked).
 		AddCheckbox("Training mode", false, OnTrainingChecked).
-		AddCheckbox("Streaming mode (Only functional for turbo or text mode)", true, OnStreamingChecked).
 		AddButton("Back to chat", OnBack).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
@@ -604,7 +626,7 @@ func CreateRefinementView() bool {
 	node.layout.affinityView = tview.NewGrid()
 	// Affinity
 	node.layout.affinityView.
-		SetSize(1, 3, 25, 75).
+		SetSize(1, 3, 35, 75).
 		AddItem(affinitySection, 0, 0, 1, 3, 0, 0, true).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").

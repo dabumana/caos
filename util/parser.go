@@ -70,8 +70,25 @@ func MatchNumber(text string) bool {
 	return matched
 }
 
+// MatchToken - Match token amount
+func MatchToken(text []string) int64 {
+	var countChar int64
+	var maxTokens int64
+	for i, _ := range text {
+		i += int(countChar)
+		if countChar%4 == 1 {
+			maxTokens++
+		}
+	}
+	return maxTokens
+}
 
-// ConstructPathFileTo - Initialize a directory for further storage in a TXT or JSON file 
+// CalcTokenPrompt - Token prompt calculation
+func CalcTokenPrompt(length int) int64 {
+	return int64(length) / 4
+}
+
+// ConstructPathFileTo - Initialize a directory for further storage in a TXT or JSON file
 func ConstructPathFileTo(path string, format string) *os.File {
 	var dir string
 	if dir, e := os.Getwd(); e != nil {

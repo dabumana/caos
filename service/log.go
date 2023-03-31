@@ -15,10 +15,9 @@ import (
 
 // EventManager - Log event service
 type EventManager struct {
-	event     model.HistoricalEvent
-	session   model.HistoricalSession
-	pool      model.PoolProperties
-	isRunning bool
+	event   model.HistoricalEvent
+	session model.HistoricalSession
+	pool    model.PoolProperties
 }
 
 // SaveTraining - Export training in JSON format
@@ -84,29 +83,24 @@ func (c EventManager) AppendToSession(id string, prompt model.HistoricalPrompt, 
 // AppendToLayout - Append and visualize content in console page view
 func (c EventManager) AppendToLayout(responses []string) {
 	log := strings.Join(responses, "")
-	log = strings.ReplaceAll(log, "[]", "\n")
 	node.layout.promptOutput.SetText(log)
 }
 
 // AppendToChoice - Append choice to response
-func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, schat *gpt3.ChatCompletionStreamResponse) []string {
+func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse) []string {
 	var responses []string
 	responses = append(responses, "\n")
-	if comp != nil && edit == nil && search == nil && chat == nil && schat == nil {
+	if comp != nil && edit == nil && search == nil && chat == nil {
 		for i := range comp.Choices {
 			responses = append(responses, comp.Choices[i].Text, "\n\n###\n\n")
 		}
-	} else if edit != nil && comp == nil && search == nil && chat == nil && schat == nil {
+	} else if edit != nil && comp == nil && search == nil && chat == nil {
 		for i := range edit.Choices {
 			responses = append(responses, edit.Choices[i].Text, "\n\n###\n\n")
 		}
-	} else if chat != nil && comp == nil && search == nil && edit == nil && schat == nil {
+	} else if chat != nil && comp == nil && search == nil && edit == nil {
 		for i := range chat.Choices {
 			responses = append(responses, chat.Choices[i].Message.Content, "\n\n###\n\n")
-		}
-	} else if schat != nil && comp == nil && search == nil && edit == nil && chat == nil {
-		for i := range schat.Choices {
-			responses = append(responses, schat.Choices[i].Delta.Content, "\n\n###\n\n")
 		}
 	} else {
 		for i := range search.Data {
@@ -219,7 +213,9 @@ func (c EventManager) LogEmbedding(header model.EngineProperties, body model.Pro
 // VisualLogChatCompletion - Chat response details
 func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp, nil))
+		if !node.controller.currentAgent.preferences.IsPromptStreaming {
+			c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp))
+		}
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
 				resp.ID,
@@ -232,7 +228,6 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 				resp.Choices[0].FinishReason,
 				resp.Choices[0].Index))
 	} else if cresp != nil && resp == nil {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, nil, cresp))
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
 				cresp.ID,
@@ -250,9 +245,8 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 // VisualLogCompletion - Response details
 func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil, nil))
+		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil))
 	}
-
 	node.layout.infoOutput.SetText(
 		fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
 			resp.ID,
@@ -270,7 +264,9 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 
 // VisualLogEdit - Log edited response details
 func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
-	c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil, nil))
+	if !node.controller.currentAgent.preferences.IsPromptStreaming {
+		c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil))
+	}
 	node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Created,
 		resp.Object,
@@ -282,7 +278,9 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 
 // VisualLogEmbedding - Log embedding response details
 func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
-	c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil, nil))
+	if !node.controller.currentAgent.preferences.IsPromptStreaming {
+		c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil))
+	}
 	node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Object,
 		resp.Usage.PromptTokens,
@@ -400,11 +398,4 @@ func (c EventManager) Errata(err error) {
 
 	node.controller.currentAgent.preferences.IsLoading = false
 	node.layout.promptArea.SetText("", true)
-}
-
-// LoaderStreaming - Generic loading animation
-func (c EventManager) LoaderStreaming(in string) {
-	go func() {
-		fmt.Println(in + "/ \\ _ / \\ \n (  o . o  )")
-	}()
 }

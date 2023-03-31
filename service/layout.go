@@ -166,7 +166,7 @@ func OnChangeEngine(option string, optionIndex int) {
 	if strings.Contains(option, "edit") {
 		node.controller.currentAgent.preferences.Mode = "Edit"
 		node.layout.promptArea.SetLabel("Enter your context first: ")
-	} else if strings.Contains(option, "code") {
+	} else if strings.Contains(option, "code") || strings.Contains(option, "curie") {
 		node.controller.currentAgent.preferences.Mode = "Code"
 	} else if strings.Contains(option, "search") {
 		node.controller.currentAgent.preferences.Mode = "Search"
@@ -181,10 +181,10 @@ func OnChangeEngine(option string, optionIndex int) {
 		node.layout.promptArea.SetLabel("Enter the text to search for relatedness: ")
 	} else if strings.Contains(option, "turbo") {
 		node.controller.currentAgent.preferences.Mode = "Turbo"
-	} else if strings.Contains(option, "whisper") {
-		node.controller.currentAgent.preferences.Mode = "NOT_SUPPORTED"
-	} else {
+	} else if strings.Contains(option, "text") {
 		node.controller.currentAgent.preferences.Mode = "Text"
+	} else {
+		node.controller.currentAgent.preferences.Mode = "NOT_SUPPORTED"
 	}
 
 	mode.SetText(node.controller.currentAgent.preferences.Mode)
@@ -193,26 +193,9 @@ func OnChangeEngine(option string, optionIndex int) {
 	}
 }
 
-// OnChangeWords - Dropdown for tokens according to the amount of words
-func OnChangeWords(option string, optionIndex int) {
-	switch option {
-	case "\u0031":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031")
-	case "\u0035\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0033\u0031")
-	case "\u0038\u0035":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0036\u0034")
-	case "\u0031\u0030\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0037\u0035")
-	case "\u0032\u0030\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031\u0035\u0030")
-	case "\u0035\u0030\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0033\u0037\u0035")
-	case "\u0031\u0030\u0030\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0037\u0035\u0030")
-	case "\u0031\u0035\u0030\u0030":
-		node.controller.currentAgent.preferences.MaxTokens = util.ParseInt64("\u0031\u0031\u0032\u0035")
-	}
+// OnChangeCharacter - Dropdown for tokens according to the amount of words
+func OnChangeCharacter(option string, optionIndex int) {
+	node.controller.currentAgent.preferences.MaxTokens = util.CalcTokenPrompt(int(util.ParseInt64(option)))
 }
 
 // OnTextChange - Text field from input
@@ -267,6 +250,10 @@ func OnTextAccept(key tcell.Key) {
 	if node.controller.currentAgent.preferences.IsNewSession {
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
+
+	tokenConsumption := util.MatchToken(node.controller.currentAgent.preferences.PromptCtx)
+	node.controller.currentAgent.preferences.MaxTokens += tokenConsumption
+	node.controller.currentAgent.promptProperties.MaxTokens = int(node.controller.currentAgent.preferences.MaxTokens)
 
 	err := func() {
 		node.layout.infoOutput.SetText("\nUncheck edit mode in affinity preferences and try again...")
@@ -506,7 +493,19 @@ func CreateConsoleView() bool {
 		AddTextView("Mode", "", 15, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, OnChangeEngine).
 		AddDropDown("Role", node.controller.currentAgent.preferences.Roles, 1, OnChangeRoles).
-		AddDropDown("Words", []string{"\u0031", "\u0035\u0030", "\u0038\u0035", "\u0031\u0030\u0030", "\u0032\u0030\u0030", "\u0035\u0030\u0030", "\u0031\u0030\u0030\u0030", "\u0031\u0035\u0030\u0030"}, 4, OnChangeWords).
+		AddDropDown("Characters",
+			[]string{
+				"\u0032\u0035\u0030",
+				"\u0035\u0030\u0030",
+				"\u0031\u0030\u0030\u0030",
+				"\u0032\u0035\u0030\u0030",
+				"\u0035\u0030\u0030\u0030",
+				"\u0037\u0035\u0030\u0030",
+				"\u0031\u0030\u0030\u0030\u0030",
+				"\u0031\u0035\u0030\u0030\u0030",
+				"\u0032\u0030\u0030\u0030\u0030"},
+			3,
+			OnChangeCharacter).
 		AddButton("Affinity", OnRefinementTopic).
 		AddButton("New conversation", OnNewTopic).
 		AddButton("Export conversation", OnExportTopic).
@@ -587,7 +586,7 @@ func CreateRefinementView() bool {
 		AddCheckbox("Edit mode (edit and improve the previous response)", false, OnEditChecked).
 		AddCheckbox("Conversational mode (on Text mode only)", false, OnConversationChecked).
 		AddCheckbox("Training mode", false, OnTrainingChecked).
-		AddCheckbox("Streaming mode", true, OnStreamingChecked).
+		AddCheckbox("Streaming mode (Only functional for turbo or text mode)", true, OnStreamingChecked).
 		AddButton("Back to chat", OnBack).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).

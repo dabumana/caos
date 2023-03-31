@@ -2,8 +2,10 @@
 package service
 
 import (
+	"caos/util"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
 )
@@ -61,6 +63,10 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 		defer bWriter.Close()
 		bWriter.Clear()
 
+		bWriter.Write([]byte("\n"))
+		buffer = append(buffer, "\n")
+
+		fmt.Print("\033[H\033[2J")
 		err := service.client.ChatCompletionStream(
 			node.controller.currentAgent.ctx,
 			req, func(out *gpt3.ChatCompletionStreamResponse) {
@@ -80,12 +86,16 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 				// Write buffer
 				buffer = append(buffer, out.Choices[0].Delta.Content)
 				bWriter.Write([]byte(out.Choices[0].Delta.Content))
-				event.LoaderStreaming(fmt.Sprint(buffer))
+				fmt.Printf("%v", out.Choices[0].Delta.Content)
 			})
 
 		event.Errata(err)
 
-		resp.Choices[0].Delta.Content = fmt.Sprint(buffer)
+		bWriter.Write([]byte("\n\n###\n\n"))
+		buffer = append(buffer, "\n\n###\n\n")
+
+		out := strings.Join(buffer, "")
+		resp.Choices[0].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
 
 		node.layout.app.Sync()
 		c.chatStreamResponse = resp
@@ -172,6 +182,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		var event EventManager
 		var buffer []string
 		var prompt []string
+
 		if node.controller.currentAgent.preferences.IsConversational {
 			prompt = []string{fmt.Sprintf("Human: %v \nAI:", service.promptProperties.PromptContext)}
 		} else {
@@ -199,6 +210,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		bWriter.Write([]byte("\n"))
 		buffer = append(buffer, "\n")
 
+		fmt.Print("\033[H\033[2J")
 		isOnce := false
 		err := service.client.CompletionStreamWithEngine(
 			node.controller.currentAgent.ctx,
@@ -227,11 +239,11 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 					for i := range out.Choices {
 						buffer = append(buffer, out.Choices[i].Text)
 						in <- out.Choices[i].Text
+						fmt.Printf("%v", out.Choices[0].Text)
 					}
 				}(node.controller.currentAgent.preferences.InlineText)
 				// Write buffer
 				bWriter.Write([]byte(<-node.controller.currentAgent.preferences.InlineText))
-				event.LoaderStreaming(fmt.Sprint(buffer))
 			})
 
 		event.Errata(err)

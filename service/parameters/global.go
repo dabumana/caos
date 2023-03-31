@@ -22,6 +22,7 @@ type GlobalPreferences struct {
 	// Modes
 	IsLoading         bool
 	IsConversational  bool
+	IsDeveloper       bool
 	IsPredictable     bool
 	IsEditable        bool
 	IsTraining        bool

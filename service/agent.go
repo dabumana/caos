@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,13 +19,14 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
-	id               string
-	ctx              context.Context
-	client           gpt3.Client
-	exClient         *http.Client
-	engineProperties model.EngineProperties
-	promptProperties model.PromptProperties
-	preferences      parameters.GlobalPreferences
+	id                string
+	ctx               context.Context
+	client            gpt3.Client
+	exClient          *http.Client
+	engineProperties  model.EngineProperties
+	promptProperties  model.PromptProperties
+	predictProperties model.PredictProperties
+	preferences       parameters.GlobalPreferences
 }
 
 // Initialize - Creates context background to be used along with the client
@@ -42,12 +44,14 @@ func (c Agent) Initialize() Agent {
 	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
 	c.preferences.MaxTokens = util.ParseInt64("\u0032\u0035\u0030")
 	c.preferences.Mode = "Text"
+	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
 	c.preferences.Probabilities = util.ParseInt32("\u0031")
 	c.preferences.Results = util.ParseInt32("\u0031")
 	c.preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
 	c.preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
 	// Mode selection
 	c.preferences.IsConversational = false
+	c.preferences.IsDeveloper = false
 	c.preferences.IsEditable = false
 	c.preferences.IsLoading = false
 	c.preferences.IsNewSession = true
@@ -107,4 +111,27 @@ func (c Agent) SetPromptParameters(promptContext []string, instruction []string,
 		Probabilities: probabilities,
 	}
 	return properties
+}
+
+// SetPredictionParameters - Set prediction parameters for the current prompt
+func (c Agent) SetPredictionParameters(prompContext []string) model.PredictProperties {
+	properties := model.PredictProperties{
+		Input: prompContext,
+	}
+	return properties
+}
+
+// SetPrompt - Conversion human-ai roles
+func (c Agent) SetPrompt(context string) []string {
+	var prompt []string
+	if node.controller.currentAgent.preferences.IsConversational &&
+		!node.controller.currentAgent.preferences.IsDeveloper {
+		prompt = []string{fmt.Sprintf("Human: %v \nAI:", context)}
+	} else if node.controller.currentAgent.preferences.IsDeveloper &&
+		!node.controller.currentAgent.preferences.IsConversational {
+		prompt = []string{fmt.Sprintf("Developer Mode: %v \nAI:", context)}
+	} else {
+		prompt = []string{context}
+	}
+	return prompt
 }

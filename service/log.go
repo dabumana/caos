@@ -87,7 +87,7 @@ func (c EventManager) AppendToLayout(responses []string) {
 }
 
 // AppendToChoice - Append choice to response
-func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse) []string {
+func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, predict *model.Predict) []string {
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
@@ -101,6 +101,10 @@ func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.E
 	} else if chat != nil && comp == nil && search == nil && edit == nil {
 		for i := range chat.Choices {
 			responses = append(responses, chat.Choices[i].Message.Content, "\n\n###\n\n")
+		}
+	} else if predict != nil && edit == nil && comp == nil && search == nil {
+		for i := range predict.Sentences {
+			responses = append(responses, predict.Sentences[i].Sentence, "\n\n###\n\n")
 		}
 	} else {
 		for i := range search.Data {
@@ -210,11 +214,29 @@ func (c EventManager) LogEmbedding(header model.EngineProperties, body model.Pro
 	c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
+// LogPredict - ResponseDetails in a .json file
+func (c EventManager) LogPredict(header model.EngineProperties, body model.PromptProperties, predict *model.PredictProperties, resp *model.PredictResponse) {
+	for i := range resp.Documents {
+		predict.Details.Documents = append(predict.Details.Documents, resp.Documents[i])
+		modelTrainer := model.TrainingPrompt{
+			Prompt:     predict.Input,
+			Completion: []string{fmt.Sprintf("%v", resp.Documents[i])},
+		}
+
+		modelPrompt := model.HistoricalPrompt{
+			Header: header,
+			Body:   body,
+		}
+
+		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
+	}
+}
+
 // VisualLogChatCompletion - Chat response details
 func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
 		if !node.controller.currentAgent.preferences.IsPromptStreaming {
-			c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp))
+			c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp, nil))
 		}
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
@@ -245,7 +267,7 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 // VisualLogCompletion - Response details
 func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil))
+		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil, nil))
 	}
 	node.layout.infoOutput.SetText(
 		fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
@@ -265,7 +287,7 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 // VisualLogEdit - Log edited response details
 func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil))
+		c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil, nil))
 	}
 	node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Created,
@@ -279,13 +301,47 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 // VisualLogEmbedding - Log embedding response details
 func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil))
+		c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil, nil))
 	}
 	node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 		resp.Object,
 		resp.Usage.PromptTokens,
 		resp.Usage.TotalTokens,
 		resp.Data[0].Index))
+}
+
+// VisualLogPredict - Log predicted response details
+func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
+	var buffer []string
+	for i := range resp.Documents {
+		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, nil, &resp.Documents[i]))
+
+		details := fmt.Sprintf("Average probability: %v\nCompletely generated probability: %v\nOverall burstiness: %v",
+			resp.Documents[i].AverageProb,
+			resp.Documents[i].CompletelyProb,
+			resp.Documents[i].OverallBurstiness)
+		buffer = append(buffer, details, "\n")
+
+		for o := range resp.Documents[i].Paragraphs {
+			paragraphs := fmt.Sprintf("Completely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
+				resp.Documents[i].Paragraphs[o].CompletelyProb,
+				resp.Documents[i].Paragraphs[o].Index,
+				resp.Documents[i].Paragraphs[o].NumberSentences)
+			buffer = append(buffer, paragraphs, "\n")
+		}
+
+		for o := range resp.Documents[i].Sentences {
+			sentence := fmt.Sprintf("Generated probability:%v\nPerplexity: %v\nSentence: %v",
+				resp.Documents[i].Sentences[o].GeneratedProb,
+				resp.Documents[i].Sentences[o].Perplexity,
+				resp.Documents[i].Sentences[o].Sentence)
+			buffer = append(buffer, sentence, "\n")
+		}
+	}
+	inline := fmt.Sprintf("%v", buffer)
+	output := strings.ReplaceAll(inline, "[", "")
+	output = strings.ReplaceAll(output, "]", "")
+	node.layout.infoOutput.SetText(output)
 }
 
 // LogClient - Log client context
@@ -384,6 +440,26 @@ func (c EventManager) LogEngine(client Agent) {
 			client.promptProperties.Probabilities,
 			client.promptProperties.Results,
 			client.promptProperties.MaxTokens))
+}
+
+// LogPredictEngine - Log current predict engine
+func (c EventManager) LogPredictEngine(client Agent) {
+	var out string
+	for i := range client.predictProperties.Details.Documents {
+		if client.predictProperties.Details.Documents[i].AverageProb >= 0.5 {
+			out = "Probably generated by AI"
+		} else {
+			out = "Mostly human generated content"
+		}
+
+		node.layout.metadataOutput.SetText(
+			fmt.Sprintf("Model: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
+				client.engineProperties.Model,
+				client.predictProperties.Details.Documents[i].AverageProb,
+				client.predictProperties.Details.Documents[i].CompletelyProb,
+				client.predictProperties.Details.Documents[i].OverallBurstiness,
+				out))
+	}
 }
 
 // Errata - Generic error method

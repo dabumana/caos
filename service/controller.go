@@ -25,7 +25,8 @@ func (c Controller) EditRequest() {
 		event.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEdit(resp)
 	}
-	event.LogEngine(c.currentAgent)
+
+	event.LogEngine(node.controller.currentAgent)
 }
 
 // ChatCompletionRequest - Chat completion request to send task prompt
@@ -47,7 +48,7 @@ func (c Controller) ChatCompletionRequest() {
 		event.VisualLogChatCompletion(nil, cresp)
 	}
 
-	event.LogEngine(c.currentAgent)
+	event.LogEngine(node.controller.currentAgent)
 }
 
 // CompletionRequest - Start completion request to send task prompt
@@ -61,10 +62,11 @@ func (c Controller) CompletionRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogCompletion(c.currentAgent.engineProperties, c.currentAgent.promptProperties, resp)
+		event.LogCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogCompletion(resp)
 	}
-	event.LogEngine(c.currentAgent)
+
+	event.LogEngine(node.controller.currentAgent)
 }
 
 // EmbeddingRequest - Start a embedding vector request
@@ -76,12 +78,26 @@ func (c Controller) EmbeddingRequest() {
 		event.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
 		event.VisualLogEmbedding(resp)
 	}
-	event.LogEngine(c.currentAgent)
+
+	event.LogEngine(node.controller.currentAgent)
+}
+
+// PredictableRequest - Start a predictable string request
+func (c Controller) PredictableRequest() {
+	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
+
+	var event EventManager
+	if resp != nil {
+		event.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, &node.controller.currentAgent.predictProperties, resp)
+		event.VisualLogPredict(resp)
+	}
+
+	event.LogPredictEngine(node.controller.currentAgent)
 }
 
 // ListModels - Get actual models available
 func (c Controller) ListModels() {
-	resp := node.prompt.GetListModels(c.currentAgent)
+	resp := node.prompt.GetListModels(node.controller.currentAgent)
 	if resp != nil {
 		for _, i := range resp.Data {
 			node.controller.currentAgent.preferences.Models = append(node.controller.currentAgent.preferences.Models, i.ID)

@@ -34,6 +34,8 @@ Installation steps:
 
 -   **Conversational mode**: A friendly experience with the model	
 
+-   **Developer mode**: Developer mode prompts
+
 -   ##### Advanced parameters like:
 
     #### Completion>
@@ -88,13 +90,6 @@ also includes advanced modes that allow users to modify the contextual informati
 -   **Topp**: Applies the same concept as temperature, when you are modifying this value, you need to apply a higher value for temperature
 -   **Penalty**: Penalty applied to the characters an redundancy in a result completion
 -   **Frequency Penalty**: Establish the frequency of the penalty threshold defined
-
-#### Modes:
-
--   **Training Mode**: Prepare your fine tunning data based on the completion response, can be exported to a JSON file for further use.
--   **Edit Mode**: Use Edit mode for all the requests
-    -   Press `New Conversation` and select `Edit mode` the first request will be for a completion endpoint the second based on the first request will continue editing the content in the parameters that you ask.
--   **Conversational Mode**: Use conversational AI mode request for a friendly interaction.
 
 ### Disclaimer :warning:
 

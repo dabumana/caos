@@ -122,38 +122,41 @@ func (c EventManager) LogChatCompletion(header model.EngineProperties, body mode
 	}
 
 	if resp != nil && cresp == nil {
-		body.Content = []string{resp.Choices[0].Message.Content}
+		for i := range resp.Choices {
+			body.Content = []string{resp.Choices[i].Message.Content}
 
-		modelTrainer := model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[0].Message.Content},
+			modelTrainer := model.TrainingPrompt{
+				Prompt:     body.PromptContext,
+				Completion: []string{resp.Choices[i].Message.Content},
+			}
+
+			modelPrompt := model.HistoricalPrompt{
+				Header: header,
+				Body:   body,
+			}
+
+			c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
+
+			node.controller.currentAgent.preferences.CurrentID = resp.ID
 		}
-
-		modelPrompt := model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
-
-		c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
-
-		node.controller.currentAgent.preferences.CurrentID = resp.ID
-
 	} else if cresp != nil && resp == nil {
-		body.Content = []string{cresp.Choices[0].Delta.Content}
+		for i := range cresp.Choices {
+			body.Content = []string{cresp.Choices[i].Delta.Content}
 
-		modelTrainer := model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{cresp.Choices[0].Delta.Content},
+			modelTrainer := model.TrainingPrompt{
+				Prompt:     body.PromptContext,
+				Completion: []string{cresp.Choices[i].Delta.Content},
+			}
+
+			modelPrompt := model.HistoricalPrompt{
+				Header: header,
+				Body:   body,
+			}
+
+			c.AppendToSession(cresp.ID, modelPrompt, modelTrainer)
+
+			node.controller.currentAgent.preferences.CurrentID = cresp.ID
 		}
-
-		modelPrompt := model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
-
-		c.AppendToSession(cresp.ID, modelPrompt, modelTrainer)
-
-		node.controller.currentAgent.preferences.CurrentID = cresp.ID
 	}
 }
 
@@ -164,54 +167,61 @@ func (c EventManager) LogCompletion(header model.EngineProperties, body model.Pr
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
-	body.Content = []string{resp.Choices[0].Text}
+	for i := range resp.Choices {
+		body.Content = []string{resp.Choices[i].Text}
 
-	modelTrainer := model.TrainingPrompt{
-		Prompt:     body.PromptContext,
-		Completion: []string{resp.Choices[0].Text},
+		modelTrainer := model.TrainingPrompt{
+			Prompt:     body.PromptContext,
+			Completion: []string{resp.Choices[i].Text},
+		}
+
+		modelPrompt := model.HistoricalPrompt{
+			Header: header,
+			Body:   body,
+		}
+
+		c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
+		node.controller.currentAgent.preferences.CurrentID = resp.ID
 	}
-
-	modelPrompt := model.HistoricalPrompt{
-		Header: header,
-		Body:   body,
-	}
-
-	c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
-	node.controller.currentAgent.preferences.CurrentID = resp.ID
 }
 
 // LogEdit - Response details in a .json file
 func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
-	body.Content = []string{resp.Choices[0].Text}
 
-	modelTrainer := model.TrainingPrompt{
-		Prompt:     body.PromptContext,
-		Completion: []string{resp.Choices[0].Text},
+	for i := range resp.Choices {
+		body.Content = []string{resp.Choices[i].Text}
+
+		modelTrainer := model.TrainingPrompt{
+			Prompt:     body.PromptContext,
+			Completion: []string{resp.Choices[i].Text},
+		}
+
+		modelPrompt := model.HistoricalPrompt{
+			Header: header,
+			Body:   body,
+		}
+
+		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
-
-	modelPrompt := model.HistoricalPrompt{
-		Header: header,
-		Body:   body,
-	}
-
-	c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
 // LogEmbedding - Response details in a .json file
 func (c EventManager) LogEmbedding(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
-	body.Content = []string{resp.Data[0].Object}
+	for i := range resp.Data {
+		body.Content = []string{resp.Data[i].Object}
 
-	modelTrainer := model.TrainingPrompt{
-		Prompt:     body.PromptContext,
-		Completion: []string{fmt.Sprintf("%v", resp.Data[0])},
+		modelTrainer := model.TrainingPrompt{
+			Prompt:     body.PromptContext,
+			Completion: []string{fmt.Sprintf("%v", resp.Data[i])},
+		}
+
+		modelPrompt := model.HistoricalPrompt{
+			Header: header,
+			Body:   body,
+		}
+
+		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
-
-	modelPrompt := model.HistoricalPrompt{
-		Header: header,
-		Body:   body,
-	}
-
-	c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
 // LogPredict - ResponseDetails in a .json file
@@ -238,29 +248,33 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 		if !node.controller.currentAgent.preferences.IsPromptStreaming {
 			c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp, nil))
 		}
-		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
-				resp.ID,
-				resp.Model,
-				resp.Created,
-				resp.Object,
-				resp.Usage.CompletionTokens,
-				resp.Usage.PromptTokens,
-				resp.Usage.TotalTokens,
-				resp.Choices[0].FinishReason,
-				resp.Choices[0].Index))
+		for i := range resp.Choices {
+			node.layout.infoOutput.SetText(
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+					resp.ID,
+					resp.Model,
+					resp.Created,
+					resp.Object,
+					resp.Usage.CompletionTokens,
+					resp.Usage.PromptTokens,
+					resp.Usage.TotalTokens,
+					resp.Choices[i].FinishReason,
+					resp.Choices[i].Index))
+		}
 	} else if cresp != nil && resp == nil {
-		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
-				cresp.ID,
-				cresp.Model,
-				cresp.Created,
-				cresp.Object,
-				cresp.Usage.CompletionTokens,
-				cresp.Usage.PromptTokens,
-				cresp.Usage.TotalTokens,
-				cresp.Choices[0].FinishReason,
-				cresp.Choices[0].Index))
+		for i := range cresp.Choices {
+			node.layout.infoOutput.SetText(
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+					cresp.ID,
+					cresp.Model,
+					cresp.Created,
+					cresp.Object,
+					cresp.Usage.CompletionTokens,
+					cresp.Usage.PromptTokens,
+					cresp.Usage.TotalTokens,
+					cresp.Choices[i].FinishReason,
+					cresp.Choices[i].Index))
+		}
 	}
 }
 
@@ -269,19 +283,21 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil, nil))
 	}
-	node.layout.infoOutput.SetText(
-		fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
-			resp.ID,
-			resp.Model,
-			resp.Created,
-			resp.Object,
-			resp.Usage.CompletionTokens,
-			resp.Usage.PromptTokens,
-			resp.Usage.TotalTokens,
-			resp.Choices[0].FinishReason,
-			resp.Choices[0].LogProbs.TokenLogprobs,
-			resp.Choices[0].LogProbs.TopLogprobs,
-			resp.Choices[0].Index))
+	for i := range resp.Choices {
+		node.layout.infoOutput.SetText(
+			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
+				resp.ID,
+				resp.Model,
+				resp.Created,
+				resp.Object,
+				resp.Usage.CompletionTokens,
+				resp.Usage.PromptTokens,
+				resp.Usage.TotalTokens,
+				resp.Choices[i].FinishReason,
+				resp.Choices[i].LogProbs.TokenLogprobs,
+				resp.Choices[i].LogProbs.TopLogprobs,
+				resp.Choices[i].Index))
+	}
 }
 
 // VisualLogEdit - Log edited response details
@@ -289,13 +305,15 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil, nil))
 	}
-	node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
-		resp.Created,
-		resp.Object,
-		resp.Usage.CompletionTokens,
-		resp.Usage.PromptTokens,
-		resp.Usage.TotalTokens,
-		resp.Choices[0].Index))
+	for i := range resp.Choices {
+		node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
+			resp.Created,
+			resp.Object,
+			resp.Usage.CompletionTokens,
+			resp.Usage.PromptTokens,
+			resp.Usage.TotalTokens,
+			resp.Choices[i].Index))
+	}
 }
 
 // VisualLogEmbedding - Log embedding response details
@@ -303,11 +321,13 @@ func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil, nil))
 	}
-	node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
-		resp.Object,
-		resp.Usage.PromptTokens,
-		resp.Usage.TotalTokens,
-		resp.Data[0].Index))
+	for i := range resp.Data {
+		node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
+			resp.Object,
+			resp.Usage.PromptTokens,
+			resp.Usage.TotalTokens,
+			resp.Data[i].Index))
+	}
 }
 
 // VisualLogPredict - Log predicted response details

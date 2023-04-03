@@ -107,7 +107,9 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 		buffer = append(buffer, "\n\n###\n\n")
 
 		out := strings.Join(buffer, "")
-		resp.Choices[0].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
+		for i := range resp.Choices {
+			resp.Choices[i].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
+		}
 
 		node.layout.app.Sync()
 		c.chatStreamResponse = resp
@@ -253,8 +255,9 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		bWriter.Write([]byte("\n\n###\n\n"))
 		buffer = append(buffer, "\n\n###\n\n")
 
-		resp.Choices[0].Text = fmt.Sprint(buffer)
-
+		for i := range resp.Choices {
+			resp.Choices[i].Text = fmt.Sprint(buffer)
+		}
 		node.layout.app.Sync()
 		c.contextualResponse = resp
 		return c.contextualResponse

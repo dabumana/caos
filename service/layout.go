@@ -139,6 +139,11 @@ func OnExportTrainedTopic() {
 	}
 }
 
+// OnProfile - Profile view event
+func OnProfile() {
+	ReturnToPage(4)
+}
+
 // OnChangeRoles - Dropdown from input to change role
 func OnChangeRoles(option string, optionIndex int) {
 	if strings.Contains(option, string(model.User)) {
@@ -531,6 +536,7 @@ func CreateConsoleView() bool {
 		AddButton("New conversation", OnNewTopic).
 		AddButton("Export conversation", OnExportTopic).
 		AddButton("Export training", OnExportTrainedTopic).
+		AddButton("Profile", OnProfile).
 		SetHorizontal(true).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
@@ -665,7 +671,12 @@ func CreateIDModalView() {
 			node.controller.currentAgent.id = textToCheck
 			return true
 		}, nil).
+		AddInputField("Enter your API key: ", node.controller.currentAgent.key, 30, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.key = textToCheck
+			return true
+		}, nil).
 		AddButton("Save", func() {
+			node.controller.currentAgent.client, node.controller.currentAgent.exClient = node.controller.currentAgent.Connect()
 			ReturnToPage(2)
 		}).
 		AddButton("Cancel", func() {

@@ -95,9 +95,9 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 				buffer = append(buffer, out.Choices[0].Delta.Content)
 				bWriter.Write([]byte(out.Choices[0].Delta.Content))
 				if out.Choices[0].Delta.Content == "\n" {
-					fmt.Print("\r" + out.Choices[0].Delta.Content)
+					fmt.Print("\x1b[32m\r", out.Choices[0].Delta.Content)
 				} else {
-					fmt.Print(out.Choices[0].Delta.Content)
+					fmt.Print("\x1b[32m", out.Choices[0].Delta.Content)
 				}
 			})
 
@@ -240,9 +240,9 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 						buffer = append(buffer, out.Choices[i].Text)
 						in <- out.Choices[i].Text
 						if out.Choices[i].Text == "\n" {
-							fmt.Print("\r" + out.Choices[i].Text)
+							fmt.Print("\x1b[32m\r", out.Choices[i].Text)
 						} else {
-							fmt.Print(out.Choices[i].Text)
+							fmt.Print("\x1b[32m", out.Choices[i].Text)
 						}
 					}
 				}(node.controller.currentAgent.preferences.InlineText)

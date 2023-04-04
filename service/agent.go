@@ -4,7 +4,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -20,6 +19,7 @@ import (
 // Agent - Contextual client API
 type Agent struct {
 	id                string
+	key               string
 	ctx               context.Context
 	client            gpt3.Client
 	exClient          *http.Client
@@ -33,6 +33,8 @@ type Agent struct {
 func (c Agent) Initialize() Agent {
 	// ID
 	c.id = "anon"
+	// Key
+	c.key = c.GetKeyFromLocal()
 	// Role
 	c.preferences.Role = model.Assistant
 	// Background context
@@ -68,23 +70,24 @@ func (c Agent) Initialize() Agent {
 func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	godotenv.Load()
 
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		log.Fatalln("Missing API KEY")
-	}
-
 	externalClient := http.Client{
 		Transport: http.DefaultTransport,
 		Timeout:   time.Duration(12 * time.Second),
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)
-	client := gpt3.NewClient(apiKey, option)
+	client := gpt3.NewClient(c.key, option)
 
 	c.client = client
 	c.exClient = &externalClient
 
 	return c.client, c.exClient
+}
+
+// GetKeyFromVault - Get the currect key stablished on the environment
+func (c Agent) GetKeyFromLocal() string {
+	apiKey := os.Getenv("API_KEY")
+	return apiKey
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt

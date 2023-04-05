@@ -34,7 +34,7 @@ Installation steps:
 
 -   **Conversational mode**: A friendly experience with the model	
 
--   **Developer mode**: Developer mode prompts
+-   **Developer mode**: Developer mode prompt context
 
 -   ##### Advanced parameters like:
 

@@ -16,8 +16,8 @@ type Node struct {
 	controller Controller
 }
 
-// Start - Initialize node service
-func (c Node) Start(sandboxMode bool) {
+// start - Initialize node service
+func (c Node) Start() {
 	var controller Controller
 	var event EventManager
 	node.controller = controller
@@ -32,12 +32,10 @@ func (c Node) Start(sandboxMode bool) {
 		log.Fatalln("Client NOT loaded.")
 		return
 	}
+
 	// Initialize app layout service
 	InitializeLayout()
-	// Test mode
-	if sandboxMode {
-		return
-	}
+
 	// Exception
 	if err := node.layout.app.Run(); err != nil {
 		fmt.Printf("Execution error:%s\n", err)

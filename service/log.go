@@ -27,8 +27,8 @@ func (c EventManager) SaveTraining() {
 	out.WriteString(string(raw))
 }
 
-// SaveLog - Save log with actual historic detail
-func (c EventManager) SaveLog() {
+// saveLog - Save log with actual historic detail
+func (c EventManager) saveLog() {
 	if c.pool.Session != nil {
 		raw, _ := json.MarshalIndent(c.pool.Session[len(c.pool.Session)-1], "", "\u0009")
 		out := util.ConstructPathFileTo("log", "json")
@@ -36,16 +36,16 @@ func (c EventManager) SaveLog() {
 	}
 }
 
-// ClearSession - Clear all the pools
-func (c EventManager) ClearSession() {
+// clearSession - Clear all the pools
+func (c EventManager) clearSession() {
 	c.pool.Event = nil
 	c.pool.Session = nil
 	c.pool.TrainingEvent = nil
 	c.pool.TrainingSession = nil
 }
 
-// AppendToSession - Add a set of events as a session
-func (c EventManager) AppendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
+// appendToSession - Add a set of events as a session
+func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
 	historical := model.HistoricalEvent{
 		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
 		Event:     prompt,
@@ -77,17 +77,17 @@ func (c EventManager) AppendToSession(id string, prompt model.HistoricalPrompt, 
 		c.pool.TrainingSession = append(c.pool.TrainingSession, session)
 	}
 
-	c.SaveLog()
+	c.saveLog()
 }
 
-// AppendToLayout - Append and visualize content in console page view
-func (c EventManager) AppendToLayout(responses []string) {
+// appendToLayout - Append and visualize content in console page view
+func (c EventManager) appendToLayout(responses []string) {
 	log := strings.Join(responses, "")
 	node.layout.promptOutput.SetText(log)
 }
 
-// AppendToChoice - Append choice to response
-func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, predict *model.Predict) []string {
+// appendToChoice - Append choice to response
+func (c EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, predict *model.Predict) []string {
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
@@ -117,7 +117,7 @@ func (c EventManager) AppendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.E
 // LogChatCompletion - Chat response details in a .json file
 func (c EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if node.controller.currentAgent.preferences.IsNewSession {
-		c.ClearSession()
+		c.clearSession()
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
@@ -135,7 +135,7 @@ func (c EventManager) LogChatCompletion(header model.EngineProperties, body mode
 				Body:   body,
 			}
 
-			c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
+			c.appendToSession(resp.ID, modelPrompt, modelTrainer)
 
 			node.controller.currentAgent.preferences.CurrentID = resp.ID
 		}
@@ -153,7 +153,7 @@ func (c EventManager) LogChatCompletion(header model.EngineProperties, body mode
 				Body:   body,
 			}
 
-			c.AppendToSession(cresp.ID, modelPrompt, modelTrainer)
+			c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
 
 			node.controller.currentAgent.preferences.CurrentID = cresp.ID
 		}
@@ -163,31 +163,30 @@ func (c EventManager) LogChatCompletion(header model.EngineProperties, body mode
 // LogCompletion - Response details in a .json file
 func (c EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if node.controller.currentAgent.preferences.IsNewSession {
-		c.ClearSession()
+		c.clearSession()
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-
-		modelTrainer := model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[i].Text},
-		}
-
-		modelPrompt := model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
-
-		c.AppendToSession(resp.ID, modelPrompt, modelTrainer)
-		node.controller.currentAgent.preferences.CurrentID = resp.ID
 	}
+
+	modelTrainer := model.TrainingPrompt{
+		Prompt:     body.PromptContext,
+		Completion: []string{resp.Choices[0].Text},
+	}
+
+	modelPrompt := model.HistoricalPrompt{
+		Header: header,
+		Body:   body,
+	}
+
+	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
+	node.controller.currentAgent.preferences.CurrentID = resp.ID
 }
 
 // LogEdit - Response details in a .json file
 func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
-
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
 
@@ -201,7 +200,7 @@ func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptPr
 			Body:   body,
 		}
 
-		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
+		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
 }
 
@@ -220,25 +219,29 @@ func (c EventManager) LogEmbedding(header model.EngineProperties, body model.Pro
 			Body:   body,
 		}
 
-		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
+		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
 }
 
 // LogPredict - ResponseDetails in a .json file
-func (c EventManager) LogPredict(header model.EngineProperties, body model.PromptProperties, predict *model.PredictProperties, resp *model.PredictResponse) {
+func (c EventManager) LogPredict(header model.EngineProperties, body model.PredictProperties, resp *model.PredictResponse) {
 	for i := range resp.Documents {
-		predict.Details.Documents = append(predict.Details.Documents, resp.Documents[i])
+		predictProperties := model.PredictProperties{
+			Input:   body.Input,
+			Details: *resp,
+		}
+
 		modelTrainer := model.TrainingPrompt{
-			Prompt:     predict.Input,
+			Prompt:     body.Input,
 			Completion: []string{fmt.Sprintf("%v", resp.Documents[i])},
 		}
 
 		modelPrompt := model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
+			Header:         header,
+			PredictiveBody: predictProperties,
 		}
 
-		c.AppendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
+		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
 }
 
@@ -246,8 +249,9 @@ func (c EventManager) LogPredict(header model.EngineProperties, body model.Promp
 func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
 		if !node.controller.currentAgent.preferences.IsPromptStreaming {
-			c.AppendToLayout(c.AppendToChoice(nil, nil, nil, resp, nil))
+			c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
 		}
+
 		for i := range resp.Choices {
 			node.layout.infoOutput.SetText(
 				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
@@ -281,8 +285,9 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 // VisualLogCompletion - Response details
 func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(resp, nil, nil, nil, nil))
+		c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 	}
+
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
@@ -303,8 +308,9 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 // VisualLogEdit - Log edited response details
 func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(nil, resp, nil, nil, nil))
+		c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
 	}
+
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Created,
@@ -319,8 +325,9 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 // VisualLogEmbedding - Log embedding response details
 func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, resp, nil, nil))
+		c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
 	}
+
 	for i := range resp.Data {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Object,
@@ -334,7 +341,7 @@ func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 	var buffer []string
 	for i := range resp.Documents {
-		c.AppendToLayout(c.AppendToChoice(nil, nil, nil, nil, &resp.Documents[i]))
+		c.appendToLayout(c.appendToChoice(nil, nil, nil, nil, &resp.Documents[i]))
 
 		details := fmt.Sprintf("Average probability: %v\nCompletely generated probability: %v\nOverall burstiness: %v",
 			resp.Documents[i].AverageProb,
@@ -343,7 +350,7 @@ func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 		buffer = append(buffer, details, "\n")
 
 		for o := range resp.Documents[i].Paragraphs {
-			paragraphs := fmt.Sprintf("Completely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
+			paragraphs := fmt.Sprintf("\nCompletely generated probability: %v\nIndex: %v\nNumber of sentences: %v",
 				resp.Documents[i].Paragraphs[o].CompletelyProb,
 				resp.Documents[i].Paragraphs[o].Index,
 				resp.Documents[i].Paragraphs[o].NumberSentences)
@@ -351,17 +358,16 @@ func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 		}
 
 		for o := range resp.Documents[i].Sentences {
-			sentence := fmt.Sprintf("Generated probability:%v\nPerplexity: %v\nSentence: %v",
+			sentence := fmt.Sprintf("\nGenerated probability:%v\nPerplexity: %v\nSentence: %v",
 				resp.Documents[i].Sentences[o].GeneratedProb,
 				resp.Documents[i].Sentences[o].Perplexity,
 				resp.Documents[i].Sentences[o].Sentence)
 			buffer = append(buffer, sentence, "\n")
 		}
 	}
+
 	inline := fmt.Sprintf("%v", buffer)
-	output := strings.ReplaceAll(inline, "[", "")
-	output = strings.ReplaceAll(output, "]", "")
-	node.layout.infoOutput.SetText(output)
+	node.layout.infoOutput.SetText(util.RemoveWrapper(inline))
 }
 
 // LogClient - Log client context

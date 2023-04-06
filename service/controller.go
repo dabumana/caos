@@ -26,7 +26,7 @@ func (c Controller) EditRequest() {
 		event.VisualLogEdit(resp)
 	}
 
-	event.LogEngine(node.controller.currentAgent)
+	event.LogEngine(c.currentAgent)
 }
 
 // ChatCompletionRequest - Chat completion request to send task prompt
@@ -48,7 +48,7 @@ func (c Controller) ChatCompletionRequest() {
 		event.VisualLogChatCompletion(nil, cresp)
 	}
 
-	event.LogEngine(node.controller.currentAgent)
+	event.LogEngine(c.currentAgent)
 }
 
 // CompletionRequest - Start completion request to send task prompt
@@ -66,7 +66,7 @@ func (c Controller) CompletionRequest() {
 		event.VisualLogCompletion(resp)
 	}
 
-	event.LogEngine(node.controller.currentAgent)
+	event.LogEngine(c.currentAgent)
 }
 
 // EmbeddingRequest - Start a embedding vector request
@@ -79,7 +79,7 @@ func (c Controller) EmbeddingRequest() {
 		event.VisualLogEmbedding(resp)
 	}
 
-	event.LogEngine(node.controller.currentAgent)
+	event.LogEngine(c.currentAgent)
 }
 
 // PredictableRequest - Start a predictable string request
@@ -88,16 +88,18 @@ func (c Controller) PredictableRequest() {
 
 	var event EventManager
 	if resp != nil {
-		event.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, &node.controller.currentAgent.predictProperties, resp)
+		event.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.predictProperties, resp)
 		event.VisualLogPredict(resp)
+
+		c.currentAgent.predictProperties.Details.Documents = append(c.currentAgent.predictProperties.Details.Documents, resp.Documents...)
 	}
 
-	event.LogPredictEngine(node.controller.currentAgent)
+	event.LogPredictEngine(c.currentAgent)
 }
 
 // ListModels - Get actual models available
 func (c Controller) ListModels() {
-	resp := node.prompt.GetListModels(node.controller.currentAgent)
+	resp := node.prompt.GetListModels(c.currentAgent)
 	if resp != nil {
 		for _, i := range resp.Data {
 			node.controller.currentAgent.preferences.Models = append(node.controller.currentAgent.preferences.Models, i.ID)

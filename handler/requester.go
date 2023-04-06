@@ -7,7 +7,7 @@ import (
 
 // IServiceRequester - Service requester interface API
 type IServiceRequester interface {
-	Start(sandboxMode bool)
+	Start()
 }
 
 // Node - Global node service for handler

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/mitchellh/go-wordwrap"
 )
 
 // Prompt - Handle prompt request
@@ -28,8 +29,8 @@ type Prompt struct {
 	predictableResponse *model.PredictResponse
 }
 
-// IsContextValid - Client context validation
-func IsContextValid(current Agent) bool {
+// isContextValid - Client context validation
+func isContextValid(current Agent) bool {
 	if current.ctx == nil {
 		log.Fatalln("Context NOT found")
 		return false
@@ -43,7 +44,7 @@ func IsContextValid(current Agent) bool {
 
 // SendStreamingChatCompletion - Send streaming chat completion prompt
 func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
-	if IsContextValid(service) {
+	if isContextValid(service) {
 		var buffer []string
 		var event EventManager
 
@@ -95,9 +96,11 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 				buffer = append(buffer, out.Choices[0].Delta.Content)
 				bWriter.Write([]byte(out.Choices[0].Delta.Content))
 				if out.Choices[0].Delta.Content == "\n" {
-					fmt.Printf("\x1b[32m%s\r", out.Choices[0].Delta.Content)
+					out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
+					fmt.Printf("\x1b[32m%s\r", out)
 				} else {
-					fmt.Printf("\x1b[32m%s", out.Choices[0].Delta.Content)
+					out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
+					fmt.Printf("\x1b[32m%s", out)
 				}
 			})
 
@@ -120,7 +123,7 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 
 // SendChatCompletion - Send chat completion prompt
 func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
-	if IsContextValid(service) {
+	if isContextValid(service) {
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
 			Content: node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0])[0],
@@ -155,7 +158,7 @@ func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 
 // SendCompletion - Send task prompt
 func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
-	if IsContextValid(service) {
+	if isContextValid(service) {
 		req := gpt3.CompletionRequest{
 			Prompt:           node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
@@ -185,7 +188,7 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 
 // SendStreamingCompletion - Send task prompt on stream mode
 func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
-	if IsContextValid(service) {
+	if isContextValid(service) {
 		var event EventManager
 		var buffer []string
 
@@ -240,9 +243,11 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 						buffer = append(buffer, out.Choices[i].Text)
 						in <- out.Choices[i].Text
 						if out.Choices[i].Text == "\n" {
-							fmt.Printf("\x1b[32m%s\r", out.Choices[i].Text)
+							out := wordwrap.WrapString(out.Choices[i].Text, 50)
+							fmt.Printf("\x1b[32m%s\r", out)
 						} else {
-							fmt.Printf("\x1b[32m%s", out.Choices[i].Text)
+							out := wordwrap.WrapString(out.Choices[i].Text, 50)
+							fmt.Printf("\x1b[32m%s", out)
 						}
 					}
 				}(node.controller.currentAgent.preferences.InlineText)
@@ -267,7 +272,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 
 // SendEditPrompt - Send edit instruction task prompt
 func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
-	if IsContextValid(service) && service.promptProperties.PromptContext != nil {
+	if isContextValid(service) && service.promptProperties.PromptContext != nil {
 		req := gpt3.EditsRequest{
 			Model:       service.engineProperties.Model,
 			Input:       service.promptProperties.PromptContext[0],
@@ -292,7 +297,7 @@ func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 
 // SendEmbeddingPrompt - Creates an embedding vector representing the input text
 func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
-	if IsContextValid(service) {
+	if isContextValid(service) {
 		req := gpt3.EmbeddingsRequest{
 			Model: service.engineProperties.Model,
 			Input: service.promptProperties.PromptContext,
@@ -314,7 +319,7 @@ func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 
 // SendPredictablePrompt - Send a predictable request
 func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
-	isValid := IsContextValid(service)
+	isValid := isContextValid(service)
 	if isValid {
 		req := model.PredictRequest{
 			Document: string(service.predictProperties.Input[0]),

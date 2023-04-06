@@ -2,9 +2,10 @@
 package caos
 
 import (
+	"testing"
+
 	"caos/model"
 	"caos/service"
-	"testing"
 )
 
 func TestConnect(t *testing.T) {
@@ -53,7 +54,7 @@ func TestSetEngineParameters(t *testing.T) {
 	t.Log("Test - FINISHED")
 }
 
-func TestSetRequestParameters(t *testing.T) {
+func TestSetPromptParameters(t *testing.T) {
 	var service service.Agent
 	context := []string{"Generate an UML template"}
 	prompt := []string{"for an eshop, include customers and providers."}
@@ -77,6 +78,19 @@ func TestSetRequestParameters(t *testing.T) {
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)
 		t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Probabilities, probabilities)
 		t.Log("Test - ERROR")
+	} else {
+		t.Log("Test - PASSED")
+	}
+	t.Log("Test - FINISHED")
+}
+
+func TestSetPredictionParameters(t *testing.T) {
+	var service service.Agent
+	context := []string{"Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..."}
+	predictProperties := service.SetPredictionParameters(context)
+	if predictProperties.Input == nil {
+		t.Errorf("Received:%v\nExpected:%v\n", predictProperties.Input, context)
+		t.Error("Test - ERROR")
 	} else {
 		t.Log("Test - PASSED")
 	}

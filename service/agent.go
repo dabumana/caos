@@ -34,7 +34,7 @@ func (c Agent) Initialize() Agent {
 	// ID
 	c.id = "anon"
 	// Key
-	c.key = c.GetKeyFromLocal()
+	c.key = c.getKeyFromLocal()
 	// Role
 	c.preferences.Role = model.Assistant
 	// Background context
@@ -84,8 +84,8 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	return c.client, c.exClient
 }
 
-// GetKeyFromVault - Get the currect key stablished on the environment
-func (c Agent) GetKeyFromLocal() string {
+// getKeyFromVault - Get the currect key stablished on the environment
+func (c Agent) getKeyFromLocal() string {
 	apiKey := os.Getenv("API_KEY")
 	return apiKey
 }

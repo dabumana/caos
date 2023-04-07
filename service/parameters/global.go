@@ -6,10 +6,11 @@ import "caos/model"
 // GlobalPreferences - General
 type GlobalPreferences struct {
 	// Engine properties
-	Engine string
-	Mode   string
-	Models []string
-	Roles  []string
+	Engine   string
+	Mode     string
+	Models   []string
+	Roles    []string
+	Template []string
 	// Prompt properties
 	Probabilities int32
 	Results       int32

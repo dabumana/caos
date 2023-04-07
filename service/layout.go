@@ -69,6 +69,11 @@ func onFrequencyChange(text string) {
 	node.controller.currentAgent.preferences.Frequency = util.ParseFloat32(text)
 }
 
+// onTemplateChange - Template dropdown selection
+func onTemplateChange(option string, index int) {
+
+}
+
 // onTypeAccept - Evaluates when an input text matches the field criteria
 func onTypeAccept(text string, lastChar rune) bool {
 	matched := util.MatchNumber(text)
@@ -604,15 +609,14 @@ func createRefinementView() bool {
 	affinitySection := tview.NewForm()
 	// Affinity section
 	affinitySection.
-		AddInputField("Results", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Results), 5, onTypeAccept, onResultChange).
-		AddInputField("Probabilities", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Probabilities), 5, onTypeAccept, onProbabilityChange).
-		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Temperature), 5, onTypeAccept, onTemperatureChange).
-		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Topp), 5, onTypeAccept, onToppChange).
-		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, onTypeAccept, onPenaltyChange).
-		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
+		AddInputField("Results: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Results), 5, onTypeAccept, onResultChange).
+		AddInputField("Probabilities: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Probabilities), 5, onTypeAccept, onProbabilityChange).
+		AddInputField("Temperature [0.0 / 1.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Temperature), 5, onTypeAccept, onTemperatureChange).
+		AddInputField("Topp [0.0 / 1.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Topp), 5, onTypeAccept, onToppChange).
+		AddInputField("Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, onTypeAccept, onPenaltyChange).
+		AddInputField("Frequency Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
+		AddDropDown("Template: ", []string{"NOON"}, 0, onTemplateChange).
 		AddCheckbox("Edit mode (edit and improve the previous response)", false, onEditChecked).
-		AddCheckbox("Conversational mode (on Text and Turbo mode only)", false, onConversationChecked).
-		AddCheckbox("Developer mode (on Text and Turbo mode only)", false, onDeveloperChecked).
 		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, onStreamingChecked).
 		AddCheckbox("Training mode", false, onTrainingChecked).
 		AddButton("Back to chat", onBack).
@@ -625,7 +629,7 @@ func createRefinementView() bool {
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(1, 1, 10, 10)
+		SetBorderPadding(3, 3, 30, 30)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
@@ -671,8 +675,12 @@ func createIDModalView() {
 			node.controller.currentAgent.id = textToCheck
 			return true
 		}, nil).
-		AddInputField("Enter your API key: ", node.controller.currentAgent.key, 30, func(textToCheck string, lastChar rune) bool {
-			node.controller.currentAgent.key = textToCheck
+		AddInputField("API key: ", node.controller.currentAgent.keys[0], 60, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.keys[0] = textToCheck
+			return true
+		}, nil).
+		AddInputField("API key [GPT-Zero]: ", node.controller.currentAgent.keys[1], 60, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.keys[1] = textToCheck
 			return true
 		}, nil).
 		AddButton("Save", func() {

@@ -4,8 +4,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"caos/model"
@@ -14,12 +14,13 @@ import (
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 // Agent - Contextual client API
 type Agent struct {
 	id                string
-	key               string
+	keys              []string
 	ctx               context.Context
 	client            gpt3.Client
 	exClient          *http.Client
@@ -34,7 +35,7 @@ func (c Agent) Initialize() Agent {
 	// ID
 	c.id = "anon"
 	// Key
-	c.key = c.getKeyFromLocal()
+	c.keys = c.getKeyFromLocalEnv()
 	// Role
 	c.preferences.Role = model.Assistant
 	// Background context
@@ -62,6 +63,11 @@ func (c Agent) Initialize() Agent {
 	c.preferences.IsPromptStreaming = true
 	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
+	// Template
+	reader, _ := ioutil.ReadDir("../template/")
+	for _, file := range reader {
+		c.preferences.Template = append(c.preferences.Template, file.Name())
+	}
 	// Return created client
 	return c
 }
@@ -76,7 +82,7 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)
-	client := gpt3.NewClient(c.key, option)
+	client := gpt3.NewClient(c.keys[0], option)
 
 	c.client = client
 	c.exClient = &externalClient
@@ -84,10 +90,27 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	return c.client, c.exClient
 }
 
-// getKeyFromVault - Get the currect key stablished on the environment
-func (c Agent) getKeyFromLocal() string {
-	apiKey := os.Getenv("API_KEY")
-	return apiKey
+// getKeyFromLocalEnv - Get the currect key stablished on the environment
+func (c Agent) getKeyFromLocalEnv() []string {
+	var keys []string
+
+	viper.SetConfigFile(".env")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err.Error())
+	}
+
+	val1, _ := viper.Get("API_KEY").(string)
+	val2, _ := viper.Get("ZERO_API_KEY").(string)
+
+	if val1 != "" {
+		keys = append(keys, val1)
+	}
+	if val2 != "" {
+		keys = append(keys, val2)
+	}
+
+	return keys
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt

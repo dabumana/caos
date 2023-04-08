@@ -6,9 +6,9 @@ type Roles string
 
 // const - Select Roles
 const (
-	System    Roles = " system "    // System role
-	Assistant Roles = " assistant " // Assistant role
-	User      Roles = " user "      // User role
+	System    Roles = "system"    // System role
+	Assistant Roles = "assistant" // Assistant role
+	User      Roles = "user"      // User role
 )
 
 // EngineProperties - Engine preferences

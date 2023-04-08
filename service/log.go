@@ -47,30 +47,32 @@ func (c EventManager) clearSession() {
 
 // appendToSession - Add a set of events as a session
 func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
-	historical := model.HistoricalEvent{
+	lEvent := model.HistoricalEvent{
 		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
 		Event:     prompt,
 	}
 
-	c.pool.Event = append(c.pool.Event, historical)
+	c.pool.Event = append(c.pool.Event, lEvent)
+	node.controller.events.pool.Event = append(node.controller.events.pool.Event, lEvent)
 
-	lsession := model.HistoricalSession{
+	lSession := model.HistoricalSession{
 		ID:      id,
-		Session: []model.HistoricalEvent{historical},
+		Session: []model.HistoricalEvent{lEvent},
 	}
 
-	c.pool.Session = append(c.pool.Session, lsession)
-	node.controller.events.pool.Session = append(node.controller.events.pool.Session, lsession)
+	c.pool.Session = append(c.pool.Session, lSession)
+	node.controller.events.pool.Session = append(node.controller.events.pool.Session, lSession)
 
 	event := model.TrainingEvent{
-		Timestamp: c.currentEvent.Timestamp,
+		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
 		Event:     train,
 	}
 
 	c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
+	node.controller.events.pool.TrainingEvent = append(node.controller.events.pool.TrainingEvent, event)
 
 	session := model.TrainingSession{
-		ID:      c.currentSession.ID,
+		ID:      id,
 		Session: []model.TrainingEvent{event},
 	}
 

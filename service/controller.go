@@ -1,7 +1,11 @@
 // Package service section
 package service
 
-import "github.com/PullRequestInc/go-gpt3"
+import (
+	"caos/model"
+
+	"github.com/PullRequestInc/go-gpt3"
+)
 
 // Controller - Contextual client controller API
 type Controller struct {
@@ -15,6 +19,12 @@ func (c Controller) AttachProfile() Agent {
 	serviceClient = serviceClient.Initialize()
 
 	return serviceClient
+}
+
+// FlushEvents - Reset the pool
+func (c Controller) FlushEvents() {
+	node.controller.events.pool.TrainingEvent = []model.TrainingEvent{}
+	node.controller.events.pool.TrainingSession = []model.TrainingSession{}
 }
 
 // EditRequest - Start edit request  to send a task prompt

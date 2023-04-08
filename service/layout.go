@@ -114,6 +114,8 @@ func clearConsoleView() {
 	node.layout.promptOutput.SetText("")
 	node.layout.promptArea.SetPlaceholder("Type here...")
 	node.layout.promptArea.SetText("", true)
+	// Flush training historial
+	node.controller.FlushEvents()
 }
 
 // onConsole - Console view event

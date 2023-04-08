@@ -6,6 +6,7 @@ import "github.com/PullRequestInc/go-gpt3"
 // Controller - Contextual client controller API
 type Controller struct {
 	currentAgent Agent
+	events       EventManager
 }
 
 // AttachProfile - Attach profile to a new service client
@@ -20,13 +21,12 @@ func (c Controller) AttachProfile() Agent {
 func (c Controller) EditRequest() {
 	resp := node.prompt.SendEditPrompt(c.currentAgent)
 
-	var event EventManager
 	if resp != nil {
-		event.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		event.VisualLogEdit(resp)
+		c.events.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.VisualLogEdit(resp)
 	}
 
-	event.LogEngine(c.currentAgent)
+	c.events.LogEngine(c.currentAgent)
 }
 
 // ChatCompletionRequest - Chat completion request to send task prompt
@@ -39,16 +39,15 @@ func (c Controller) ChatCompletionRequest() {
 		resp = node.prompt.SendChatCompletion(c.currentAgent)
 	}
 
-	var event EventManager
 	if resp != nil && cresp == nil {
-		event.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
-		event.VisualLogChatCompletion(resp, nil)
+		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
+		c.events.VisualLogChatCompletion(resp, nil)
 	} else if cresp != nil && resp == nil {
-		event.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
-		event.VisualLogChatCompletion(nil, cresp)
+		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
+		c.events.VisualLogChatCompletion(nil, cresp)
 	}
 
-	event.LogEngine(c.currentAgent)
+	c.events.LogEngine(c.currentAgent)
 }
 
 // CompletionRequest - Start completion request to send task prompt
@@ -60,41 +59,38 @@ func (c Controller) CompletionRequest() {
 		resp = node.prompt.SendCompletion(c.currentAgent)
 	}
 
-	var event EventManager
 	if resp != nil {
-		event.LogCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		event.VisualLogCompletion(resp)
+		c.events.LogCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.VisualLogCompletion(resp)
 	}
 
-	event.LogEngine(c.currentAgent)
+	c.events.LogEngine(c.currentAgent)
 }
 
 // EmbeddingRequest - Start a embedding vector request
 func (c Controller) EmbeddingRequest() {
 	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
 
-	var event EventManager
 	if resp != nil {
-		event.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		event.VisualLogEmbedding(resp)
+		c.events.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.VisualLogEmbedding(resp)
 	}
 
-	event.LogEngine(c.currentAgent)
+	c.events.LogEngine(c.currentAgent)
 }
 
 // PredictableRequest - Start a predictable string request
 func (c Controller) PredictableRequest() {
 	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
 
-	var event EventManager
 	if resp != nil {
-		event.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.predictProperties, resp)
-		event.VisualLogPredict(resp)
+		c.events.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.predictProperties, resp)
+		c.events.VisualLogPredict(resp)
 
 		c.currentAgent.predictProperties.Details.Documents = append(c.currentAgent.predictProperties.Details.Documents, resp.Documents...)
 	}
 
-	event.LogPredictEngine(c.currentAgent)
+	c.events.LogPredictEngine(c.currentAgent)
 }
 
 // ListModels - Get actual models available

@@ -46,7 +46,6 @@ func isContextValid(current Agent) bool {
 func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
 	if isContextValid(service) {
 		var buffer []string
-		var event EventManager
 
 		resp := &gpt3.ChatCompletionStreamResponse{}
 
@@ -104,6 +103,7 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 				}
 			})
 
+		var event EventManager
 		event.Errata(err)
 
 		bWriter.Write([]byte("\n\n###\n\n"))
@@ -189,7 +189,6 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 // SendStreamingCompletion - Send task prompt on stream mode
 func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
-		var event EventManager
 		var buffer []string
 
 		resp := &gpt3.CompletionResponse{}
@@ -255,6 +254,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 				bWriter.Write([]byte(<-node.controller.currentAgent.preferences.InlineText))
 			})
 
+		var event EventManager
 		event.Errata(err)
 
 		bWriter.Write([]byte("\n\n###\n\n"))

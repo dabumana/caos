@@ -15,19 +15,20 @@ import (
 
 // EventManager - Log event service
 type EventManager struct {
-	event   model.HistoricalEvent
-	session model.HistoricalSession
-	pool    model.PoolProperties
+	pool model.PoolProperties
+	// Historical
+	currentEvent   model.HistoricalEvent
+	currentSession model.HistoricalSession
 }
 
-// SaveTraining - Export training in JSON format
-func (c EventManager) SaveTraining() {
-	raw, _ := json.MarshalIndent(c.pool.TrainingSession, "", "\u0009")
+// ExportTraining - Export training in JSON format
+func (c EventManager) ExportTraining(session []model.TrainingSession) {
+	raw, _ := json.MarshalIndent(session, "", "\u0009")
 	out := util.ConstructPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 
-// saveLog - Save log with actual historic detail
+// saveLog - Save saveLog with actual historic detail
 func (c EventManager) saveLog() {
 	if c.pool.Session != nil {
 		raw, _ := json.MarshalIndent(c.pool.Session[len(c.pool.Session)-1], "", "\u0009")
@@ -59,23 +60,22 @@ func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, 
 	}
 
 	c.pool.Session = append(c.pool.Session, lsession)
+	node.controller.events.pool.Session = append(node.controller.events.pool.Session, lsession)
 
-	if node.controller.currentAgent.preferences.IsTraining {
-
-		event := model.HistoricalTrainingEvent{
-			Timestamp: c.event.Timestamp,
-			Event:     train,
-		}
-
-		c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
-
-		session := model.HistoricalTrainingSession{
-			ID:      c.session.ID,
-			Session: []model.HistoricalTrainingEvent{event},
-		}
-
-		c.pool.TrainingSession = append(c.pool.TrainingSession, session)
+	event := model.TrainingEvent{
+		Timestamp: c.currentEvent.Timestamp,
+		Event:     train,
 	}
+
+	c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
+
+	session := model.TrainingSession{
+		ID:      c.currentSession.ID,
+		Session: []model.TrainingEvent{event},
+	}
+
+	c.pool.TrainingSession = append(c.pool.TrainingSession, session)
+	node.controller.events.pool.TrainingSession = append(node.controller.events.pool.TrainingSession, session)
 
 	c.saveLog()
 }
@@ -182,6 +182,7 @@ func (c EventManager) LogCompletion(header model.EngineProperties, body model.Pr
 	}
 
 	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
+
 	node.controller.currentAgent.preferences.CurrentID = resp.ID
 }
 

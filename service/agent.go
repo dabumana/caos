@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"caos/model"
@@ -20,7 +22,8 @@ import (
 // Agent - Contextual client API
 type Agent struct {
 	id                string
-	keys              []string
+	key               []string
+	template          []string
 	ctx               context.Context
 	client            gpt3.Client
 	exClient          *http.Client
@@ -35,13 +38,15 @@ func (c Agent) Initialize() Agent {
 	// ID
 	c.id = "anon"
 	// Key
-	c.keys = c.getKeyFromLocalEnv()
-	// Role
-	c.preferences.Role = model.Assistant
+	c.key = c.getKeyFromLocal()
+	c.template = c.getTemplateFromLocal()
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
+	// Role
+	c.preferences.Role = model.Assistant
 	// Global preferences
+	c.preferences.TemplateIndex = 0
 	c.preferences.Engine = "text-davinci-003"
 	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
 	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
@@ -59,15 +64,9 @@ func (c Agent) Initialize() Agent {
 	c.preferences.IsLoading = false
 	c.preferences.IsNewSession = true
 	c.preferences.IsPromptReady = false
-	c.preferences.IsTraining = false
 	c.preferences.IsPromptStreaming = true
 	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
-	// Template
-	reader, _ := ioutil.ReadDir("../template/")
-	for _, file := range reader {
-		c.preferences.Template = append(c.preferences.Template, file.Name())
-	}
 	// Return created client
 	return c
 }
@@ -82,7 +81,7 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)
-	client := gpt3.NewClient(c.keys[0], option)
+	client := gpt3.NewClient(c.key[0], option)
 
 	c.client = client
 	c.exClient = &externalClient
@@ -90,27 +89,41 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 	return c.client, c.exClient
 }
 
-// getKeyFromLocalEnv - Get the currect key stablished on the environment
-func (c Agent) getKeyFromLocalEnv() []string {
+// getKeyFromLocal - Get the currect key stablished on the environment
+func (c Agent) getKeyFromLocal() []string {
 	var keys []string
+	var event EventManager
 
 	viper.SetConfigFile(".env")
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err.Error())
+		event.Errata(err)
 	}
 
 	val1, _ := viper.Get("API_KEY").(string)
 	val2, _ := viper.Get("ZERO_API_KEY").(string)
 
-	if val1 != "" {
-		keys = append(keys, val1)
-	}
-	if val2 != "" {
-		keys = append(keys, val2)
-	}
+	keys = append(keys, val1, val2)
 
 	return keys
+}
+
+// getTemplateFromLocal - Get templates on local dir
+func (c Agent) getTemplateFromLocal() []string {
+	var files []string
+
+	dir, _ := os.Getwd()
+	path := dir + "/template/"
+	reader, _ := ioutil.ReadDir(path)
+	for _, file := range reader {
+		files = append(files, " "+strings.Split(file.Name(), ".")[0]+" ")
+		out, _ := ioutil.ReadFile(path + file.Name())
+		if out != nil {
+			c.preferences.TemplateCtx = append(c.preferences.TemplateCtx, string(out[:]))
+		}
+	}
+
+	return files
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt
@@ -149,15 +162,7 @@ func (c Agent) SetPredictionParameters(prompContext []string) model.PredictPrope
 
 // SetPrompt - Conversion human-ai roles
 func (c Agent) SetPrompt(context string) []string {
-	var prompt []string
-	if node.controller.currentAgent.preferences.IsConversational &&
-		!node.controller.currentAgent.preferences.IsDeveloper {
-		prompt = []string{fmt.Sprintf("Human: %v \nAI:", context)}
-	} else if node.controller.currentAgent.preferences.IsDeveloper &&
-		!node.controller.currentAgent.preferences.IsConversational {
-		prompt = []string{fmt.Sprintf("Developer Mode: %v \nAI:", context)}
-	} else {
-		prompt = []string{context}
-	}
+	// out := node.controller.currentAgent.preferences.TemplateCtx[node.controller.currentAgent.preferences.TemplateIndex]
+	prompt := []string{fmt.Sprint(">> ", context)}
 	return prompt
 }

@@ -16,7 +16,7 @@ type Node struct {
 	controller Controller
 }
 
-// start - Initialize node service
+// Start - Initialize node service
 func (c Node) Start() {
 	var controller Controller
 	var event EventManager

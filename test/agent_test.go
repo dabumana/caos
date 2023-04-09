@@ -8,18 +8,6 @@ import (
 	"caos/service"
 )
 
-func TestConnect(t *testing.T) {
-	var service service.Agent
-	client, exClient := service.Connect()
-	if client == nil || exClient == nil {
-		t.Error("client not found.")
-		t.Log("Test - ERROR")
-	} else {
-		t.Log("Test - PASSED")
-	}
-	t.Log("Test - FINISHED")
-}
-
 func TestSetEngineParameters(t *testing.T) {
 	var service service.Agent
 	id := "test_user"

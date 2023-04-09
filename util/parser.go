@@ -73,8 +73,8 @@ func MatchNumber(text string) bool {
 
 // MatchToken - Match token amount
 func MatchToken(text []string) int64 {
-	var maxTokens int64 = 0
-	for i, _ := range []byte(text[0]) {
+	var maxTokens int64
+	for i := range []byte(text[0]) {
 		if i%4 == 1 {
 			maxTokens++
 		}
@@ -94,7 +94,7 @@ func CalcTokenPrompt(length int) int64 {
 	return int64(length) / 4
 }
 
-// ConstructPathFileTo - Initialize a directory for further storage in a TXT or JSON file includes a timestamp
+// ConstructTsPathFileTo - Initialize a directory for further storage in a TXT or JSON file includes a timestamp
 func ConstructTsPathFileTo(path string, format string) *os.File {
 	var dir string
 	if dir, e := os.Getwd(); e != nil {

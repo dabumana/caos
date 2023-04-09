@@ -35,8 +35,6 @@ type Layout struct {
 	metadataOutput *tview.TextView
 	promptOutput   *tview.TextView
 	infoOutput     *tview.TextView
-	// Event manager
-	eventManager EventManager
 }
 
 // onResultChange - Evaluates when an input text changes for the result input field
@@ -69,6 +67,11 @@ func onFrequencyChange(text string) {
 	node.controller.currentAgent.preferences.Frequency = util.ParseFloat32(text)
 }
 
+// onTemplateChange - Template dropdown selection
+func onTemplateChange(option string, index int) {
+	node.controller.currentAgent.preferences.TemplateIndex = index
+}
+
 // onTypeAccept - Evaluates when an input text matches the field criteria
 func onTypeAccept(text string, lastChar rune) bool {
 	matched := util.MatchNumber(text)
@@ -78,7 +81,7 @@ func onTypeAccept(text string, lastChar rune) bool {
 // onBack - Button event to return to the main page
 func onBack() {
 	// Console view
-	returnToPage(1)
+	onConsole()
 	// Validate layout forms
 	validateRefinementForm()
 	// Clean input
@@ -89,16 +92,20 @@ func onBack() {
 
 // onNewTopic - Define a new conversation button event
 func onNewTopic() {
+	// Local preferences
 	node.controller.currentAgent.preferences.IsNewSession = true
 	node.controller.currentAgent.preferences.IsPromptReady = false
 	node.controller.currentAgent.preferences.PromptCtx = []string{""}
+	node.controller.currentAgent.cachedPrompt = ""
 
-	if node.controller.currentAgent.preferences.IsTraining {
-		onTrainingTopic()
+	if node.layout.promptOutput.GetText(true) == "" {
+		// Clear console view
+		clearConsoleView()
+		node.layout.infoOutput.SetText("A new conversation can be started.")
 		return
 	}
 
-	clearConsoleView()
+	OnModal()
 }
 
 // clearConsoleView - Clean input-output fields
@@ -108,40 +115,56 @@ func clearConsoleView() {
 	node.layout.promptOutput.SetText("")
 	node.layout.promptArea.SetPlaceholder("Type here...")
 	node.layout.promptArea.SetText("", true)
+	// Flush training historial
+	node.controller.FlushEvents()
 }
 
-// onRefinementTopic - Refinement view button event
-func onRefinementTopic() {
+// onConsole - Console view event
+func onConsole() {
+	// Console view
+	returnToPage(1)
+}
+
+// onRefinement - Refinement view event
+func onRefinement() {
 	// Refinement view
 	returnToPage(2)
 }
 
-// onTrainingTopic - Modal confirmation to export training
-func onTrainingTopic() {
+// OnModal - Modal confirmation to export training
+func OnModal() {
 	// Training modal view
 	returnToPage(3)
-}
-
-// onExportTopic - Export current conversation as a file .txt
-func onExportTopic() {
-	if node.layout.promptOutput.GetText(true) == "" {
-		return
-	}
-
-	out := util.ConstructPathFileTo("export", "txt")
-	out.WriteString(node.layout.promptOutput.GetText(true))
-}
-
-// onExportTrainedTopic - Export current conversation as a trained model as a .json file
-func onExportTrainedTopic() {
-	if node.controller.currentAgent.preferences.IsTraining {
-		node.layout.eventManager.SaveTraining()
-	}
 }
 
 // onProfile - Profile view event
 func onProfile() {
 	returnToPage(4)
+}
+
+// onExportTopic - Export current conversation as a file .txt
+func onExportTopic() {
+	if node.layout.promptOutput.GetText(true) == "" {
+		node.layout.infoOutput.SetText("No converstaion started yet...")
+		return
+	}
+
+	out := util.ConstructTsPathFileTo("export", "txt")
+	out.WriteString(node.layout.promptOutput.GetText(true))
+}
+
+// onExportTrainedTopic - Export current conversation as a trained model as a .json file
+func onExportTrainedTopic() {
+	if node.layout.promptOutput.GetText(true) == "" {
+		node.layout.infoOutput.SetText("You don't have any interaction to be exported...")
+		return
+	}
+
+	var event EventManager
+	event.ExportTraining(node.controller.events.pool.TrainingSession)
+
+	clearConsoleView()
+	node.layout.infoOutput.SetText("Training session exported, you can continue with a new conversation.")
 }
 
 // onChangeRoles - Dropdown from input to change role
@@ -323,6 +346,9 @@ func onTextAccept(key tcell.Key) {
 		}
 
 		group.Wait()
+
+		node.controller.currentAgent.cachedPrompt = node.layout.promptOutput.GetText(true)
+
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&
 				node.controller.currentAgent.preferences.PromptCtx != nil) {
@@ -348,21 +374,6 @@ func onEditChecked(state bool) {
 	}
 	// new topic event
 	onNewTopic()
-}
-
-// onConversationChecked - Conversation mode for friendly responses
-func onConversationChecked(state bool) {
-	node.controller.currentAgent.preferences.IsConversational = state
-}
-
-// onDeveloperChecked - Developer mode for uncensored responses
-func onDeveloperChecked(state bool) {
-	node.controller.currentAgent.preferences.IsDeveloper = state
-}
-
-// onTrainingChecked - Training mode to store the current conversation
-func onTrainingChecked(state bool) {
-	node.controller.currentAgent.preferences.IsTraining = state
 }
 
 // onStreamingChecked - Streaming mode
@@ -445,8 +456,6 @@ func returnToPage(index int) {
 		node.layout.pages.HidePage("training")
 		node.layout.pages.HidePage("id")
 	}
-	// Clear console
-	clearConsoleView()
 }
 
 // generateLayoutContent - Layout content for console view
@@ -532,7 +541,8 @@ func createConsoleView() bool {
 				"\u0032\u0030\u0030\u0030\u0030"},
 			3,
 			onChangeCharacter).
-		AddButton("Affinity", onRefinementTopic).
+		AddDropDown("Template", node.controller.currentAgent.template, 0, onTemplateChange).
+		AddButton("Affinity", onRefinement).
 		AddButton("New conversation", onNewTopic).
 		AddButton("Export conversation", onExportTopic).
 		AddButton("Export training", onExportTrainedTopic).
@@ -604,17 +614,14 @@ func createRefinementView() bool {
 	affinitySection := tview.NewForm()
 	// Affinity section
 	affinitySection.
-		AddInputField("Results", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Results), 5, onTypeAccept, onResultChange).
-		AddInputField("Probabilities", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Probabilities), 5, onTypeAccept, onProbabilityChange).
-		AddInputField("Temperature [0.0 / 1.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Temperature), 5, onTypeAccept, onTemperatureChange).
-		AddInputField("Topp [0.0 / 1.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Topp), 5, onTypeAccept, onToppChange).
-		AddInputField("Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, onTypeAccept, onPenaltyChange).
-		AddInputField("Frequency Penalty [-2.0 / 2.0]", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
+		AddInputField("Results: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Results), 5, onTypeAccept, onResultChange).
+		AddInputField("Probabilities: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Probabilities), 5, onTypeAccept, onProbabilityChange).
+		AddInputField("Temperature [0.0 / 1.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Temperature), 5, onTypeAccept, onTemperatureChange).
+		AddInputField("Topp [0.0 / 1.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Topp), 5, onTypeAccept, onToppChange).
+		AddInputField("Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, onTypeAccept, onPenaltyChange).
+		AddInputField("Frequency Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
 		AddCheckbox("Edit mode (edit and improve the previous response)", false, onEditChecked).
-		AddCheckbox("Conversational mode (on Text and Turbo mode only)", false, onConversationChecked).
-		AddCheckbox("Developer mode (on Text and Turbo mode only)", false, onDeveloperChecked).
 		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, onStreamingChecked).
-		AddCheckbox("Training mode", false, onTrainingChecked).
 		AddButton("Back to chat", onBack).
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
@@ -625,7 +632,7 @@ func createRefinementView() bool {
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(1, 1, 10, 10)
+		SetBorderPadding(3, 3, 30, 30)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
@@ -643,8 +650,8 @@ func createRefinementView() bool {
 	return node.layout.affinityView != nil
 }
 
-// createTrainingModalView - Create modal view for training mode
-func createTrainingModalView() {
+// createModalView - Create modal view for training mode
+func createModalView() {
 	// Modal layout
 	node.layout.modalInput = tview.NewModal()
 	// Modal section
@@ -657,7 +664,12 @@ func createTrainingModalView() {
 			if buttonLabel == "Ok" {
 				onExportTrainedTopic()
 			}
-			returnToPage(1)
+
+			if buttonLabel == "Cancel" {
+				clearConsoleView()
+			}
+
+			onConsole()
 		})
 }
 
@@ -671,16 +683,20 @@ func createIDModalView() {
 			node.controller.currentAgent.id = textToCheck
 			return true
 		}, nil).
-		AddInputField("Enter your API key: ", node.controller.currentAgent.key, 30, func(textToCheck string, lastChar rune) bool {
-			node.controller.currentAgent.key = textToCheck
+		AddInputField("API key: ", node.controller.currentAgent.key[0], 60, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.key[0] = textToCheck
+			return true
+		}, nil).
+		AddInputField("API key [GPT-Zero]: ", node.controller.currentAgent.key[1], 60, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.key[1] = textToCheck
 			return true
 		}, nil).
 		AddButton("Save", func() {
 			node.controller.currentAgent.client, node.controller.currentAgent.exClient = node.controller.currentAgent.Connect()
-			returnToPage(2)
+			onRefinement()
 		}).
 		AddButton("Cancel", func() {
-			returnToPage(1)
+			onConsole()
 		}).
 		SetLabelColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignCenter).
@@ -700,7 +716,7 @@ func InitializeLayout() {
 	// Create views
 	createConsoleView()
 	createRefinementView()
-	createTrainingModalView()
+	createModalView()
 	createIDModalView()
 	// Window frame
 	node.layout.pages = tview.NewPages()
@@ -721,8 +737,8 @@ func InitializeLayout() {
 		SetRoot(node.layout.pages, true).
 		SetFocus(node.layout.promptArea).
 		EnableMouse(true)
-	// Console view
-	returnToPage(4)
+	// Initial view
+	onProfile()
 	// Validate forms
 	validateRefinementForm()
 }

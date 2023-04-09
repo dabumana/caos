@@ -11,7 +11,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
@@ -46,13 +45,12 @@ func isContextValid(current Agent) bool {
 func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
 	if isContextValid(service) {
 		var buffer []string
-		var event EventManager
 
 		resp := &gpt3.ChatCompletionStreamResponse{}
 
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -77,7 +75,7 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 
 		fmt.Print("\033[H\033[2J")
 		err := service.client.ChatCompletionStream(
-			node.controller.currentAgent.ctx,
+			service.ctx,
 			req, func(out *gpt3.ChatCompletionStreamResponse) {
 				resp.ID = out.ID
 				resp.Choices = out.Choices
@@ -104,6 +102,7 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 				}
 			})
 
+		var event EventManager
 		event.Errata(err)
 
 		bWriter.Write([]byte("\n\n###\n\n"))
@@ -126,7 +125,7 @@ func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 	if isContextValid(service) {
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -143,7 +142,7 @@ func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 		}
 
 		resp, err := service.client.ChatCompletion(
-			node.controller.currentAgent.ctx,
+			service.ctx,
 			req)
 
 		var event EventManager
@@ -160,7 +159,7 @@ func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		req := gpt3.CompletionRequest{
-			Prompt:           node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -172,7 +171,7 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			Echo:             true}
 
 		resp, err := service.client.CompletionWithEngine(
-			node.controller.currentAgent.ctx,
+			service.ctx,
 			service.engineProperties.Model,
 			req)
 
@@ -189,13 +188,12 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 // SendStreamingCompletion - Send task prompt on stream mode
 func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
-		var event EventManager
 		var buffer []string
 
 		resp := &gpt3.CompletionResponse{}
 
 		req := gpt3.CompletionRequest{
-			Prompt:           node.controller.currentAgent.SetPrompt(service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -216,7 +214,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 		fmt.Print("\033[H\033[2J")
 		isOnce := false
 		err := service.client.CompletionStreamWithEngine(
-			node.controller.currentAgent.ctx,
+			service.ctx,
 			service.engineProperties.Model,
 			req, func(out *gpt3.CompletionResponse) {
 				go func(in chan string) {
@@ -250,11 +248,12 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 							fmt.Printf("\x1b[32m%s", out)
 						}
 					}
-				}(node.controller.currentAgent.preferences.InlineText)
+				}(service.preferences.InlineText)
 				// Write buffer
-				bWriter.Write([]byte(<-node.controller.currentAgent.preferences.InlineText))
+				bWriter.Write([]byte(<-service.preferences.InlineText))
 			})
 
+		var event EventManager
 		event.Errata(err)
 
 		bWriter.Write([]byte("\n\n###\n\n"))
@@ -325,11 +324,6 @@ func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 			Document: string(service.predictProperties.Input[0]),
 		}
 
-		zeroApiKey := os.Getenv("ZERO_API_KEY")
-		if zeroApiKey == "" {
-			log.Fatalln("Missing GPT ZERO API KEY, you have some free requests.")
-		}
-
 		var event EventManager
 		out, err := json.Marshal(req)
 		if err != nil {
@@ -351,7 +345,7 @@ func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 			if req != nil {
 				req.Header.Set("Accept", "application/json")
 				req.Header.Set("Content-type", "application/json")
-				req.Header.Set("X-Api-Key", zeroApiKey)
+				req.Header.Set("X-Api-Key", service.key[1])
 
 				resp, err := service.exClient.Do(req)
 				if err != nil {

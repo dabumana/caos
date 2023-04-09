@@ -15,23 +15,21 @@ import (
 
 // EventManager - Log event service
 type EventManager struct {
-	event   model.HistoricalEvent
-	session model.HistoricalSession
-	pool    model.PoolProperties
+	pool model.PoolProperties
 }
 
-// SaveTraining - Export training in JSON format
-func (c EventManager) SaveTraining() {
-	raw, _ := json.MarshalIndent(c.pool.TrainingSession, "", "\u0009")
-	out := util.ConstructPathFileTo("training", "json")
+// ExportTraining - Export training in JSON format
+func (c EventManager) ExportTraining(session []model.TrainingSession) {
+	raw, _ := json.MarshalIndent(session, "", "\u0009")
+	out := util.ConstructTsPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 
-// saveLog - Save log with actual historic detail
-func (c EventManager) saveLog() {
+// saveLogSession - Save log session with actual detail
+func (c EventManager) saveLogSession() {
 	if c.pool.Session != nil {
 		raw, _ := json.MarshalIndent(c.pool.Session[len(c.pool.Session)-1], "", "\u0009")
-		out := util.ConstructPathFileTo("log", "json")
+		out := util.ConstructTsPathFileTo("log", "json")
 		out.WriteString(string(raw))
 	}
 }
@@ -46,38 +44,39 @@ func (c EventManager) clearSession() {
 
 // appendToSession - Add a set of events as a session
 func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
-	historical := model.HistoricalEvent{
+	lEvent := model.HistoricalEvent{
 		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
 		Event:     prompt,
 	}
 
-	c.pool.Event = append(c.pool.Event, historical)
+	c.pool.Event = append(c.pool.Event, lEvent)
+	node.controller.events.pool.Event = append(node.controller.events.pool.Event, lEvent)
 
-	lsession := model.HistoricalSession{
+	lSession := model.HistoricalSession{
 		ID:      id,
-		Session: []model.HistoricalEvent{historical},
+		Session: []model.HistoricalEvent{lEvent},
 	}
 
-	c.pool.Session = append(c.pool.Session, lsession)
+	c.pool.Session = append(c.pool.Session, lSession)
+	node.controller.events.pool.Session = append(node.controller.events.pool.Session, lSession)
 
-	if node.controller.currentAgent.preferences.IsTraining {
-
-		event := model.HistoricalTrainingEvent{
-			Timestamp: c.event.Timestamp,
-			Event:     train,
-		}
-
-		c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
-
-		session := model.HistoricalTrainingSession{
-			ID:      c.session.ID,
-			Session: []model.HistoricalTrainingEvent{event},
-		}
-
-		c.pool.TrainingSession = append(c.pool.TrainingSession, session)
+	event := model.TrainingEvent{
+		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
+		Event:     train,
 	}
 
-	c.saveLog()
+	c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
+	node.controller.events.pool.TrainingEvent = append(node.controller.events.pool.TrainingEvent, event)
+
+	session := model.TrainingSession{
+		ID:      id,
+		Session: []model.TrainingEvent{event},
+	}
+
+	c.pool.TrainingSession = append(c.pool.TrainingSession, session)
+	node.controller.events.pool.TrainingSession = append(node.controller.events.pool.TrainingSession, session)
+
+	c.saveLogSession()
 }
 
 // appendToLayout - Append and visualize content in console page view
@@ -167,18 +166,22 @@ func (c EventManager) LogCompletion(header model.EngineProperties, body model.Pr
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-	}
 
-	modelTrainer := model.TrainingPrompt{
-		Prompt:     body.PromptContext,
-		Completion: []string{resp.Choices[0].Text},
-	}
+		modelTrainer = model.TrainingPrompt{
+			Prompt:     body.PromptContext,
+			Completion: []string{resp.Choices[i].Text},
+		}
 
-	modelPrompt := model.HistoricalPrompt{
-		Header: header,
-		Body:   body,
+		modelPrompt = model.HistoricalPrompt{
+			Header: header,
+			Body:   body,
+		}
+
 	}
 
 	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
@@ -187,62 +190,71 @@ func (c EventManager) LogCompletion(header model.EngineProperties, body model.Pr
 
 // LogEdit - Response details in a .json file
 func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
 
-		modelTrainer := model.TrainingPrompt{
+		modelTrainer = model.TrainingPrompt{
 			Prompt:     body.PromptContext,
 			Completion: []string{resp.Choices[i].Text},
 		}
 
-		modelPrompt := model.HistoricalPrompt{
+		modelPrompt = model.HistoricalPrompt{
 			Header: header,
 			Body:   body,
 		}
-
-		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
+
+	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
 // LogEmbedding - Response details in a .json file
 func (c EventManager) LogEmbedding(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	for i := range resp.Data {
 		body.Content = []string{resp.Data[i].Object}
 
-		modelTrainer := model.TrainingPrompt{
+		modelTrainer = model.TrainingPrompt{
 			Prompt:     body.PromptContext,
 			Completion: []string{fmt.Sprintf("%v", resp.Data[i])},
 		}
 
-		modelPrompt := model.HistoricalPrompt{
+		modelPrompt = model.HistoricalPrompt{
 			Header: header,
 			Body:   body,
 		}
-
-		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
+
+	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
 // LogPredict - ResponseDetails in a .json file
 func (c EventManager) LogPredict(header model.EngineProperties, body model.PredictProperties, resp *model.PredictResponse) {
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	for i := range resp.Documents {
 		predictProperties := model.PredictProperties{
 			Input:   body.Input,
 			Details: *resp,
 		}
 
-		modelTrainer := model.TrainingPrompt{
+		modelTrainer = model.TrainingPrompt{
 			Prompt:     body.Input,
 			Completion: []string{fmt.Sprintf("%v", resp.Documents[i])},
 		}
 
-		modelPrompt := model.HistoricalPrompt{
+		modelPrompt = model.HistoricalPrompt{
 			Header:         header,
 			PredictiveBody: predictProperties,
 		}
-
-		c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 	}
+
+	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
 // VisualLogChatCompletion - Chat response details
@@ -445,7 +457,7 @@ func (c EventManager) LogClient(client Agent) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((&&     ..............&&&((((.,./(((((((((((((((((((((((((((((&@@@@& &  (.&......*....    @@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	`)
 	fmt.Printf("\n-------------------------------------------\n")
-	fmt.Printf("Context: %v\nClient: %v\n", client.ctx, client.client)
+	fmt.Printf("Version: %v\nClient ID: %v\n", client.ctx, client.id)
 	fmt.Printf("-------------------------------------------\n")
 	fmt.Print(`This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.`)
 	fmt.Printf("\n-------------------------------------------\n")

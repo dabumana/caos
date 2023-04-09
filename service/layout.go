@@ -450,11 +450,6 @@ func returnToPage(index int) {
 		node.layout.pages.HidePage("refinement")
 		node.layout.pages.HidePage("training")
 		node.layout.pages.ShowPage("id")
-	default:
-		node.layout.pages.ShowPage("console")
-		node.layout.pages.HidePage("refinement")
-		node.layout.pages.HidePage("training")
-		node.layout.pages.HidePage("id")
 	}
 }
 

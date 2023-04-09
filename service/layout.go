@@ -96,6 +96,7 @@ func onNewTopic() {
 	node.controller.currentAgent.preferences.IsNewSession = true
 	node.controller.currentAgent.preferences.IsPromptReady = false
 	node.controller.currentAgent.preferences.PromptCtx = []string{""}
+	node.controller.currentAgent.cachedPrompt = ""
 
 	if node.layout.promptOutput.GetText(true) == "" {
 		// Clear console view
@@ -148,7 +149,7 @@ func onExportTopic() {
 		return
 	}
 
-	out := util.ConstructPathFileTo("export", "txt")
+	out := util.ConstructTsPathFileTo("export", "txt")
 	out.WriteString(node.layout.promptOutput.GetText(true))
 }
 
@@ -345,6 +346,9 @@ func onTextAccept(key tcell.Key) {
 		}
 
 		group.Wait()
+
+		node.controller.currentAgent.cachedPrompt = node.layout.promptOutput.GetText(true)
+
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&
 				node.controller.currentAgent.preferences.PromptCtx != nil) {

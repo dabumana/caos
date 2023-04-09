@@ -94,8 +94,8 @@ func CalcTokenPrompt(length int) int64 {
 	return int64(length) / 4
 }
 
-// ConstructPathFileTo - Initialize a directory for further storage in a TXT or JSON file
-func ConstructPathFileTo(path string, format string) *os.File {
+// ConstructPathFileTo - Initialize a directory for further storage in a TXT or JSON file includes a timestamp
+func ConstructTsPathFileTo(path string, format string) *os.File {
 	var dir string
 	if dir, e := os.Getwd(); e != nil {
 		fmt.Printf("dir: %v\n", dir)
@@ -106,6 +106,7 @@ func ConstructPathFileTo(path string, format string) *os.File {
 	}
 
 	var out *os.File
+
 	now := fmt.Sprint(time.Now().UTC())
 	tsFile := fmt.Sprintf("%s-%s.%s", path, now, format)
 	pathOutput := filepath.Join(dir, path, tsFile)

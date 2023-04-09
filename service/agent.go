@@ -3,7 +3,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,6 +20,7 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
+	version           string
 	id                string
 	key               []string
 	template          []string
@@ -31,11 +31,14 @@ type Agent struct {
 	promptProperties  model.PromptProperties
 	predictProperties model.PredictProperties
 	preferences       parameters.GlobalPreferences
+	// Temporal cache
+	cachedPrompt string
 }
 
 // Initialize - Creates context background to be used along with the client
 func (c Agent) Initialize() Agent {
 	// ID
+	c.version = "v.0.1.9"
 	c.id = "anon"
 	// Key
 	c.key = c.getKeyFromLocal()
@@ -117,9 +120,10 @@ func (c Agent) getTemplateFromLocal() []string {
 	reader, _ := ioutil.ReadDir(path)
 	for _, file := range reader {
 		files = append(files, " "+strings.Split(file.Name(), ".")[0]+" ")
-		out, _ := ioutil.ReadFile(path + file.Name())
+		filePath := strings.Join([]string{path}, file.Name())
+		out, _ := ioutil.ReadFile(filePath)
 		if out != nil {
-			c.preferences.TemplateCtx = append(c.preferences.TemplateCtx, string(out[:]))
+			c.preferences.TemplateCtx = append(c.preferences.TemplateCtx, string(out))
 		}
 	}
 
@@ -161,8 +165,9 @@ func (c Agent) SetPredictionParameters(prompContext []string) model.PredictPrope
 }
 
 // SetPrompt - Conversion human-ai roles
-func (c Agent) SetPrompt(context string) []string {
-	// out := node.controller.currentAgent.preferences.TemplateCtx[node.controller.currentAgent.preferences.TemplateIndex]
-	prompt := []string{fmt.Sprint(">> ", context)}
+func (c Agent) SetPrompt(context string, input string) []string {
+	prompt := []string{context + input}
+	//out := c.preferences.TemplateCtx[c.preferences.TemplateIndex]
+	//prompt = append(prompt, fmt.Sprintf("%v", node.controller.events.pool.TrainingSession), context)
 	return prompt
 }

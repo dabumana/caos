@@ -69,7 +69,10 @@ func onFrequencyChange(text string) {
 
 // onTemplateChange - Template dropdown selection
 func onTemplateChange(option string, index int) {
-	node.controller.currentAgent.preferences.TemplateIndex = index
+	if node.controller.currentAgent.preferences.Template != index {
+		node.controller.currentAgent.preferences.Template = index
+		onNewTopic()
+	}
 }
 
 // onTypeAccept - Evaluates when an input text matches the field criteria
@@ -536,7 +539,7 @@ func createConsoleView() bool {
 				"\u0032\u0030\u0030\u0030\u0030"},
 			3,
 			onChangeCharacter).
-		AddDropDown("Template", node.controller.currentAgent.template, 0, onTemplateChange).
+		AddDropDown("Template", node.controller.currentAgent.templateId, 0, onTemplateChange).
 		AddButton("Affinity", onRefinement).
 		AddButton("New conversation", onNewTopic).
 		AddButton("Export conversation", onExportTopic).

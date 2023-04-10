@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"caos/model"
@@ -20,10 +19,14 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
-	version           string
-	id                string
-	key               []string
-	template          []string
+	// Versioned and ID
+	version string
+	id      string
+	key     []string
+	// Assistant context
+	templateId  []string
+	templateCtx []string
+	// Client context
 	ctx               context.Context
 	client            gpt3.Client
 	exClient          *http.Client
@@ -36,20 +39,21 @@ type Agent struct {
 }
 
 // Initialize - Creates context background to be used along with the client
-func (c Agent) Initialize() Agent {
+func (c *Agent) Initialize() Agent {
 	// ID
 	c.version = "v.0.1.9"
 	c.id = "anon"
 	// Key
-	c.key = c.getKeyFromLocal()
-	c.template = c.getTemplateFromLocal()
+	c.key = getKeyFromLocal()
+	// template
+	c.templateId, c.templateCtx = getTemplateFromLocal()
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
 	// Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
-	c.preferences.TemplateIndex = 0
+	c.preferences.Template = 0
 	c.preferences.Engine = "text-davinci-003"
 	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
 	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
@@ -71,11 +75,11 @@ func (c Agent) Initialize() Agent {
 	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
 	// Return created client
-	return c
+	return *c
 }
 
 // Connect - Contextualize the API to create a new client
-func (c Agent) Connect() (gpt3.Client, *http.Client) {
+func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 	godotenv.Load()
 
 	externalClient := http.Client{
@@ -93,7 +97,7 @@ func (c Agent) Connect() (gpt3.Client, *http.Client) {
 }
 
 // getKeyFromLocal - Get the currect key stablished on the environment
-func (c Agent) getKeyFromLocal() []string {
+func getKeyFromLocal() []string {
 	var keys []string
 	var event EventManager
 
@@ -112,26 +116,27 @@ func (c Agent) getKeyFromLocal() []string {
 }
 
 // getTemplateFromLocal - Get templates on local dir
-func (c Agent) getTemplateFromLocal() []string {
-	var files []string
+func getTemplateFromLocal() ([]string, []string) {
+	var index []string
+	var context []string
 
 	dir, _ := os.Getwd()
 	path := dir + "/template/"
 	reader, _ := ioutil.ReadDir(path)
+
 	for _, file := range reader {
-		files = append(files, " "+strings.Split(file.Name(), ".")[0]+" ")
-		filePath := strings.Join([]string{path}, file.Name())
-		out, _ := ioutil.ReadFile(filePath)
+		index = append(index, file.Name())
+		out, _ := ioutil.ReadFile(path + file.Name())
 		if out != nil {
-			c.preferences.TemplateCtx = append(c.preferences.TemplateCtx, string(out))
+			context = append(context, string(out))
 		}
 	}
 
-	return files
+	return index, context
 }
 
 // SetEngineParameters - Set engine parameters for the current prompt
-func (c Agent) SetEngineParameters(id string, pmodel string, role model.Roles, temperature float32, topp float32, penalty float32, frequency float32) model.EngineProperties {
+func (c *Agent) SetEngineParameters(id string, pmodel string, role model.Roles, temperature float32, topp float32, penalty float32, frequency float32) model.EngineProperties {
 	properties := model.EngineProperties{
 		UserID:           id,
 		Model:            pmodel,
@@ -145,7 +150,7 @@ func (c Agent) SetEngineParameters(id string, pmodel string, role model.Roles, t
 }
 
 // SetPromptParameters - Set request parameters for the current prompt
-func (c Agent) SetPromptParameters(promptContext []string, instruction []string, tokens int, results int, probabilities int) model.PromptProperties {
+func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, tokens int, results int, probabilities int) model.PromptProperties {
 	properties := model.PromptProperties{
 		PromptContext: promptContext,
 		Instruction:   instruction,
@@ -157,7 +162,7 @@ func (c Agent) SetPromptParameters(promptContext []string, instruction []string,
 }
 
 // SetPredictionParameters - Set prediction parameters for the current prompt
-func (c Agent) SetPredictionParameters(prompContext []string) model.PredictProperties {
+func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProperties {
 	properties := model.PredictProperties{
 		Input: prompContext,
 	}
@@ -165,9 +170,7 @@ func (c Agent) SetPredictionParameters(prompContext []string) model.PredictPrope
 }
 
 // SetPrompt - Conversion human-ai roles
-func (c Agent) SetPrompt(context string, input string) []string {
-	prompt := []string{context + input}
-	//out := c.preferences.TemplateCtx[c.preferences.TemplateIndex]
-	//prompt = append(prompt, fmt.Sprintf("%v", node.controller.events.pool.TrainingSession), context)
+func (c *Agent) SetPrompt(template string, context string, input string) []string {
+	prompt := []string{template + context + input}
 	return prompt
 }

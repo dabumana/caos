@@ -42,7 +42,7 @@ func isContextValid(current Agent) bool {
 }
 
 // SendStreamingChatCompletion - Send streaming chat completion prompt
-func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
+func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
 	if isContextValid(service) {
 		var buffer []string
 
@@ -50,7 +50,7 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -121,11 +121,11 @@ func (c Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionS
 }
 
 // SendChatCompletion - Send chat completion prompt
-func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
+func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 	if isContextValid(service) {
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -156,10 +156,10 @@ func (c Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 }
 
 // SendCompletion - Send task prompt
-func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
+func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -186,14 +186,14 @@ func (c Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 }
 
 // SendStreamingCompletion - Send task prompt on stream mode
-func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
+func (c *Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		var buffer []string
 
 		resp := &gpt3.CompletionResponse{}
 
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -270,7 +270,7 @@ func (c Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse 
 }
 
 // SendEditPrompt - Send edit instruction task prompt
-func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
+func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 	if isContextValid(service) && service.promptProperties.PromptContext != nil {
 		req := gpt3.EditsRequest{
 			Model:       service.engineProperties.Model,
@@ -295,7 +295,7 @@ func (c Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 }
 
 // SendEmbeddingPrompt - Creates an embedding vector representing the input text
-func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
+func (c *Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 	if isContextValid(service) {
 		req := gpt3.EmbeddingsRequest{
 			Model: service.engineProperties.Model,
@@ -317,7 +317,7 @@ func (c Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 }
 
 // SendPredictablePrompt - Send a predictable request
-func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
+func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 	isValid := isContextValid(service)
 	if isValid {
 		req := model.PredictRequest{
@@ -373,7 +373,7 @@ func (c Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 }
 
 // GetListModels - Get actual list of available models
-func (c Prompt) GetListModels(service Agent) *gpt3.EnginesResponse {
+func (c *Prompt) GetListModels(service Agent) *gpt3.EnginesResponse {
 	resp, err := service.client.Engines(service.ctx)
 
 	var event EventManager

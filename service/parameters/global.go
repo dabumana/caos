@@ -8,11 +8,11 @@ import (
 // GlobalPreferences - General
 type GlobalPreferences struct {
 	// Engine properties
+	Template          int
 	Engine            string
 	Mode              string
 	Models            []string
 	Roles             []string
-	TemplateCtx       []string
 	Historial         []model.HistoricalSession
 	TrainingHistorial []model.TrainingSession
 	// Prompt properties
@@ -35,10 +35,9 @@ type GlobalPreferences struct {
 	IsPromptStreaming bool
 	IsTurbo           bool
 	// Utilitaries
-	Role          model.Roles
-	CurrentID     string
-	InlineText    chan string
-	TemplateIndex int
+	Role       model.Roles
+	CurrentID  string
+	InlineText chan string
 }
 
 // ExternalBaseURL - External API endpoint

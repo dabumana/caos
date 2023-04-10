@@ -19,14 +19,14 @@ type EventManager struct {
 }
 
 // ExportTraining - Export training in JSON format
-func (c EventManager) ExportTraining(session []model.TrainingSession) {
+func (c *EventManager) ExportTraining(session []model.TrainingSession) {
 	raw, _ := json.MarshalIndent(session, "", "\u0009")
 	out := util.ConstructTsPathFileTo("training", "json")
 	out.WriteString(string(raw))
 }
 
 // saveLogSession - Save log session with actual detail
-func (c EventManager) saveLogSession() {
+func (c *EventManager) saveLogSession() {
 	if c.pool.Session != nil {
 		raw, _ := json.MarshalIndent(c.pool.Session[len(c.pool.Session)-1], "", "\u0009")
 		out := util.ConstructTsPathFileTo("log", "json")
@@ -35,7 +35,7 @@ func (c EventManager) saveLogSession() {
 }
 
 // clearSession - Clear all the pools
-func (c EventManager) clearSession() {
+func (c *EventManager) clearSession() {
 	c.pool.Event = nil
 	c.pool.Session = nil
 	c.pool.TrainingEvent = nil
@@ -43,7 +43,7 @@ func (c EventManager) clearSession() {
 }
 
 // appendToSession - Add a set of events as a session
-func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
+func (c *EventManager) appendToSession(id string, prompt model.HistoricalPrompt, train model.TrainingPrompt) {
 	lEvent := model.HistoricalEvent{
 		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
 		Event:     prompt,
@@ -80,13 +80,13 @@ func (c EventManager) appendToSession(id string, prompt model.HistoricalPrompt, 
 }
 
 // appendToLayout - Append and visualize content in console page view
-func (c EventManager) appendToLayout(responses []string) {
+func (c *EventManager) appendToLayout(responses []string) {
 	log := strings.Join(responses, "")
 	node.layout.promptOutput.SetText(log)
 }
 
 // appendToChoice - Append choice to response
-func (c EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, predict *model.Predict) []string {
+func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.EditsResponse, search *gpt3.EmbeddingsResponse, chat *gpt3.ChatCompletionResponse, predict *model.Predict) []string {
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
@@ -114,7 +114,7 @@ func (c EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.E
 }
 
 // LogChatCompletion - Chat response details in a .json file
-func (c EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if node.controller.currentAgent.preferences.IsNewSession {
 		c.clearSession()
 		node.controller.currentAgent.preferences.IsNewSession = false
@@ -160,7 +160,7 @@ func (c EventManager) LogChatCompletion(header model.EngineProperties, body mode
 }
 
 // LogCompletion - Response details in a .json file
-func (c EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
+func (c *EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
 	if node.controller.currentAgent.preferences.IsNewSession {
 		c.clearSession()
 		node.controller.currentAgent.preferences.IsNewSession = false
@@ -189,7 +189,7 @@ func (c EventManager) LogCompletion(header model.EngineProperties, body model.Pr
 }
 
 // LogEdit - Response details in a .json file
-func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
+func (c *EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -211,7 +211,7 @@ func (c EventManager) LogEdit(header model.EngineProperties, body model.PromptPr
 }
 
 // LogEmbedding - Response details in a .json file
-func (c EventManager) LogEmbedding(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
+func (c *EventManager) LogEmbedding(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -233,7 +233,7 @@ func (c EventManager) LogEmbedding(header model.EngineProperties, body model.Pro
 }
 
 // LogPredict - ResponseDetails in a .json file
-func (c EventManager) LogPredict(header model.EngineProperties, body model.PredictProperties, resp *model.PredictResponse) {
+func (c *EventManager) LogPredict(header model.EngineProperties, body model.PredictProperties, resp *model.PredictResponse) {
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -258,7 +258,7 @@ func (c EventManager) LogPredict(header model.EngineProperties, body model.Predi
 }
 
 // VisualLogChatCompletion - Chat response details
-func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
 		if !node.controller.currentAgent.preferences.IsPromptStreaming {
 			c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
@@ -295,7 +295,7 @@ func (c EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse,
 }
 
 // VisualLogCompletion - Response details
-func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
+func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 	}
@@ -318,7 +318,7 @@ func (c EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 }
 
 // VisualLogEdit - Log edited response details
-func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
+func (c *EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
 	}
@@ -335,7 +335,7 @@ func (c EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 }
 
 // VisualLogEmbedding - Log embedding response details
-func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
+func (c *EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 	if !node.controller.currentAgent.preferences.IsPromptStreaming {
 		c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
 	}
@@ -350,7 +350,7 @@ func (c EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
 }
 
 // VisualLogPredict - Log predicted response details
-func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
+func (c *EventManager) VisualLogPredict(resp *model.PredictResponse) {
 	var buffer []string
 	for i := range resp.Documents {
 		c.appendToLayout(c.appendToChoice(nil, nil, nil, nil, &resp.Documents[i]))
@@ -383,7 +383,7 @@ func (c EventManager) VisualLogPredict(resp *model.PredictResponse) {
 }
 
 // LogClient - Log client context
-func (c EventManager) LogClient(client Agent) {
+func (c *EventManager) LogClient(client Agent) {
 	fmt.Print(`
  _______________________________________________________________________________________________________________________________________________________________________________________________________
 |............................................................................................C.A.O.S....................................................................................................|	
@@ -457,14 +457,14 @@ func (c EventManager) LogClient(client Agent) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((&&     ..............&&&((((.,./(((((((((((((((((((((((((((((&@@@@& &  (.&......*....    @@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	`)
 	fmt.Printf("\n-------------------------------------------\n")
-	fmt.Printf("Version: %v\nClient ID: %v\n", client.ctx, client.id)
-	fmt.Printf("-------------------------------------------\n")
+	fmt.Printf("Version: %v\nClient ID: %v", client.version, client.id)
+	fmt.Printf("\n-------------------------------------------\n")
 	fmt.Print(`This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.`)
 	fmt.Printf("\n-------------------------------------------\n")
 }
 
 // LogEngine - Log current engine
-func (c EventManager) LogEngine(client Agent) {
+func (c *EventManager) LogEngine(client Agent) {
 	node.layout.metadataOutput.SetText(
 		fmt.Sprintf("Model: %v\nRole: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
 			client.engineProperties.Model,
@@ -481,7 +481,7 @@ func (c EventManager) LogEngine(client Agent) {
 }
 
 // LogPredictEngine - Log current predict engine
-func (c EventManager) LogPredictEngine(client Agent) {
+func (c *EventManager) LogPredictEngine(client Agent) {
 	var out string
 	for i := range client.predictProperties.Details.Documents {
 		if client.predictProperties.Details.Documents[i].AverageProb >= 0.5 {
@@ -501,7 +501,7 @@ func (c EventManager) LogPredictEngine(client Agent) {
 }
 
 // Errata - Generic error method
-func (c EventManager) Errata(err error) {
+func (c *EventManager) Errata(err error) {
 	if err != nil {
 		node.controller.currentAgent.preferences.IsNewSession = true
 		node.layout.infoOutput.SetText(err.Error())

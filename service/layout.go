@@ -539,7 +539,7 @@ func createConsoleView() bool {
 				"\u0032\u0030\u0030\u0030\u0030"},
 			3,
 			onChangeCharacter).
-		AddDropDown("Template", node.controller.currentAgent.templateId, 0, onTemplateChange).
+		AddDropDown("Template", node.controller.currentAgent.templateID, 0, onTemplateChange).
 		AddButton("Affinity", onRefinement).
 		AddButton("New conversation", onNewTopic).
 		AddButton("Export conversation", onExportTopic).

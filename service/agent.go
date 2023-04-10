@@ -41,7 +41,7 @@ type Agent struct {
 // Initialize - Creates context background to be used along with the client
 func (c *Agent) Initialize() Agent {
 	// ID
-	c.version = "v.0.1.9"
+	c.version = "v.0.2.0"
 	c.id = "anon"
 	// Key
 	c.key = getKeyFromLocal()
@@ -170,7 +170,11 @@ func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProp
 }
 
 // SetPrompt - Conversion human-ai roles
-func (c *Agent) SetPrompt(template string, context string, input string) []string {
-	prompt := []string{template + context + input}
+func (c *Agent) SetPrompt(context string, input string) []string {
+	if context == "" {
+		context = c.templateCtx[c.preferences.Template]
+	}
+
+	prompt := []string{context + input}
 	return prompt
 }

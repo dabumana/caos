@@ -50,7 +50,6 @@ func (c *EventManager) appendToSession(id string, prompt model.HistoricalPrompt,
 	}
 
 	c.pool.Event = append(c.pool.Event, lEvent)
-	node.controller.events.pool.Event = append(node.controller.events.pool.Event, lEvent)
 
 	lSession := model.HistoricalSession{
 		ID:      id,
@@ -58,7 +57,6 @@ func (c *EventManager) appendToSession(id string, prompt model.HistoricalPrompt,
 	}
 
 	c.pool.Session = append(c.pool.Session, lSession)
-	node.controller.events.pool.Session = append(node.controller.events.pool.Session, lSession)
 
 	event := model.TrainingEvent{
 		Timestamp: fmt.Sprint(time.Now().UnixMilli()),
@@ -66,7 +64,6 @@ func (c *EventManager) appendToSession(id string, prompt model.HistoricalPrompt,
 	}
 
 	c.pool.TrainingEvent = append(c.pool.TrainingEvent, event)
-	node.controller.events.pool.TrainingEvent = append(node.controller.events.pool.TrainingEvent, event)
 
 	session := model.TrainingSession{
 		ID:      id,
@@ -74,7 +71,6 @@ func (c *EventManager) appendToSession(id string, prompt model.HistoricalPrompt,
 	}
 
 	c.pool.TrainingSession = append(c.pool.TrainingSession, session)
-	node.controller.events.pool.TrainingSession = append(node.controller.events.pool.TrainingSession, session)
 
 	c.saveLogSession()
 }
@@ -120,42 +116,41 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 		node.controller.currentAgent.preferences.IsNewSession = false
 	}
 
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	if resp != nil && cresp == nil {
 		for i := range resp.Choices {
 			body.Content = []string{resp.Choices[i].Message.Content}
 
-			modelTrainer := model.TrainingPrompt{
+			modelTrainer = model.TrainingPrompt{
 				Prompt:     body.PromptContext,
 				Completion: []string{resp.Choices[i].Message.Content},
 			}
 
-			modelPrompt := model.HistoricalPrompt{
+			modelPrompt = model.HistoricalPrompt{
 				Header: header,
 				Body:   body,
 			}
-
-			c.appendToSession(resp.ID, modelPrompt, modelTrainer)
-
-			node.controller.currentAgent.preferences.CurrentID = resp.ID
 		}
+		c.appendToSession(resp.ID, modelPrompt, modelTrainer)
+		node.controller.currentAgent.preferences.CurrentID = resp.ID
 	} else if cresp != nil && resp == nil {
 		for i := range cresp.Choices {
 			body.Content = []string{cresp.Choices[i].Delta.Content}
 
-			modelTrainer := model.TrainingPrompt{
+			modelTrainer = model.TrainingPrompt{
 				Prompt:     body.PromptContext,
 				Completion: []string{cresp.Choices[i].Delta.Content},
 			}
 
-			modelPrompt := model.HistoricalPrompt{
+			modelPrompt = model.HistoricalPrompt{
 				Header: header,
 				Body:   body,
 			}
-
-			c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
-
-			node.controller.currentAgent.preferences.CurrentID = cresp.ID
 		}
+		c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
+		node.controller.currentAgent.preferences.CurrentID = cresp.ID
 	}
 }
 

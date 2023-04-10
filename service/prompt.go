@@ -50,7 +50,7 @@ func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletion
 
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -125,7 +125,7 @@ func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse 
 	if isContextValid(service) {
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -159,7 +159,7 @@ func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse 
 func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -193,7 +193,7 @@ func (c *Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse
 		resp := &gpt3.CompletionResponse{}
 
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.templateCtx[service.preferences.Template], service.cachedPrompt, service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),

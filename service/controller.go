@@ -14,7 +14,7 @@ type Controller struct {
 }
 
 // AttachProfile - Attach profile to a new service client
-func (c Controller) AttachProfile() Agent {
+func (c *Controller) AttachProfile() Agent {
 	var serviceClient Agent
 	serviceClient = serviceClient.Initialize()
 
@@ -22,13 +22,13 @@ func (c Controller) AttachProfile() Agent {
 }
 
 // FlushEvents - Reset the pool
-func (c Controller) FlushEvents() {
+func (c *Controller) FlushEvents() {
 	node.controller.events.pool.TrainingEvent = []model.TrainingEvent{}
 	node.controller.events.pool.TrainingSession = []model.TrainingSession{}
 }
 
 // EditRequest - Start edit request  to send a task prompt
-func (c Controller) EditRequest() {
+func (c *Controller) EditRequest() {
 	resp := node.prompt.SendEditPrompt(c.currentAgent)
 
 	if resp != nil {
@@ -40,7 +40,7 @@ func (c Controller) EditRequest() {
 }
 
 // ChatCompletionRequest - Chat completion request to send task prompt
-func (c Controller) ChatCompletionRequest() {
+func (c *Controller) ChatCompletionRequest() {
 	var resp *gpt3.ChatCompletionResponse
 	var cresp *gpt3.ChatCompletionStreamResponse
 	if c.currentAgent.preferences.IsPromptStreaming {
@@ -61,7 +61,7 @@ func (c Controller) ChatCompletionRequest() {
 }
 
 // CompletionRequest - Start completion request to send task prompt
-func (c Controller) CompletionRequest() {
+func (c *Controller) CompletionRequest() {
 	var resp *gpt3.CompletionResponse
 	if c.currentAgent.preferences.IsPromptStreaming {
 		resp = node.prompt.SendStreamingCompletion(c.currentAgent)
@@ -78,7 +78,7 @@ func (c Controller) CompletionRequest() {
 }
 
 // EmbeddingRequest - Start a embedding vector request
-func (c Controller) EmbeddingRequest() {
+func (c *Controller) EmbeddingRequest() {
 	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
 
 	if resp != nil {
@@ -90,7 +90,7 @@ func (c Controller) EmbeddingRequest() {
 }
 
 // PredictableRequest - Start a predictable string request
-func (c Controller) PredictableRequest() {
+func (c *Controller) PredictableRequest() {
 	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
 
 	if resp != nil {
@@ -104,7 +104,7 @@ func (c Controller) PredictableRequest() {
 }
 
 // ListModels - Get actual models available
-func (c Controller) ListModels() {
+func (c *Controller) ListModels() {
 	resp := node.prompt.GetListModels(c.currentAgent)
 	if resp != nil {
 		for _, i := range resp.Data {

@@ -17,9 +17,10 @@ type Node struct {
 }
 
 // Start - Initialize node service
-func (c Node) Start() {
+func (c *Node) Start() {
 	var controller Controller
 	var event EventManager
+
 	node.controller = controller
 
 	if node.controller.currentAgent.client == nil {

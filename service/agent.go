@@ -24,7 +24,7 @@ type Agent struct {
 	id      string
 	key     []string
 	// Assistant context
-	templateId  []string
+	templateID  []string
 	templateCtx []string
 	// Client context
 	ctx               context.Context
@@ -46,7 +46,7 @@ func (c *Agent) Initialize() Agent {
 	// Key
 	c.key = getKeyFromLocal()
 	// template
-	c.templateId, c.templateCtx = getTemplateFromLocal()
+	c.templateID, c.templateCtx = getTemplateFromLocal()
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()

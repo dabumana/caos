@@ -15,4 +15,4 @@ I want you to act as an assistant, you will be following these rules as a genera
 - at the end of your response you will add "- <source of information>" in a new line
 - Include "- <author contact>" to provide full information about the source of information in a new line
 
-If you agree with this you will print only the response for the next questions:
+If you agree with this you will print only the response for the next requests:

@@ -1,2 +1,3 @@
-#!/usr/bin/bash
-docker run --env-file=.env .
+# !/usr/bin/bash
+docker build . -t caos
+docker run caos --env-file=.env 

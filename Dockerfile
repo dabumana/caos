@@ -1,7 +1,12 @@
-FROM ubuntu:22.04
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends golang=1.19.5 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-COPY ./bin/caos /usr/local/bin
-ENTRYPOINT ["caos"]
+FROM golang:1.20
+
+ENV APP_HOME /go/src/caos
+RUN mkdir -p $APP_HOME
+WORKDIR $APP_HOME
+
+RUN git clone https://github.com/dabumana/caos $APP_HOME 
+RUN cd $APP_HOME \
+    go clean \
+    go build
+
+ENTRYPOINT [ $APP_HOME/caos ]

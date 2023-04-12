@@ -99,12 +99,12 @@ func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 // getKeyFromLocal - Get the currect key stablished on the environment
 func getKeyFromLocal() []string {
 	var keys []string
-	var event EventManager
 
 	viper.SetConfigFile(".env")
 	err := viper.ReadInConfig()
 	if err != nil {
-		event.Errata(err)
+		keys = append(keys, "", "")
+		return keys
 	}
 
 	val1, _ := viper.Get("API_KEY").(string)

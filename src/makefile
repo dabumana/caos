@@ -1,13 +1,15 @@
-APP=caos
+APP=''
+ARCH=''
 ENTRYPOINT=main.go
+VERSION=''
 
-build:
-	GOARCH=amd64 GOOS=darwin go build -o ./src/bin/${APP}-darwin ${ENDPOINT}
-	GOARCH=amd64 GOOS=linux go build -o ./src/bin/${APP}-linux ${ENDPOINT}
-	GOARCH=amd64 GOOS=windows go build -o ./src/bin/${APP}-windows ${ENDPOINT}
+build: clean
+	GOARCH=${ARCH} GOOS=darwin go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
+	GOARCH=${ARCH} GOOS=linux go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
+	GOARCH=${ARCH} GOOS=windows go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
 
 clean:
-	go clean go.sum
+	go clean
  	# Remove cache directories
 	rm -rf 'bin'
 	rm -rf 'log'
@@ -18,10 +20,10 @@ coverage:
 	go test --cover ./...
 
 run: build
-	./${APP}
+	./bin/${APP}-${VERSION}
 
 test:
 	go test ./...
 
 update:
-	go mod tiny 
+	go mod tidy

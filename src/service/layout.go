@@ -691,6 +691,7 @@ func createIDModalView() {
 		}, nil).
 		AddButton("Save", func() {
 			node.controller.currentAgent.client, node.controller.currentAgent.exClient = node.controller.currentAgent.Connect()
+			node.controller.currentAgent.SaveKeys()
 			onRefinement()
 		}).
 		AddButton("Cancel", func() {

@@ -44,7 +44,7 @@ func (c *Agent) Initialize() Agent {
 	c.version = "v.0.2.0"
 	c.id = "anon"
 	// Key
-	c.key = getKeyFromLocal()
+	c.key = getKeys()
 	// template
 	c.templateID, c.templateCtx = getTemplateFromLocal()
 	// Background context
@@ -94,6 +94,53 @@ func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 	c.exClient = &externalClient
 
 	return c.client, c.exClient
+}
+
+// SaveKeys - Set API keys
+func (c *Agent) SaveKeys() {
+	var event EventManager
+	_, err := os.Open(".env")
+	if err != nil {
+		_, err := os.Create(".env")
+		if err != nil {
+			event.Errata(err)
+		}
+	}
+	// Configuration file
+	viper.SetDefault("API_KEY", c.key[0])
+	viper.SetDefault("ZERO_API_KEY", c.key[1])
+	viper.WriteConfigAs(".env")
+}
+
+// getKeys - Grab API keys
+func getKeys() []string {
+	file, _ := os.Open(".env")
+	if file != nil {
+		return getKeyFromEnv()
+	} else {
+		return getKeyFromLocal()
+	}
+}
+
+// getKeyFromEnv - Get environment keys
+func getKeyFromEnv() []string {
+	var keys []string
+	// Variables from environment
+	api := os.Getenv("API_KEY")
+	if api != "" {
+		keys = append(keys, api)
+	} else {
+		keys = append(keys, "")
+	}
+
+	zeroApi := os.Getenv("ZERO_API_KEY")
+	if zeroApi != "" {
+		keys = append(keys, zeroApi)
+	} else {
+		keys = append(keys, "")
+	}
+
+	return keys
 }
 
 // getKeyFromLocal - Get the currect key stablished on the environment

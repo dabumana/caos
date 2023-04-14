@@ -1,7 +1,8 @@
 APP=caos
 ARCH=amd64
+VERSION=v.0.0.0
+# Configuration path
 CONFIG_PATH=./ci/service
-VERSION=v.0.2.0
 
 build:
 	make -C ./src clean
@@ -17,7 +18,7 @@ clean:
 coverage:
 	make -C ./src coverage
 
-run:
+run: build
 	make -C ./src run
 
 deploy-pod:

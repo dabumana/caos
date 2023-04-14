@@ -1,12 +1,9 @@
-APP=''
-ARCH=''
-ENTRYPOINT=main.go
-VERSION=''
+APP=caos
+ARCH=amd64
+VERSION=v.0.0.0
 
 build: clean
-	GOARCH=${ARCH} GOOS=darwin go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
-	GOARCH=${ARCH} GOOS=linux go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
-	GOARCH=${ARCH} GOOS=windows go build -o ./bin/${APP}-${VERSION} ${ENDPOINT}
+	GOARCH=${ARCH} go build -o ./bin/${APP}-${VERSION}
 
 clean:
 	go clean

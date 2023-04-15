@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -99,17 +100,18 @@ func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 // SaveKeys - Set API keys
 func (c *Agent) SaveKeys() {
 	var event EventManager
-	_, err := os.Open(".env")
+	dir, _ := os.Getwd()
+	path := fmt.Sprint(dir, ".env")
+	_, err := os.Open(path)
 	if err != nil {
-		_, err := os.Create(".env")
+		file, err := os.Create(".env")
 		if err != nil {
 			event.Errata(err)
 		}
+		outFile := fmt.Sprintf("API_KEY=%v\nZERO_API_KEY=%v\n", c.key[0], c.key[1])
+		file.Write([]byte(outFile))
+		file.Sync()
 	}
-	// Configuration file
-	viper.SetDefault("API_KEY", c.key[0])
-	viper.SetDefault("ZERO_API_KEY", c.key[1])
-	viper.WriteConfigAs(".env")
 }
 
 // getKeys - Grab API keys
@@ -147,7 +149,11 @@ func getKeyFromEnv() []string {
 func getKeyFromLocal() []string {
 	var keys []string
 
-	viper.SetConfigFile(".env")
+	dir, _ := os.Getwd()
+	path := fmt.Sprintf("%v/.env", dir)
+
+	viper.SetConfigFile(path)
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		keys = append(keys, "", "")
@@ -168,7 +174,7 @@ func getTemplateFromLocal() ([]string, []string) {
 	var context []string
 
 	dir, _ := os.Getwd()
-	path := dir + "/template/"
+	path := fmt.Sprintf("%v/template", dir)
 	reader, _ := ioutil.ReadDir(path)
 
 	for _, file := range reader {

@@ -32,9 +32,7 @@ Installation steps:
 
 -   **Edit mode**: First input will be contextual the second one instructional
 
--   **Conversational mode**: A friendly experience with the model	
-
--   **Developer mode**: Developer mode prompt context
+-   **Template**: Developer mode prompt context
 
 -   ##### Advanced parameters like:
 

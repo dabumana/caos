@@ -1,4 +1,4 @@
-# caos
+# c.a.o.s.
 
 [![Start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)
@@ -26,41 +26,38 @@ Installation steps:
 
 -   Test all the available models for **code/text/insert/similarity**
 
--   ##### Modes:
+#### Modes:
 
 -   **Training mode**: Prepare your own sets based on the interaction
-
 -   **Edit mode**: First input will be contextual the second one instructional
-
 -   **Template**: Developer mode prompt context
 
--   ##### Advanced parameters like:
+### Advanced parameters like:
 
-    #### Completion>
-    -   Temperature
-    -   Topp
-    -   Penalty
-    -   Frequency penalty
-    -   Max tokens
-    -   Engine
+#### Completion:
 
-    #### Edit>
-    -   Contextual input
+-   Temperature
+-   Topp
+-   Penalty
+-   Frequency penalty
+-   Max tokens
+-   Engine
 
-    ![console.gif](docs%2Fmedia%2Fedit.gif)
+#### Edit:
 
-    #### Embedded>
-    -   Nested input to analize embeddings
+-   Contextual input
+![console.gif](docs%2Fmedia%2Fedit.gif)
 
-    ![console.gif](docs%2Fmedia%2Fembedded.gif)
+#### Embedded:
 
-    #### Predict>
-    -   Nested input to analize text (Powered by GPTZero)
+-   Nested input to analize embeddings
+![console.gif](docs%2Fmedia%2Fembedded.gif)
 
-    ![console.gif](docs%2Fmedia%2Fzero.gif)
+#### Predict:
 
+-   Nested input to analize text (Powered by GPTZero)
+![console.gif](docs%2Fmedia%2Fzero.gif)
 -   Multiple results and probabilities
-
 -   Detailed log according to UTC
 
 ### How to use?

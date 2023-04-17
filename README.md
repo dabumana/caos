@@ -7,7 +7,9 @@
 
 ### Description
 
-Conversational assistant for openai services, includes advanced modes to modify the contextual information for specifical uses, engine, results, probabilities according to the ammount or words with predefined values for best accuracy.
+Our conversational assistant is designed to support a wide range of OpenAI services. It features advanced modes that allow you to customize the contextual information for specific use cases, including modifying the engine, results, and probabilities. With the ability to adjust the amount of words and predefined values, you can achieve the highest level of accuracy possible.
+
+Whether you need to fine-tune the performance of your language model or optimize your AI-powered chatbot, our conversational assistant provides you with the flexibility and control you need to achieve your goals. With its user-friendly interface and powerful features, you can easily configure the assistant to meet your needs and get the most out of your OpenAI services.
 
 ### Build
 

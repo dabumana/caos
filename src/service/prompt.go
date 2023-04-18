@@ -48,9 +48,11 @@ func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletion
 
 		resp := &gpt3.ChatCompletionStreamResponse{}
 
+		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
+
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: ctxContent,
 		}
 
 		req := gpt3.ChatCompletionRequest{
@@ -123,9 +125,11 @@ func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletion
 // SendChatCompletion - Send chat completion prompt
 func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
 	if isContextValid(service) {
+		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
+
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0],
+			Content: ctxContent,
 		}
 
 		req := gpt3.ChatCompletionRequest{

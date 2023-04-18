@@ -174,7 +174,7 @@ func getTemplateFromLocal() ([]string, []string) {
 	var context []string
 
 	dir, _ := os.Getwd()
-	path := fmt.Sprintf("%v/template", dir)
+	path := dir + "/template/"
 	reader, _ := ioutil.ReadDir(path)
 
 	for _, file := range reader {

@@ -111,6 +111,11 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 
 // appendToModel - Append conversation to session model
 func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
+	if node.controller.currentAgent.preferences.IsNewSession {
+		c.clearSession()
+		node.controller.currentAgent.preferences.IsNewSession = false
+	}
+
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -130,11 +135,6 @@ func (c *EventManager) appendToModel(header model.EngineProperties, body model.P
 
 // LogChatCompletion - Chat response details in a .json file
 func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
-	if node.controller.currentAgent.preferences.IsNewSession {
-		c.clearSession()
-		node.controller.currentAgent.preferences.IsNewSession = false
-	}
-
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -159,11 +159,6 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 
 // LogCompletion - Response details in a .json file
 func (c *EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
-	if node.controller.currentAgent.preferences.IsNewSession {
-		c.clearSession()
-		node.controller.currentAgent.preferences.IsNewSession = false
-	}
-
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -222,9 +217,7 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 // VisualLogChatCompletion - Chat response details
 func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
-		if !node.controller.currentAgent.preferences.IsPromptStreaming {
-			c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
-		}
+		c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
 
 		for i := range resp.Choices {
 			node.layout.infoOutput.SetText(
@@ -258,10 +251,7 @@ func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse
 
 // VisualLogCompletion - Response details
 func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
@@ -281,10 +271,7 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 
 // VisualLogEdit - Log edited response details
 func (c *EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Created,
@@ -298,10 +285,7 @@ func (c *EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 
 // VisualLogEmbedding - Log embedding response details
 func (c *EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
 	for i := range resp.Data {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Object,

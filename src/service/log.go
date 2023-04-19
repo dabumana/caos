@@ -109,8 +109,8 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 	return responses
 }
 
-// LogChatCompletion - Chat response details in a .json file
-func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+// appendToModel - Append conversation to session model
+func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
 	if node.controller.currentAgent.preferences.IsNewSession {
 		c.clearSession()
 		node.controller.currentAgent.preferences.IsNewSession = false
@@ -119,36 +119,39 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
+	modelTrainer = model.TrainingPrompt{
+		Prompt:     body.PromptContext,
+		Completion: completion,
+	}
+
+	modelPrompt = model.HistoricalPrompt{
+		Header:         header,
+		Body:           body,
+		PredictiveBody: predictBody,
+	}
+
+	return modelTrainer, modelPrompt
+}
+
+// LogChatCompletion - Chat response details in a .json file
+func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
 	if resp != nil && cresp == nil {
 		for i := range resp.Choices {
 			body.Content = []string{resp.Choices[i].Message.Content}
-
-			modelTrainer = model.TrainingPrompt{
-				Prompt:     body.PromptContext,
-				Completion: []string{resp.Choices[i].Message.Content},
-			}
-
-			modelPrompt = model.HistoricalPrompt{
-				Header: header,
-				Body:   body,
-			}
+			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
 		}
+
 		c.appendToSession(resp.ID, modelPrompt, modelTrainer)
 		node.controller.currentAgent.preferences.CurrentID = resp.ID
 	} else if cresp != nil && resp == nil {
 		for i := range cresp.Choices {
 			body.Content = []string{cresp.Choices[i].Delta.Content}
-
-			modelTrainer = model.TrainingPrompt{
-				Prompt:     body.PromptContext,
-				Completion: []string{cresp.Choices[i].Delta.Content},
-			}
-
-			modelPrompt = model.HistoricalPrompt{
-				Header: header,
-				Body:   body,
-			}
+			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
 		}
+
 		c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
 		node.controller.currentAgent.preferences.CurrentID = cresp.ID
 	}
@@ -156,27 +159,12 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 
 // LogCompletion - Response details in a .json file
 func (c *EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
-	if node.controller.currentAgent.preferences.IsNewSession {
-		c.clearSession()
-		node.controller.currentAgent.preferences.IsNewSession = false
-	}
-
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[i].Text},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
-
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
 	}
 
 	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
@@ -190,16 +178,7 @@ func (c *EventManager) LogEdit(header model.EngineProperties, body model.PromptP
 
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[i].Text},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -212,16 +191,7 @@ func (c *EventManager) LogEmbedding(header model.EngineProperties, body model.Pr
 
 	for i := range resp.Data {
 		body.Content = []string{resp.Data[i].Object}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{fmt.Sprintf("%v", resp.Data[i])},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{fmt.Sprintf("%v", resp.Data[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -238,15 +208,7 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 			Details: *resp,
 		}
 
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.Input,
-			Completion: []string{fmt.Sprintf("%v", resp.Documents[i])},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header:         header,
-			PredictiveBody: predictProperties,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, model.PromptProperties{}, predictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -255,9 +217,7 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 // VisualLogChatCompletion - Chat response details
 func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if resp != nil && cresp == nil {
-		if !node.controller.currentAgent.preferences.IsPromptStreaming {
-			c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
-		}
+		c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
 
 		for i := range resp.Choices {
 			node.layout.infoOutput.SetText(
@@ -291,10 +251,7 @@ func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse
 
 // VisualLogCompletion - Response details
 func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(
 			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
@@ -314,10 +271,7 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 
 // VisualLogEdit - Log edited response details
 func (c *EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(nil, resp, nil, nil, nil))
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Created: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Created,
@@ -331,10 +285,7 @@ func (c *EventManager) VisualLogEdit(resp *gpt3.EditsResponse) {
 
 // VisualLogEmbedding - Log embedding response details
 func (c *EventManager) VisualLogEmbedding(resp *gpt3.EmbeddingsResponse) {
-	if !node.controller.currentAgent.preferences.IsPromptStreaming {
-		c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
-	}
-
+	c.appendToLayout(c.appendToChoice(nil, nil, resp, nil, nil))
 	for i := range resp.Data {
 		node.layout.infoOutput.SetText(fmt.Sprintf("Object: %v\nPrompt tokens: %v\nTotal tokens: %v\nIndex: %v\n",
 			resp.Object,

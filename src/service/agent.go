@@ -119,9 +119,8 @@ func getKeys() []string {
 	file, _ := os.Open(".env")
 	if file != nil {
 		return getKeyFromEnv()
-	} else {
-		return getKeyFromLocal()
 	}
+	return getKeyFromLocal()
 }
 
 // getKeyFromEnv - Get environment keys
@@ -135,9 +134,9 @@ func getKeyFromEnv() []string {
 		keys = append(keys, "")
 	}
 
-	zeroApi := os.Getenv("ZERO_API_KEY")
-	if zeroApi != "" {
-		keys = append(keys, zeroApi)
+	zeroAPI := os.Getenv("ZERO_API_KEY")
+	if zeroAPI != "" {
+		keys = append(keys, zeroAPI)
 	} else {
 		keys = append(keys, "")
 	}

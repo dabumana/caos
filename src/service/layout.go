@@ -296,10 +296,8 @@ func onTextAccept(key tcell.Key) {
 
 	if key == tcell.KeyCtrlSpace &&
 		!node.controller.currentAgent.preferences.IsLoading {
-
 		group.Add(1)
 		go func() {
-			isLoading := true
 			defer group.Done()
 			if node.controller.currentAgent.preferences.Mode == "Edit" &&
 				node.controller.currentAgent.preferences.IsPromptReady {
@@ -316,11 +314,9 @@ func onTextAccept(key tcell.Key) {
 				if node.controller.currentAgent.preferences.Mode != "Edit" &&
 					!node.controller.currentAgent.preferences.IsPromptReady {
 					node.controller.CompletionRequest()
-				} else {
-					isLoading = false
 				}
 			}
-			node.controller.currentAgent.preferences.IsLoading = isLoading
+			node.controller.currentAgent.preferences.IsLoading = false
 		}()
 
 		group.Wait()

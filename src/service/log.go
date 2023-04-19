@@ -109,6 +109,25 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 	return responses
 }
 
+// appendToModel - Append conversation to session model
+func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
+	var modelTrainer model.TrainingPrompt
+	var modelPrompt model.HistoricalPrompt
+
+	modelTrainer = model.TrainingPrompt{
+		Prompt:     body.PromptContext,
+		Completion: completion,
+	}
+
+	modelPrompt = model.HistoricalPrompt{
+		Header:         header,
+		Body:           body,
+		PredictiveBody: predictBody,
+	}
+
+	return modelTrainer, modelPrompt
+}
+
 // LogChatCompletion - Chat response details in a .json file
 func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	if node.controller.currentAgent.preferences.IsNewSession {
@@ -122,33 +141,17 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	if resp != nil && cresp == nil {
 		for i := range resp.Choices {
 			body.Content = []string{resp.Choices[i].Message.Content}
-
-			modelTrainer = model.TrainingPrompt{
-				Prompt:     body.PromptContext,
-				Completion: []string{resp.Choices[i].Message.Content},
-			}
-
-			modelPrompt = model.HistoricalPrompt{
-				Header: header,
-				Body:   body,
-			}
+			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
 		}
+
 		c.appendToSession(resp.ID, modelPrompt, modelTrainer)
 		node.controller.currentAgent.preferences.CurrentID = resp.ID
 	} else if cresp != nil && resp == nil {
 		for i := range cresp.Choices {
 			body.Content = []string{cresp.Choices[i].Delta.Content}
-
-			modelTrainer = model.TrainingPrompt{
-				Prompt:     body.PromptContext,
-				Completion: []string{cresp.Choices[i].Delta.Content},
-			}
-
-			modelPrompt = model.HistoricalPrompt{
-				Header: header,
-				Body:   body,
-			}
+			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
 		}
+
 		c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
 		node.controller.currentAgent.preferences.CurrentID = cresp.ID
 	}
@@ -166,17 +169,7 @@ func (c *EventManager) LogCompletion(header model.EngineProperties, body model.P
 
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[i].Text},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
-
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
 	}
 
 	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
@@ -190,16 +183,7 @@ func (c *EventManager) LogEdit(header model.EngineProperties, body model.PromptP
 
 	for i := range resp.Choices {
 		body.Content = []string{resp.Choices[i].Text}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{resp.Choices[i].Text},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -212,16 +196,7 @@ func (c *EventManager) LogEmbedding(header model.EngineProperties, body model.Pr
 
 	for i := range resp.Data {
 		body.Content = []string{resp.Data[i].Object}
-
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.PromptContext,
-			Completion: []string{fmt.Sprintf("%v", resp.Data[i])},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header: header,
-			Body:   body,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{fmt.Sprintf("%v", resp.Data[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -238,15 +213,7 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 			Details: *resp,
 		}
 
-		modelTrainer = model.TrainingPrompt{
-			Prompt:     body.Input,
-			Completion: []string{fmt.Sprintf("%v", resp.Documents[i])},
-		}
-
-		modelPrompt = model.HistoricalPrompt{
-			Header:         header,
-			PredictiveBody: predictProperties,
-		}
+		modelTrainer, modelPrompt = c.appendToModel(header, model.PromptProperties{}, predictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)

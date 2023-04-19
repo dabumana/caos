@@ -240,6 +240,25 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 
 	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
 
+	input := []string{textToCheck}
+	ctx := []string{""}
+
+	if !node.controller.currentAgent.preferences.IsPromptReady &&
+		node.controller.currentAgent.preferences.Mode == "Predicted" {
+		node.controller.currentAgent.predictProperties = node.controller.currentAgent.SetPredictionParameters(
+			input,
+		)
+	}
+
+	if !node.controller.currentAgent.preferences.IsPromptReady &&
+		node.controller.currentAgent.preferences.Mode != "Predicted" {
+		node.controller.currentAgent.preferences.PromptCtx = input
+	} else if node.controller.currentAgent.preferences.IsPromptReady &&
+		node.controller.currentAgent.preferences.Mode == "Edit" {
+		input = node.controller.currentAgent.preferences.PromptCtx
+		ctx = []string{textToCheck}
+	}
+
 	node.controller.currentAgent.engineProperties = node.controller.currentAgent.SetEngineParameters(
 		node.controller.currentAgent.id,
 		node.controller.currentAgent.preferences.Engine, // "text-davinci-003",
@@ -250,33 +269,13 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 		node.controller.currentAgent.preferences.Frequency,   // Frequency  of penalization
 	)
 
-	if !node.controller.currentAgent.preferences.IsPromptReady &&
-		node.controller.currentAgent.preferences.Mode != "Predicted" {
-		node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
-			[]string{textToCheck},
-			[]string{""},
-			int(node.controller.currentAgent.preferences.MaxTokens),
-			int(node.controller.currentAgent.preferences.Results),
-			int(node.controller.currentAgent.preferences.Probabilities),
-		)
-		node.controller.currentAgent.preferences.PromptCtx = []string{textToCheck}
-	} else {
-		if node.controller.currentAgent.preferences.IsPromptReady &&
-			node.controller.currentAgent.preferences.Mode == "Edit" {
-			node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
-				node.controller.currentAgent.preferences.PromptCtx,
-				[]string{textToCheck},
-				int(node.controller.currentAgent.preferences.MaxTokens),
-				int(node.controller.currentAgent.preferences.Results),
-				int(node.controller.currentAgent.preferences.Probabilities),
-			)
-		} else if node.controller.currentAgent.preferences.Mode == "Predicted" &&
-			!node.controller.currentAgent.preferences.IsPromptReady {
-			node.controller.currentAgent.predictProperties = node.controller.currentAgent.SetPredictionParameters(
-				[]string{textToCheck},
-			)
-		}
-	}
+	node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
+		input,
+		ctx,
+		int(node.controller.currentAgent.preferences.MaxTokens),
+		int(node.controller.currentAgent.preferences.Results),
+		int(node.controller.currentAgent.preferences.Probabilities),
+	)
 
 	return true
 }
@@ -295,58 +294,34 @@ func onTextAccept(key tcell.Key) {
 	node.controller.currentAgent.preferences.MaxTokens += tokenConsumption
 	node.controller.currentAgent.promptProperties.MaxTokens = int(node.controller.currentAgent.preferences.MaxTokens)
 
-	err := func() {
-		node.layout.infoOutput.SetText("\nUncheck edit mode in affinity preferences and try again...")
-		onNewTopic()
-	}
+	if key == tcell.KeyCtrlSpace &&
+		!node.controller.currentAgent.preferences.IsLoading {
 
-	if key == tcell.KeyCtrlSpace && !node.controller.currentAgent.preferences.IsLoading {
-		if node.controller.currentAgent.preferences.Mode == "Edit" {
-			if node.controller.currentAgent.preferences.IsPromptReady {
-				group.Add(1)
-				go func() {
-					node.controller.currentAgent.preferences.IsLoading = true
-					defer group.Done()
-					node.controller.EditRequest()
-				}()
-			}
-		} else if node.controller.currentAgent.preferences.Mode == "Embedded" {
-			if !node.controller.currentAgent.preferences.IsEditable {
-				group.Add(1)
-				go func() {
-					node.controller.currentAgent.preferences.IsLoading = true
-					defer group.Done()
-					node.controller.EmbeddingRequest()
-				}()
-			} else {
-				err()
-			}
-		} else if node.controller.currentAgent.preferences.Mode == "Turbo" {
-			group.Add(1)
-			go func() {
-				node.controller.currentAgent.preferences.IsLoading = true
-				defer group.Done()
+		group.Add(1)
+		go func() {
+			isLoading := true
+			defer group.Done()
+			if node.controller.currentAgent.preferences.Mode == "Edit" &&
+				node.controller.currentAgent.preferences.IsPromptReady {
+				node.controller.EditRequest()
+			} else if node.controller.currentAgent.preferences.Mode == "Embedded" &&
+				!node.controller.currentAgent.preferences.IsEditable {
+				node.controller.EmbeddingRequest()
+			} else if node.controller.currentAgent.preferences.Mode == "Predicted" &&
+				!node.controller.currentAgent.preferences.IsEditable {
+				node.controller.PredictableRequest()
+			} else if node.controller.currentAgent.preferences.Mode == "Turbo" {
 				node.controller.ChatCompletionRequest()
-			}()
-		} else if node.controller.currentAgent.preferences.Mode == "Predicted" {
-			if !node.controller.currentAgent.preferences.IsEditable {
-				group.Add(1)
-				go func() {
-					node.controller.currentAgent.preferences.IsLoading = true
-					defer group.Done()
-					node.controller.PredictableRequest()
-				}()
 			} else {
-				err()
+				if node.controller.currentAgent.preferences.Mode != "Edit" &&
+					!node.controller.currentAgent.preferences.IsPromptReady {
+					node.controller.CompletionRequest()
+				} else {
+					isLoading = false
+				}
 			}
-		} else {
-			group.Add(1)
-			go func() {
-				node.controller.currentAgent.preferences.IsLoading = true
-				defer group.Done()
-				node.controller.CompletionRequest()
-			}()
-		}
+			node.controller.currentAgent.preferences.IsLoading = isLoading
+		}()
 
 		group.Wait()
 
@@ -643,7 +618,7 @@ func createRefinementView() bool {
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(12, 12, 24, 24)
+		SetBorderPadding(6, 6, 24, 24)
 	// Validate view
 	return node.layout.affinityView != nil
 }

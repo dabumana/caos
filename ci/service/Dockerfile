@@ -5,8 +5,8 @@ RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
 
 RUN git clone https://github.com/dabumana/caos $APP_HOME 
-RUN cd $APP_HOME \
+RUN cd $WORKDIR \
     go clean \
     go build
 
-ENTRYPOINT [ $APP_HOME/caos ]
+ENTRYPOINT [ $WORKDIR/caos ]

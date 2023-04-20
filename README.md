@@ -44,6 +44,9 @@ Installation steps:
 -   Frequency penalty
 -   Max tokens
 -   Engine
+-   Template
+-   Context
+-   Historical
 
 #### Edit:
 

@@ -599,22 +599,22 @@ func createRefinementView() bool {
 		SetTitle("Improve your search criteria: ").
 		SetTitleAlign(tview.AlignLeft).
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
-		SetBorder(true).
+		SetBorder(false).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(3, 3, 30, 30)
+		SetBorderPadding(5, 5, 15, 15)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
 	node.layout.affinityView = tview.NewGrid()
 	// Affinity
 	node.layout.affinityView.
-		SetSize(1, 3, 35, 75).
+		SetSize(1, 3, 0, 0).
 		AddItem(affinitySection, 0, 0, 1, 3, 0, 0, true).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(6, 6, 24, 24)
+		SetBorderPadding(12, 12, 24, 24)
 	// Validate view
 	return node.layout.affinityView != nil
 }

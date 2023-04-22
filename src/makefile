@@ -13,14 +13,11 @@ clean:
 	rm -rf 'export'
 	rm -rf 'training'
 
-coverage:
-	go test --cover ./...
-
 run: build
 	./bin/${APP}-${VERSION}
 
 test:
-	go test ./...
+	go test -cover ./...
 
 update:
 	go mod tidy

@@ -8,6 +8,7 @@ import (
 // GlobalPreferences - General
 type GlobalPreferences struct {
 	// Engine properties
+	TemplateIDs       int
 	Template          int
 	Engine            string
 	Mode              string

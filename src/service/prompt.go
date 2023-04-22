@@ -76,7 +76,8 @@ func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletion
 		buffer = append(buffer, "\n")
 
 		fmt.Print("\033[H\033[2J")
-		err := service.client.ChatCompletionStream(
+		client := *service.client
+		err := client.ChatCompletionStream(
 			service.ctx,
 			req, func(out *gpt3.ChatCompletionStreamResponse) {
 				resp.ID = out.ID
@@ -145,7 +146,8 @@ func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse 
 			N:                *gpt3.IntPtr(service.promptProperties.Results),
 		}
 
-		resp, err := service.client.ChatCompletion(
+		client := *service.client
+		resp, err := client.ChatCompletion(
 			service.ctx,
 			req)
 
@@ -174,7 +176,8 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
 			Echo:             true}
 
-		resp, err := service.client.CompletionWithEngine(
+		client := *service.client
+		resp, err := client.CompletionWithEngine(
 			service.ctx,
 			service.engineProperties.Model,
 			req)
@@ -217,7 +220,8 @@ func (c *Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse
 
 		fmt.Print("\033[H\033[2J")
 		isOnce := false
-		err := service.client.CompletionStreamWithEngine(
+		client := *service.client
+		err := client.CompletionStreamWithEngine(
 			service.ctx,
 			service.engineProperties.Model,
 			req, func(out *gpt3.CompletionResponse) {
@@ -284,7 +288,8 @@ func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 			TopP:        gpt3.Float32Ptr(service.engineProperties.TopP),
 			N:           gpt3.IntPtr(service.promptProperties.Results)}
 
-		resp, err := service.client.Edits(
+		client := *service.client
+		resp, err := client.Edits(
 			service.ctx,
 			req)
 
@@ -306,7 +311,8 @@ func (c *Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 			Input: service.promptProperties.PromptContext,
 		}
 
-		resp, err := service.client.Embeddings(
+		client := *service.client
+		resp, err := client.Embeddings(
 			service.ctx,
 			req)
 
@@ -378,7 +384,8 @@ func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 
 // GetListModels - Get actual list of available models
 func (c *Prompt) GetListModels(service Agent) *gpt3.EnginesResponse {
-	resp, err := service.client.Engines(service.ctx)
+	client := *service.client
+	resp, err := client.Engines(service.ctx)
 
 	var event EventManager
 	event.Errata(err)

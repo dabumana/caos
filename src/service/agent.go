@@ -3,8 +3,8 @@ package service
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -27,14 +27,17 @@ type Agent struct {
 	// Assistant context
 	templateID  []string
 	templateCtx []string
-	// Client context
-	ctx               context.Context
-	client            gpt3.Client
-	exClient          *http.Client
+	// Context
+	ctx context.Context
+	// Client
+	client   *gpt3.Client
+	exClient *http.Client
+	// Properties
 	engineProperties  model.EngineProperties
 	promptProperties  model.PromptProperties
 	predictProperties model.PredictProperties
-	preferences       parameters.GlobalPreferences
+	// Preferences
+	preferences parameters.GlobalPreferences
 	// Temporal cache
 	cachedPrompt string
 }
@@ -42,7 +45,7 @@ type Agent struct {
 // Initialize - Creates context background to be used along with the client
 func (c *Agent) Initialize() Agent {
 	// ID
-	c.version = "v.0.2.0"
+	c.version = "v.0.2.2"
 	c.id = "anon"
 	// Key
 	c.key = getKeys()
@@ -54,6 +57,7 @@ func (c *Agent) Initialize() Agent {
 	// Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
+	c.preferences.TemplateIDs = len(c.templateID)
 	c.preferences.Template = 0
 	c.preferences.Engine = "text-davinci-003"
 	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
@@ -80,7 +84,7 @@ func (c *Agent) Initialize() Agent {
 }
 
 // Connect - Contextualize the API to create a new client
-func (c *Agent) Connect() (gpt3.Client, *http.Client) {
+func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 	godotenv.Load()
 
 	externalClient := http.Client{
@@ -91,7 +95,7 @@ func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 	option := gpt3.WithHTTPClient(&externalClient)
 	client := gpt3.NewClient(c.key[0], option)
 
-	c.client = client
+	c.client = &client
 	c.exClient = &externalClient
 
 	return c.client, c.exClient
@@ -99,9 +103,11 @@ func (c *Agent) Connect() (gpt3.Client, *http.Client) {
 
 // SaveKeys - Set API keys
 func (c *Agent) SaveKeys() {
-	var event EventManager
+	event := &EventManager{}
+
 	dir, _ := os.Getwd()
 	path := fmt.Sprint(dir, ".env")
+
 	_, err := os.Open(path)
 	if err != nil {
 		file, err := os.Create(".env")
@@ -114,13 +120,21 @@ func (c *Agent) SaveKeys() {
 	}
 }
 
+// GetStatus - Current agent information
+func (c *Agent) GetStatus() parameters.GlobalPreferences {
+	return c.preferences
+}
+
 // getKeys - Grab API keys
 func getKeys() []string {
-	file, _ := os.Open(".env")
+	dir, _ := os.Getwd()
+	path := fmt.Sprintf("%v/.env", dir)
+
+	file, _ := os.Stat(path)
 	if file != nil {
-		return getKeyFromEnv()
+		return getKeyFromLocal()
 	}
-	return getKeyFromLocal()
+	return getKeyFromEnv()
 }
 
 // getKeyFromEnv - Get environment keys
@@ -173,14 +187,19 @@ func getTemplateFromLocal() ([]string, []string) {
 	var context []string
 
 	dir, _ := os.Getwd()
-	path := dir + "/template/"
-	reader, _ := ioutil.ReadDir(path)
+	path := fmt.Sprintf("%v/template/role.csv", dir)
 
-	for _, file := range reader {
-		index = append(index, file.Name())
-		out, _ := ioutil.ReadFile(path + file.Name())
-		if out != nil {
-			context = append(context, string(out))
+	file, _ := os.Open(path)
+	reader := csv.NewReader(file)
+	data, _ := reader.ReadAll()
+
+	for _, j := range data {
+		for k, l := range j {
+			if k == 0 {
+				index = append(index, l)
+			} else if k == 1 {
+				context = append(context, l)
+			}
 		}
 	}
 

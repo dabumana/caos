@@ -11,7 +11,7 @@ Our conversational assistant is designed to support a wide range of OpenAI servi
 
 Whether you need to fine-tune the performance of your language model or optimize your AI-powered chatbot, our conversational assistant provides you with the flexibility and control you need to achieve your goals. With its user-friendly interface and powerful features, you can easily configure the assistant to meet your needs and get the most out of your OpenAI services.
 
-### Build
+### Build :wrench:
 
 Installation steps:
 

@@ -7,7 +7,9 @@ import (
 )
 
 // node - Global node service
-var node Node
+var (
+	node Node
+)
 
 // Node - Node manager
 type Node struct {

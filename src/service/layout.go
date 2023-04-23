@@ -599,9 +599,9 @@ func createRefinementView() bool {
 		SetTitle("Improve your search criteria: ").
 		SetTitleAlign(tview.AlignLeft).
 		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
-		SetBorder(false).
+		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(5, 5, 15, 15)
+		SetBorderPadding(5, 5, 25, 25)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid

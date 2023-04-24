@@ -22,10 +22,15 @@ jobs:
         go-version: 1.19
         
     - name: Git Version
+      id: semantic
       uses: codacy/git-version@2.4.0
+      with:
+        release-branch: master
+        dev-branch: developer
+        prefix: v
 
     - name: Build
-      run: make build APP=caos ARCH=amd64 VERSION=0.2.1
+      run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}
 
     - name: Test
       run: make test

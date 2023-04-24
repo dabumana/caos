@@ -20,12 +20,12 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.19
+        
+    - name: Git Version
+      uses: codacy/git-version@2.4.0
 
     - name: Build
       run: make build APP=caos ARCH=amd64 VERSION=0.2.1
 
     - name: Test
       run: make test
-      
-    - name: Git Version
-      uses: codacy/git-version@2.4.0

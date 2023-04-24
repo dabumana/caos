@@ -27,7 +27,6 @@ jobs:
       uses: codacy/git-version@2.4.0
       with:
         release-branch: master
-        dev-branch: developer
 
     - name: Build
       run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}

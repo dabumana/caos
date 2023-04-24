@@ -28,10 +28,10 @@ jobs:
       with:
         release-branch: master
         dev-branch: developer
-        prefix: v.
+        prefix: v
         
     - name: Build
-      run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}
+      run: make build APP=caos VERSION=${{ env.GitVersion_SemVer }}
 
     - name: Test
       run: make test

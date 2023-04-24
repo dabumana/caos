@@ -14,24 +14,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3.5.2
-        
+    - uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.19
-        
-    - name: Version
-      id: semantic
-      uses: codacy/git-version@2.4.0
-      with:
-        release-branch: master
-        dev-branch: developer
-        prefix: v
-        
+
     - name: Build
-      run: make build APP=caos VERSION=${{ env.GitVersion_SemVer }}
+      run: make build APP=caos ARCH=amd64 VERSION=0.2.1
 
     - name: Test
       run: make test
+      
+    - name: Git Version
+      uses: codacy/git-version@2.4.0

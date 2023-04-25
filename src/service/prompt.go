@@ -63,7 +63,7 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
+			Stream:           service.preferences.IsPromptStreaming,
 			N:                *gpt3.IntPtr(service.promptProperties.Results),
 		}
 
@@ -151,10 +151,10 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
+			Stream:           service.preferences.IsPromptStreaming,
 			N:                gpt3.IntPtr(service.promptProperties.Results),
 			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
-			Echo:             true}
+			Echo:             false}
 
 		if service.preferences.IsPromptStreaming {
 			bWriter := node.layout.promptOutput.BatchWriter()

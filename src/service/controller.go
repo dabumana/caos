@@ -27,18 +27,6 @@ func (c *Controller) FlushEvents() {
 	node.controller.events.pool.TrainingSession = []model.TrainingSession{}
 }
 
-// EditRequest - Start edit request  to send a task prompt
-func (c *Controller) EditRequest() {
-	resp := node.prompt.SendEditPrompt(c.currentAgent)
-
-	if resp != nil {
-		c.events.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		c.events.VisualLogEdit(resp)
-	}
-
-	c.events.LogEngine(c.currentAgent)
-}
-
 // ChatCompletionRequest - Chat completion request to send task prompt
 func (c *Controller) ChatCompletionRequest() {
 	var resp *gpt3.ChatCompletionResponse
@@ -70,8 +58,20 @@ func (c *Controller) CompletionRequest() {
 	}
 
 	if resp != nil {
-		c.events.LogCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
 		c.events.VisualLogCompletion(resp)
+	}
+
+	c.events.LogEngine(c.currentAgent)
+}
+
+// EditRequest - Start edit request  to send a task prompt
+func (c *Controller) EditRequest() {
+	resp := node.prompt.SendEditPrompt(c.currentAgent)
+
+	if resp != nil {
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, node.controller.currentAgent.preferences.CurrentID)
+		c.events.VisualLogEdit(resp)
 	}
 
 	c.events.LogEngine(c.currentAgent)
@@ -82,7 +82,7 @@ func (c *Controller) EmbeddingRequest() {
 	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Data[0].Object}, node.controller.currentAgent.preferences.CurrentID)
 		c.events.VisualLogEmbedding(resp)
 	}
 

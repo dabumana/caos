@@ -157,44 +157,13 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	}
 }
 
-// LogCompletion - Response details in a .json file
-func (c *EventManager) LogCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.CompletionResponse) {
-	var modelTrainer model.TrainingPrompt
-	var modelPrompt model.HistoricalPrompt
+// LogGeneralCompletion - Response details in .json format
+func (c *EventManager) LogGeneralCompletion(header model.EngineProperties, body model.PromptProperties, resp []string, id string) {
+	body.Content = resp
+	modelTrainer, modelPrompt := c.appendToModel(header, body, model.PredictProperties{}, resp)
 
-	for i := range resp.Choices {
-		body.Content = []string{resp.Choices[i].Text}
-		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
-	}
-
-	c.appendToSession(resp.ID, modelPrompt, modelTrainer)
-	node.controller.currentAgent.preferences.CurrentID = resp.ID
-}
-
-// LogEdit - Response details in a .json file
-func (c *EventManager) LogEdit(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EditsResponse) {
-	var modelTrainer model.TrainingPrompt
-	var modelPrompt model.HistoricalPrompt
-
-	for i := range resp.Choices {
-		body.Content = []string{resp.Choices[i].Text}
-		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Text})
-	}
-
-	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
-}
-
-// LogEmbedding - Response details in a .json file
-func (c *EventManager) LogEmbedding(header model.EngineProperties, body model.PromptProperties, resp *gpt3.EmbeddingsResponse) {
-	var modelTrainer model.TrainingPrompt
-	var modelPrompt model.HistoricalPrompt
-
-	for i := range resp.Data {
-		body.Content = []string{resp.Data[i].Object}
-		modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{fmt.Sprintf("%v", resp.Data[i])})
-	}
-
-	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
+	c.appendToSession(id, modelPrompt, modelTrainer)
+	node.controller.currentAgent.preferences.CurrentID = id
 }
 
 // LogPredict - ResponseDetails in a .json file
@@ -254,7 +223,7 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 	c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 	for i := range resp.Choices {
 		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nToken probs: %v \nToken top: %v\nIndex: %v\n",
+			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nToken probs: %v \nToken top: %v\nFinish reason: %v\nIndex: %v\n",
 				resp.ID,
 				resp.Model,
 				resp.Created,
@@ -262,9 +231,9 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
 				resp.Usage.CompletionTokens,
 				resp.Usage.PromptTokens,
 				resp.Usage.TotalTokens,
-				resp.Choices[i].FinishReason,
 				resp.Choices[i].LogProbs.TokenLogprobs,
 				resp.Choices[i].LogProbs.TopLogprobs,
+				resp.Choices[i].FinishReason,
 				resp.Choices[i].Index))
 	}
 }

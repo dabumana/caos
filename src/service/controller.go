@@ -29,12 +29,13 @@ func (c *Controller) FlushEvents() {
 
 // ChatCompletionRequest - Chat completion request to send task prompt
 func (c *Controller) ChatCompletionRequest() {
-	var resp *gpt3.ChatCompletionResponse
 	var cresp *gpt3.ChatCompletionStreamResponse
+	var resp *gpt3.ChatCompletionResponse
+
 	if c.currentAgent.preferences.IsPromptStreaming {
-		cresp = node.prompt.SendStreamingChatCompletion(c.currentAgent)
+		cresp, _ = node.prompt.SendChatCompletion(c.currentAgent)
 	} else {
-		resp = node.prompt.SendChatCompletion(c.currentAgent)
+		_, resp = node.prompt.SendChatCompletion(c.currentAgent)
 	}
 
 	if resp != nil && cresp == nil {
@@ -51,11 +52,8 @@ func (c *Controller) ChatCompletionRequest() {
 // CompletionRequest - Start completion request to send task prompt
 func (c *Controller) CompletionRequest() {
 	var resp *gpt3.CompletionResponse
-	if c.currentAgent.preferences.IsPromptStreaming {
-		resp = node.prompt.SendStreamingCompletion(c.currentAgent)
-	} else {
-		resp = node.prompt.SendCompletion(c.currentAgent)
-	}
+
+	resp = node.prompt.SendCompletion(c.currentAgent)
 
 	if resp != nil {
 		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)

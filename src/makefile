@@ -1,9 +1,8 @@
 APP=caos
-ARCH=amd64
 VERSION=v.0.0.0
 
 build: clean
-	GOARCH=${ARCH} go build -o ./bin/${APP}-${VERSION}
+	go build -o ./bin/${APP}-${VERSION}
 
 clean:
 	go clean

@@ -1,5 +1,4 @@
 APP=caos
-ARCH=amd64
 VERSION=v.0.0.0
 # Configuration path
 CONFIG_PATH=./ci/service
@@ -7,7 +6,7 @@ CONFIG_PATH=./ci/service
 build:
 	make -C ./src clean
 	make -C ./src test
-	make -C ./src build APP=${APP} ARCH=${ARCH} VERSION=${VERSION}
+	make -C ./src build APP=${APP} VERSION=${VERSION}
 
 test:
 	make -C ./src test

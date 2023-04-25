@@ -119,25 +119,25 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 			node.layout.app.Sync()
 			c.chatStreamResponse = sresp
 			return c.chatStreamResponse, nil
-		} else {
-			client := *service.client
-			resp, err := client.ChatCompletion(
-				service.ctx,
-				req)
-
-			var event EventManager
-			event.Errata(err)
-
-			node.layout.app.Sync()
-			c.chatResponse = resp
-			return nil, c.chatResponse
 		}
+
+		client := *service.client
+		resp, err := client.ChatCompletion(
+			service.ctx,
+			req)
+
+		var event EventManager
+		event.Errata(err)
+
+		node.layout.app.Sync()
+		c.chatResponse = resp
+		return nil, c.chatResponse
 
 	}
 	return nil, nil
 }
 
-// SendStreamingCompletion - Send task prompt on stream mode
+// SendCompletion - Send task prompt on stream mode
 func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		var buffer []string
@@ -219,20 +219,20 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			node.layout.app.Sync()
 			c.contextualResponse = resp
 			return c.contextualResponse
-		} else {
-			client := *service.client
-			resp, err := client.CompletionWithEngine(
-				service.ctx,
-				service.engineProperties.Model,
-				req)
-
-			var event EventManager
-			event.Errata(err)
-
-			node.layout.app.Sync()
-			c.contextualResponse = resp
-			return c.contextualResponse
 		}
+
+		client := *service.client
+		resp, err := client.CompletionWithEngine(
+			service.ctx,
+			service.engineProperties.Model,
+			req)
+
+		var event EventManager
+		event.Errata(err)
+
+		node.layout.app.Sync()
+		c.contextualResponse = resp
+		return c.contextualResponse
 
 	}
 	return nil

@@ -39,10 +39,10 @@ func (c *Controller) ChatCompletionRequest() {
 
 	if resp != nil && cresp == nil {
 		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
-		c.events.VisualLogChatCompletion(resp, nil)
+		c.events.VisualLogCompletion(nil, resp, nil)
 	} else if cresp != nil && resp == nil {
 		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
-		c.events.VisualLogChatCompletion(nil, cresp)
+		c.events.VisualLogCompletion(nil, nil, cresp)
 	}
 
 	c.events.LogEngine(c.currentAgent)
@@ -59,7 +59,7 @@ func (c *Controller) CompletionRequest() {
 
 	if resp != nil {
 		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
-		c.events.VisualLogCompletion(resp)
+		c.events.VisualLogCompletion(resp, nil, nil)
 	}
 
 	c.events.LogEngine(c.currentAgent)

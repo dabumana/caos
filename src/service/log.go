@@ -183,14 +183,14 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
 }
 
-// VisualLogChatCompletion - Chat response details
-func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
-	if resp != nil && cresp == nil {
-		c.appendToLayout(c.appendToChoice(nil, nil, nil, resp, nil))
+// VisualLogCompletion - Chat response details
+func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse, cresp *gpt3.ChatCompletionResponse, sresp *gpt3.ChatCompletionStreamResponse) {
+	if resp != nil && cresp == nil && sresp == nil {
+		c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
 
 		for i := range resp.Choices {
 			node.layout.infoOutput.SetText(
-				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nToken probs: %v \nToken top: %v\nFinish reason: %v\nIndex: %v\n",
 					resp.ID,
 					resp.Model,
 					resp.Created,
@@ -198,10 +198,14 @@ func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse
 					resp.Usage.CompletionTokens,
 					resp.Usage.PromptTokens,
 					resp.Usage.TotalTokens,
+					resp.Choices[i].LogProbs.TokenLogprobs,
+					resp.Choices[i].LogProbs.TopLogprobs,
 					resp.Choices[i].FinishReason,
 					resp.Choices[i].Index))
 		}
-	} else if cresp != nil && resp == nil {
+	} else if cresp != nil && sresp == nil && resp == nil {
+		c.appendToLayout(c.appendToChoice(nil, nil, nil, cresp, nil))
+
 		for i := range cresp.Choices {
 			node.layout.infoOutput.SetText(
 				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
@@ -215,26 +219,20 @@ func (c *EventManager) VisualLogChatCompletion(resp *gpt3.ChatCompletionResponse
 					cresp.Choices[i].FinishReason,
 					cresp.Choices[i].Index))
 		}
-	}
-}
-
-// VisualLogCompletion - Response details
-func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse) {
-	c.appendToLayout(c.appendToChoice(resp, nil, nil, nil, nil))
-	for i := range resp.Choices {
-		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nToken probs: %v \nToken top: %v\nFinish reason: %v\nIndex: %v\n",
-				resp.ID,
-				resp.Model,
-				resp.Created,
-				resp.Object,
-				resp.Usage.CompletionTokens,
-				resp.Usage.PromptTokens,
-				resp.Usage.TotalTokens,
-				resp.Choices[i].LogProbs.TokenLogprobs,
-				resp.Choices[i].LogProbs.TopLogprobs,
-				resp.Choices[i].FinishReason,
-				resp.Choices[i].Index))
+	} else if sresp != nil && cresp != nil && resp == nil {
+		for i := range sresp.Choices {
+			node.layout.infoOutput.SetText(
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+					sresp.ID,
+					sresp.Model,
+					sresp.Created,
+					sresp.Object,
+					sresp.Usage.CompletionTokens,
+					sresp.Usage.PromptTokens,
+					sresp.Usage.TotalTokens,
+					sresp.Choices[i].FinishReason,
+					sresp.Choices[i].Index))
+		}
 	}
 }
 

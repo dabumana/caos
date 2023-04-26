@@ -51,9 +51,7 @@ func (c *Controller) ChatCompletionRequest() {
 
 // CompletionRequest - Start completion request to send task prompt
 func (c *Controller) CompletionRequest() {
-	var resp *gpt3.CompletionResponse
-
-	resp = node.prompt.SendCompletion(c.currentAgent)
+	resp := node.prompt.SendCompletion(c.currentAgent)
 
 	if resp != nil {
 		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)

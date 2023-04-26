@@ -478,6 +478,40 @@ func generateLayoutContent() {
 	node.controller.currentAgent.preferences.Roles = append(node.controller.currentAgent.preferences.Roles, string(model.System))
 }
 
+// createConsoleSections - Create sections for console view
+func createConsoleSections() (*tview.Flex, *tview.Flex, *tview.Flex) {
+	// Layout
+	metadataSection := tview.NewFlex()
+	infoSection := tview.NewFlex()
+	comSection := tview.NewFlex()
+	// Initialize sections
+	metadataSection.
+		AddItem(node.layout.metadataOutput, 0, 1, false).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorDarkSlateGray.TrueColor()).
+		SetBorderPadding(1, 2, 2, 4).
+		SetTitle("Metadata").
+		SetTitleColor(tcell.ColorOrange.TrueColor()).
+		SetTitleAlign(tview.AlignLeft)
+	infoSection.
+		AddItem(node.layout.infoOutput, 0, 1, false).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBorderPadding(1, 2, 2, 4).
+		SetTitle("Details").
+		SetTitleColor(tcell.ColorDarkTurquoise.TrueColor()).
+		SetTitleAlign(tview.AlignLeft)
+	comSection.
+		AddItem(node.layout.promptOutput, 0, 1, false).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
+		SetBorderPadding(1, 2, 2, 4).
+		SetTitle("Prompter").
+		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetTitleAlign(tview.AlignLeft)
+	return metadataSection, infoSection, comSection
+}
+
 // createConsoleView - Create console view page
 func createConsoleView() bool {
 	// help
@@ -487,9 +521,6 @@ func createConsoleView() bool {
 		SetTextAlign(tview.AlignRight)
 	// Layout
 	node.layout.detailsInput = tview.NewForm()
-	metadataSection := tview.NewFlex()
-	infoSection := tview.NewFlex()
-	comSection := tview.NewFlex()
 	// Console section
 	node.layout.promptArea.
 		SetBorderPadding(1, 2, 2, 4)
@@ -521,30 +552,8 @@ func createConsoleView() bool {
 		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignRight)
-	metadataSection.
-		AddItem(node.layout.metadataOutput, 0, 1, false).
-		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkSlateGray.TrueColor()).
-		SetBorderPadding(1, 2, 2, 4).
-		SetTitle("Metadata").
-		SetTitleColor(tcell.ColorOrange.TrueColor()).
-		SetTitleAlign(tview.AlignLeft)
-	infoSection.
-		AddItem(node.layout.infoOutput, 0, 1, false).
-		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(1, 2, 2, 4).
-		SetTitle("Details").
-		SetTitleColor(tcell.ColorDarkTurquoise.TrueColor()).
-		SetTitleAlign(tview.AlignLeft)
-	comSection.
-		AddItem(node.layout.promptOutput, 0, 1, false).
-		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
-		SetBorderPadding(1, 2, 2, 4).
-		SetTitle("Prompter").
-		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetTitleAlign(tview.AlignLeft)
+	// Create sections
+	metadataSection, infoSection, comSection := createConsoleSections()
 	// Console grid
 	node.layout.consoleView = tview.NewGrid().
 		SetRows(0, 12).

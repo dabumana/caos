@@ -27,34 +27,23 @@ func (c *Controller) FlushEvents() {
 	node.controller.events.pool.TrainingSession = []model.TrainingSession{}
 }
 
-// EditRequest - Start edit request  to send a task prompt
-func (c *Controller) EditRequest() {
-	resp := node.prompt.SendEditPrompt(c.currentAgent)
-
-	if resp != nil {
-		c.events.LogEdit(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		c.events.VisualLogEdit(resp)
-	}
-
-	c.events.LogEngine(c.currentAgent)
-}
-
 // ChatCompletionRequest - Chat completion request to send task prompt
 func (c *Controller) ChatCompletionRequest() {
-	var resp *gpt3.ChatCompletionResponse
 	var cresp *gpt3.ChatCompletionStreamResponse
+	var resp *gpt3.ChatCompletionResponse
+
 	if c.currentAgent.preferences.IsPromptStreaming {
-		cresp = node.prompt.SendStreamingChatCompletion(c.currentAgent)
+		cresp, _ = node.prompt.SendChatCompletion(c.currentAgent)
 	} else {
-		resp = node.prompt.SendChatCompletion(c.currentAgent)
+		_, resp = node.prompt.SendChatCompletion(c.currentAgent)
 	}
 
 	if resp != nil && cresp == nil {
 		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
-		c.events.VisualLogChatCompletion(resp, nil)
+		c.events.VisualLogCompletion(nil, resp, nil)
 	} else if cresp != nil && resp == nil {
 		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
-		c.events.VisualLogChatCompletion(nil, cresp)
+		c.events.VisualLogCompletion(nil, nil, cresp)
 	}
 
 	c.events.LogEngine(c.currentAgent)
@@ -63,15 +52,24 @@ func (c *Controller) ChatCompletionRequest() {
 // CompletionRequest - Start completion request to send task prompt
 func (c *Controller) CompletionRequest() {
 	var resp *gpt3.CompletionResponse
-	if c.currentAgent.preferences.IsPromptStreaming {
-		resp = node.prompt.SendStreamingCompletion(c.currentAgent)
-	} else {
-		resp = node.prompt.SendCompletion(c.currentAgent)
-	}
+
+	resp = node.prompt.SendCompletion(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
-		c.events.VisualLogCompletion(resp)
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
+		c.events.VisualLogCompletion(resp, nil, nil)
+	}
+
+	c.events.LogEngine(c.currentAgent)
+}
+
+// EditRequest - Start edit request  to send a task prompt
+func (c *Controller) EditRequest() {
+	resp := node.prompt.SendEditPrompt(c.currentAgent)
+
+	if resp != nil {
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, node.controller.currentAgent.preferences.CurrentID)
+		c.events.VisualLogEdit(resp)
 	}
 
 	c.events.LogEngine(c.currentAgent)
@@ -82,7 +80,7 @@ func (c *Controller) EmbeddingRequest() {
 	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogEmbedding(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp)
+		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Data[0].Object}, node.controller.currentAgent.preferences.CurrentID)
 		c.events.VisualLogEmbedding(resp)
 	}
 

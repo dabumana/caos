@@ -41,13 +41,12 @@ func isContextValid(current Agent) bool {
 	return true
 }
 
-// SendStreamingChatCompletion - Send streaming chat completion prompt
-func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletionStreamResponse {
+// SendChatCompletion - Send streaming chat completion prompt
+func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
 	if isContextValid(service) {
 		var buffer []string
 
-		resp := &gpt3.ChatCompletionStreamResponse{}
-
+		sresp := &gpt3.ChatCompletionStreamResponse{}
 		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
 
 		msg := gpt3.ChatCompletionRequestMessage{
@@ -64,86 +63,63 @@ func (c *Prompt) SendStreamingChatCompletion(service Agent) *gpt3.ChatCompletion
 			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
+			Stream:           service.preferences.IsPromptStreaming,
 			N:                *gpt3.IntPtr(service.promptProperties.Results),
+			Stop:             []string{},
 		}
 
-		bWriter := node.layout.promptOutput.BatchWriter()
-		defer bWriter.Close()
-		bWriter.Clear()
+		if service.preferences.IsPromptStreaming {
+			bWriter := node.layout.promptOutput.BatchWriter()
+			defer bWriter.Close()
+			bWriter.Clear()
 
-		bWriter.Write([]byte("\n"))
-		buffer = append(buffer, "\n")
+			bWriter.Write([]byte("\n"))
+			buffer = append(buffer, "\n")
 
-		fmt.Print("\033[H\033[2J")
-		client := *service.client
-		err := client.ChatCompletionStream(
-			service.ctx,
-			req, func(out *gpt3.ChatCompletionStreamResponse) {
-				resp.ID = out.ID
-				resp.Choices = out.Choices
-				resp.Created = out.Created
-				resp.Model = out.Model
-				resp.Object = out.Object
-				resp.Usage = out.Usage
-				// Choices
-				resp.Choices[0].Index = out.Choices[0].Index
-				resp.Choices[0].FinishReason = out.Choices[0].FinishReason
-				// Delta
-				resp.Choices[0].Delta = out.Choices[0].Delta
-				resp.Choices[0].Delta.Content = out.Choices[0].Delta.Content
-				resp.Choices[0].Delta.Role = out.Choices[0].Delta.Role
-				// Write buffer
-				buffer = append(buffer, out.Choices[0].Delta.Content)
-				bWriter.Write([]byte(out.Choices[0].Delta.Content))
-				if out.Choices[0].Delta.Content == "\n" {
-					out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-					fmt.Printf("\x1b[32m%s\r", out)
-				} else {
-					out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-					fmt.Printf("\x1b[32m%s", out)
-				}
-			})
+			fmt.Print("\033[H\033[2J")
+			client := *service.client
+			err := client.ChatCompletionStream(
+				service.ctx,
+				req, func(out *gpt3.ChatCompletionStreamResponse) {
+					sresp.ID = out.ID
+					sresp.Choices = out.Choices
+					sresp.Created = out.Created
+					sresp.Model = out.Model
+					sresp.Object = out.Object
+					sresp.Usage = out.Usage
+					// Choices
+					sresp.Choices[0].Index = out.Choices[0].Index
+					sresp.Choices[0].FinishReason = out.Choices[0].FinishReason
+					// Delta
+					sresp.Choices[0].Delta = out.Choices[0].Delta
+					sresp.Choices[0].Delta.Content = out.Choices[0].Delta.Content
+					sresp.Choices[0].Delta.Role = out.Choices[0].Delta.Role
+					// Write buffer
+					buffer = append(buffer, out.Choices[0].Delta.Content)
+					bWriter.Write([]byte(out.Choices[0].Delta.Content))
+					if out.Choices[0].Delta.Content == "\n" {
+						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
+						fmt.Printf("\x1b[32m%s\r", out)
+					} else {
+						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
+						fmt.Printf("\x1b[32m%s", out)
+					}
+				})
 
-		var event EventManager
-		event.Errata(err)
+			var event EventManager
+			event.Errata(err)
 
-		bWriter.Write([]byte("\n\n###\n\n"))
-		buffer = append(buffer, "\n\n###\n\n")
+			bWriter.Write([]byte("\n\n###\n\n"))
+			buffer = append(buffer, "\n\n###\n\n")
 
-		out := strings.Join(buffer, "")
-		for i := range resp.Choices {
-			resp.Choices[i].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
-		}
+			out := strings.Join(buffer, "")
+			for i := range sresp.Choices {
+				sresp.Choices[i].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
+			}
 
-		node.layout.app.Sync()
-		c.chatStreamResponse = resp
-		return c.chatStreamResponse
-	}
-	return nil
-}
-
-// SendChatCompletion - Send chat completion prompt
-func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse {
-	if isContextValid(service) {
-		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
-
-		msg := gpt3.ChatCompletionRequestMessage{
-			Role:    string(service.preferences.Role),
-			Content: ctxContent,
-		}
-
-		req := gpt3.ChatCompletionRequest{
-			Model:            service.engineProperties.Model,
-			User:             service.id,
-			Messages:         []gpt3.ChatCompletionRequestMessage{msg},
-			MaxTokens:        *gpt3.IntPtr(service.promptProperties.MaxTokens),
-			Temperature:      *gpt3.Float32Ptr(service.engineProperties.Temperature),
-			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
-			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
-			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
-			N:                *gpt3.IntPtr(service.promptProperties.Results),
+			node.layout.app.Sync()
+			c.chatStreamResponse = sresp
+			return c.chatStreamResponse, nil
 		}
 
 		client := *service.client
@@ -156,14 +132,19 @@ func (c *Prompt) SendChatCompletion(service Agent) *gpt3.ChatCompletionResponse 
 
 		node.layout.app.Sync()
 		c.chatResponse = resp
-		return c.chatResponse
+		return nil, c.chatResponse
+
 	}
-	return nil
+	return nil, nil
 }
 
-// SendCompletion - Send task prompt
+// SendCompletion - Send task prompt on stream mode
 func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
+		var buffer []string
+
+		resp := &gpt3.CompletionResponse{}
+
 		req := gpt3.CompletionRequest{
 			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
@@ -171,10 +152,75 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
+			Stream:           service.preferences.IsPromptStreaming,
 			N:                gpt3.IntPtr(service.promptProperties.Results),
 			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
-			Echo:             true}
+			Echo:             false}
+
+		if service.preferences.IsPromptStreaming {
+			bWriter := node.layout.promptOutput.BatchWriter()
+			defer bWriter.Close()
+			bWriter.Clear()
+
+			bWriter.Write([]byte("\n"))
+			buffer = append(buffer, "\n")
+
+			fmt.Print("\033[H\033[2J")
+			isOnce := false
+			client := *service.client
+			err := client.CompletionStreamWithEngine(
+				service.ctx,
+				service.engineProperties.Model,
+				req, func(out *gpt3.CompletionResponse) {
+					go func(in chan string) {
+						if !isOnce {
+							resp.ID = out.ID
+							resp.Choices = out.Choices
+							resp.Created = out.Created
+							resp.Model = out.Model
+							resp.Object = out.Object
+							resp.Usage = out.Usage
+							isOnce = true
+						}
+
+						resp.Choices[0].FinishReason = out.Choices[0].FinishReason
+						resp.Choices[0].Index = out.Choices[0].Index
+
+						resp.Choices = append(resp.Choices, out.Choices[0])
+						resp.Choices[0].LogProbs.TextOffset = append(resp.Choices[0].LogProbs.TextOffset, out.Choices[0].LogProbs.TextOffset...)
+						resp.Choices[0].LogProbs.TokenLogprobs = append(resp.Choices[0].LogProbs.TokenLogprobs, out.Choices[0].LogProbs.TokenLogprobs...)
+						resp.Choices[0].LogProbs.Tokens = append(resp.Choices[0].LogProbs.Tokens, out.Choices[0].LogProbs.Tokens...)
+						resp.Choices[0].LogProbs.TopLogprobs = append(resp.Choices[0].LogProbs.TopLogprobs, out.Choices[0].LogProbs.TopLogprobs...)
+
+						for i := range out.Choices {
+							buffer = append(buffer, out.Choices[i].Text)
+							in <- out.Choices[i].Text
+							if out.Choices[i].Text == "\n" {
+								out := wordwrap.WrapString(out.Choices[i].Text, 50)
+								fmt.Printf("\x1b[32m%s\r", out)
+							} else {
+								out := wordwrap.WrapString(out.Choices[i].Text, 50)
+								fmt.Printf("\x1b[32m%s", out)
+							}
+						}
+					}(service.preferences.InlineText)
+					// Write buffer
+					bWriter.Write([]byte(<-service.preferences.InlineText))
+				})
+
+			var event EventManager
+			event.Errata(err)
+
+			bWriter.Write([]byte("\n\n###\n\n"))
+			buffer = append(buffer, "\n\n###\n\n")
+
+			for i := range resp.Choices {
+				resp.Choices[i].Text = fmt.Sprint(buffer)
+			}
+			node.layout.app.Sync()
+			c.contextualResponse = resp
+			return c.contextualResponse
+		}
 
 		client := *service.client
 		resp, err := client.CompletionWithEngine(
@@ -188,91 +234,7 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 		node.layout.app.Sync()
 		c.contextualResponse = resp
 		return c.contextualResponse
-	}
-	return nil
-}
 
-// SendStreamingCompletion - Send task prompt on stream mode
-func (c *Prompt) SendStreamingCompletion(service Agent) *gpt3.CompletionResponse {
-	if isContextValid(service) {
-		var buffer []string
-
-		resp := &gpt3.CompletionResponse{}
-
-		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
-			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
-			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
-			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
-			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
-			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
-			Stream:           false,
-			N:                gpt3.IntPtr(service.promptProperties.Results),
-			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
-			Echo:             true}
-
-		bWriter := node.layout.promptOutput.BatchWriter()
-		defer bWriter.Close()
-		bWriter.Clear()
-
-		bWriter.Write([]byte("\n"))
-		buffer = append(buffer, "\n")
-
-		fmt.Print("\033[H\033[2J")
-		isOnce := false
-		client := *service.client
-		err := client.CompletionStreamWithEngine(
-			service.ctx,
-			service.engineProperties.Model,
-			req, func(out *gpt3.CompletionResponse) {
-				go func(in chan string) {
-					if !isOnce {
-						resp.ID = out.ID
-						resp.Choices = out.Choices
-						resp.Created = out.Created
-						resp.Model = out.Model
-						resp.Object = out.Object
-						resp.Usage = out.Usage
-						isOnce = true
-					}
-
-					resp.Choices[0].FinishReason = out.Choices[0].FinishReason
-					resp.Choices[0].Index = out.Choices[0].Index
-
-					resp.Choices = append(resp.Choices, out.Choices[0])
-					resp.Choices[0].LogProbs.TextOffset = append(resp.Choices[0].LogProbs.TextOffset, out.Choices[0].LogProbs.TextOffset...)
-					resp.Choices[0].LogProbs.TokenLogprobs = append(resp.Choices[0].LogProbs.TokenLogprobs, out.Choices[0].LogProbs.TokenLogprobs...)
-					resp.Choices[0].LogProbs.Tokens = append(resp.Choices[0].LogProbs.Tokens, out.Choices[0].LogProbs.Tokens...)
-					resp.Choices[0].LogProbs.TopLogprobs = append(resp.Choices[0].LogProbs.TopLogprobs, out.Choices[0].LogProbs.TopLogprobs...)
-
-					for i := range out.Choices {
-						buffer = append(buffer, out.Choices[i].Text)
-						in <- out.Choices[i].Text
-						if out.Choices[i].Text == "\n" {
-							out := wordwrap.WrapString(out.Choices[i].Text, 50)
-							fmt.Printf("\x1b[32m%s\r", out)
-						} else {
-							out := wordwrap.WrapString(out.Choices[i].Text, 50)
-							fmt.Printf("\x1b[32m%s", out)
-						}
-					}
-				}(service.preferences.InlineText)
-				// Write buffer
-				bWriter.Write([]byte(<-service.preferences.InlineText))
-			})
-
-		var event EventManager
-		event.Errata(err)
-
-		bWriter.Write([]byte("\n\n###\n\n"))
-		buffer = append(buffer, "\n\n###\n\n")
-
-		for i := range resp.Choices {
-			resp.Choices[i].Text = fmt.Sprint(buffer)
-		}
-		node.layout.app.Sync()
-		c.contextualResponse = resp
-		return c.contextualResponse
 	}
 	return nil
 }

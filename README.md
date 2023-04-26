@@ -1,11 +1,20 @@
-# c.a.o.s.
+# :smiling_imp: CAOS - Conversational Assistant for OpenAI Services
 
 [![Start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)
-[![Go](https://github.com/dabumana/caos/actions/workflows/go.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/go.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ce2f44761a6e486999eddd05b749c1be)](https://www.codacy.com/gh/dabumana/caos/dashboard?utm_source=github.com&utm_medium=referral&utm_content=dabumana/caos&utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ce2f44761a6e486999eddd05b749c1be)](https://app.codacy.com/gh/dabumana/caos/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-### Description
+### Status :warning:
+
+Current delivery status for recent commit.
+
+[![Successful Build](https://github.com/dabumana/caos/actions/workflows/build.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/build.yml)
+
+[![Code Integrity](https://github.com/dabumana/caos/actions/workflows/integration.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/integration.yml)
+
+[![Acceptance Security](https://github.com/dabumana/caos/actions/workflows/acceptance.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/acceptance.yml)
+
+### Description :notebook:
 
 Our conversational assistant is designed to support a wide range of OpenAI services. It features advanced modes that allow you to customize the contextual information for specific use cases, including modifying the engine, results, and probabilities. With the ability to adjust the amount of words and predefined values, you can achieve the highest level of accuracy possible.
 
@@ -24,17 +33,18 @@ Installation steps:
 -   Run `./clean.sh`
 -   If you have Docker installed execute `./run.sh`, in any other case `./build.sh`
 
-### Features
+### Features :sparkles:
 
 -   Test all the available models for **code/text/insert/similarity**
 
-#### Modes:
+#### Modes: 
 
 -   **Training mode**: Prepare your own sets based on the interaction
 -   **Edit mode**: First input will be contextual the second one instructional
 -   **Template**: Developer mode prompt context
+-   **More than 165 templates defined as characters and roles** you can refer to **[Awesome ChatGPT Prompts](https://github.com/f/awesome-chatgpt-prompts/blob/main/prompts.csv)**
 
-### Advanced parameters like:
+### Advanced parameters like :dizzy:
 
 #### Completion:
 
@@ -65,7 +75,7 @@ Installation steps:
 -   Multiple results and probabilities
 -   Detailed log according to UTC
 
-### How to use?
+### How to use :question:
 
 ![console.gif](docs%2Fmedia%2Fgeneral.gif)
 
@@ -91,6 +101,6 @@ also includes advanced modes that allow users to modify the contextual informati
 -   **Penalty**: Penalty applied to the characters an redundancy in a result completion
 -   **Frequency Penalty**: Establish the frequency of the penalty threshold defined
 
-### Disclaimer :warning:
+### Disclaimer :bangbang:
 
 This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.

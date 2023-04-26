@@ -38,6 +38,3 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
-        
-    - name: Velocity deploy action
-      uses: codeclimate/velocity-deploy-action@v1.0.0

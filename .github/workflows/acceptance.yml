@@ -41,6 +41,3 @@ jobs:
         
     - name: Velocity deploy action
       uses: codeclimate/velocity-deploy-action@v1.0.0
-      with: 
-        token: ${{ secrets.VELOCITY_REPORTER_TOKEN }}
-

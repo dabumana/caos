@@ -3,6 +3,7 @@
 [![Start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ce2f44761a6e486999eddd05b749c1be)](https://app.codacy.com/gh/dabumana/caos/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Maintainability](https://api.codeclimate.com/v1/badges/9bf177949db99d4b2f15/maintainability)](https://codeclimate.com/github/dabumana/caos/maintainability)
 
 ### Status :warning:
 

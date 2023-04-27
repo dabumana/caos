@@ -98,8 +98,12 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 			responses = append(responses, edit.Choices[i].Text, "\n\n###\n\n")
 		}
 	} else if chat != nil && comp == nil && search == nil && edit == nil {
-		for i := range chat.Choices {
-			responses = append(responses, chat.Choices[i].Message.Content, "\n\n###\n\n")
+		if node.controller.currentAgent.preferences.IsPromptStreaming {
+			responses = append(responses, chat.Choices[0].Message.Content, "\n\n###\n\n")
+		} else {
+			for i := range chat.Choices {
+				responses = append(responses, chat.Choices[i].Message.Content, "\n\n###\n\n")
+			}
 		}
 	} else if predict != nil && edit == nil && comp == nil && search == nil {
 		for i := range predict.Sentences {
@@ -231,20 +235,18 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse, cresp 
 					cresp.Choices[i].FinishReason,
 					cresp.Choices[i].Index))
 		}
-	} else if sresp != nil && cresp != nil && resp == nil {
-		for i := range sresp.Choices {
-			node.layout.infoOutput.SetText(
-				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
-					sresp.ID,
-					sresp.Model,
-					sresp.Created,
-					sresp.Object,
-					sresp.Usage.CompletionTokens,
-					sresp.Usage.PromptTokens,
-					sresp.Usage.TotalTokens,
-					sresp.Choices[i].FinishReason,
-					sresp.Choices[i].Index))
-		}
+	} else if sresp != nil && cresp == nil && resp == nil {
+		node.layout.infoOutput.SetText(
+			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+				sresp.ID,
+				sresp.Model,
+				sresp.Created,
+				sresp.Object,
+				sresp.Usage.CompletionTokens,
+				sresp.Usage.PromptTokens,
+				sresp.Usage.TotalTokens,
+				sresp.Choices[0].FinishReason,
+				sresp.Choices[0].Index))
 	}
 }
 

@@ -100,7 +100,6 @@ func onNewTopic() {
 	node.controller.currentAgent.preferences.IsPromptReady = false
 	node.controller.currentAgent.preferences.PromptCtx = []string{""}
 	node.controller.currentAgent.cachedPrompt = ""
-
 	if node.layout.promptOutput.GetText(true) == "" {
 		// Clear console view
 		clearConsoleView()
@@ -151,7 +150,7 @@ func onExportTopic() {
 		node.layout.infoOutput.SetText("No converstaion started yet...")
 		return
 	}
-
+	// Path constructor
 	out := util.ConstructTsPathFileTo("export", "txt")
 	out.WriteString(node.layout.promptOutput.GetText(true))
 }
@@ -162,10 +161,10 @@ func onExportTrainedTopic() {
 		node.layout.infoOutput.SetText("You don't have any interaction to be exported...")
 		return
 	}
-
+	// Event training
 	var event EventManager
 	event.ExportTraining(node.controller.events.pool.TrainingSession)
-
+	// Clear console
 	clearConsoleView()
 	node.layout.infoOutput.SetText("Training session exported, you can continue with a new conversation.")
 }
@@ -320,19 +319,15 @@ func onTextAccept(key tcell.Key) {
 		}()
 
 		group.Wait()
-
 		node.controller.currentAgent.cachedPrompt = node.layout.promptOutput.GetText(true)
 
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&
 				node.controller.currentAgent.preferences.PromptCtx != nil) {
-
 			node.controller.currentAgent.preferences.Engine = "text-davinci-edit-001"
 			node.controller.currentAgent.preferences.IsPromptReady = true
-
 			engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
 			engine.SetCurrentOption(validateSelector(node.controller.currentAgent.preferences.Engine))
-
 			node.layout.promptArea.SetLabel("Enter your request: ")
 		}
 	}

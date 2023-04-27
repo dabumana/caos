@@ -2,7 +2,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -35,12 +34,8 @@ func (c *Node) Start() {
 		log.Fatalln("Client NOT loaded.")
 		return
 	}
-
+	// Generate service
+	node.layout.app, node.layout.screen = ConstructService()
 	// Initialize app layout service
-	InitializeLayout()
-
-	// Exception
-	if err := node.layout.app.Run(); err != nil {
-		fmt.Printf("Execution error:%s\n", err)
-	}
+	Initialize()
 }

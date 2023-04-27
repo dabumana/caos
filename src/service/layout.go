@@ -686,8 +686,18 @@ func createIDModalView() {
 
 }
 
-// InitializeLayout - Create service layout for terminal session
-func InitializeLayout() {
+// ConstructService - Service constructor
+func ConstructService() (*tview.Application, *tcell.Screen) {
+	// Main executor
+	app := tview.NewApplication()
+	// Main screen
+	screen := new(tcell.Screen)
+	app.SetScreen(*screen)
+	return app, screen
+}
+
+// Initialize - Create service layout for terminal session
+func Initialize() {
 	/* Layout content */
 	generateLayoutContent()
 	// Create views
@@ -702,20 +712,19 @@ func InitializeLayout() {
 		AddAndSwitchToPage("refinement", node.layout.affinityView, true).
 		AddAndSwitchToPage("training", node.layout.modalInput, true).
 		AddAndSwitchToPage("id", node.layout.idInput, true)
-	// Main executor
-	node.layout.app = tview.NewApplication()
-	// Inline
-	node.controller.currentAgent.preferences.InlineText = make(chan string)
-	// Main screen
-	node.layout.screen = new(tcell.Screen)
-	node.layout.app.SetScreen(*node.layout.screen)
 	// App terminal configuration
 	node.layout.app.
 		SetRoot(node.layout.pages, true).
 		SetFocus(node.layout.promptArea).
 		EnableMouse(true)
+	// Inline
+	node.controller.currentAgent.preferences.InlineText = make(chan string)
 	// Initial view
 	onProfile()
 	// Validate forms
 	validateRefinementForm()
+	// Exception
+	if err := node.layout.app.Run(); err != nil {
+		panic(err)
+	}
 }

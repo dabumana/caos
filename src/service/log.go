@@ -384,7 +384,7 @@ func (c *EventManager) LogClient(client Agent) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((&&     ..............&&&((((.,./(((((((((((((((((((((((((((((&@@@@& &  (.&......*....    @@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	`)
 	fmt.Printf("\n-------------------------------------------\n")
-	fmt.Printf("Version: %v\nClient ID: %v", client.version, client.id)
+	fmt.Printf("ID name can be changed in PROFILE section\nmore information can be found in: https://github.com/dabumana/caos\nClient ID: %v", client.id)
 	fmt.Printf("\n-------------------------------------------\n")
 	fmt.Print(`This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.`)
 	fmt.Printf("\n-------------------------------------------\n")

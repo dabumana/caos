@@ -1,4 +1,4 @@
-# :smiling_imp: CAOS - Conversational Assistant for OpenAI Services
+# C A O S - Conversational Assistant for OpenAI Services
 
 [![Start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](https://beta.openai.com/docs/introduction/key-concepts)
 [![Documentation Status](https://readthedocs.org/projects/caos-openai/badge/?version=latest)](https://caos-openai.readthedocs.io/en/latest/?badge=latest)

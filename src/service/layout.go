@@ -103,6 +103,8 @@ func onNewTopic() {
 	if node.layout.promptOutput.GetText(true) == "" {
 		// Clear console view
 		clearConsoleView()
+		// Flush training historial
+		node.controller.FlushEvents()
 		node.layout.infoOutput.SetText("A new conversation can be started.")
 		return
 	}
@@ -117,8 +119,6 @@ func clearConsoleView() {
 	node.layout.promptOutput.SetText("")
 	node.layout.promptArea.SetPlaceholder("Type here...")
 	node.layout.promptArea.SetText("", true)
-	// Flush training historial
-	node.controller.FlushEvents()
 }
 
 // onConsole - Console view event
@@ -152,7 +152,7 @@ func onExportTopic() {
 	}
 	// Path constructor
 	out := util.ConstructTsPathFileTo("export", "txt")
-	out.WriteString(node.layout.promptOutput.GetText(true))
+	out.WriteString(node.controller.currentAgent.cachedPrompt)
 }
 
 // onExportTrainedTopic - Export current conversation as a trained model as a .json file
@@ -285,10 +285,6 @@ func onTextAccept(key tcell.Key) {
 		return
 	}
 
-	if node.controller.currentAgent.preferences.IsNewSession {
-		node.controller.currentAgent.preferences.IsNewSession = false
-	}
-
 	tokenConsumption := util.MatchToken(node.controller.currentAgent.preferences.PromptCtx)
 	node.controller.currentAgent.preferences.MaxTokens += tokenConsumption
 	node.controller.currentAgent.promptProperties.MaxTokens = int(node.controller.currentAgent.preferences.MaxTokens)
@@ -319,7 +315,9 @@ func onTextAccept(key tcell.Key) {
 		}()
 
 		group.Wait()
-		node.controller.currentAgent.cachedPrompt = node.layout.promptOutput.GetText(true)
+
+		node.controller.currentAgent.cachedPrompt = fmt.Sprint(node.controller.currentAgent.cachedPrompt,
+			node.controller.currentAgent.promptProperties.PromptContext[0], node.layout.promptOutput.GetText(true))
 
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&
@@ -329,6 +327,10 @@ func onTextAccept(key tcell.Key) {
 			engine := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
 			engine.SetCurrentOption(validateSelector(node.controller.currentAgent.preferences.Engine))
 			node.layout.promptArea.SetLabel("Enter your request: ")
+		}
+
+		if node.controller.currentAgent.preferences.IsNewSession {
+			node.controller.currentAgent.preferences.IsNewSession = false
 		}
 	}
 }

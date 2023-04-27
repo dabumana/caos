@@ -162,9 +162,6 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			defer bWriter.Close()
 			bWriter.Clear()
 
-			bWriter.Write([]byte("\n"))
-			buffer = append(buffer, "\n")
-
 			fmt.Print("\033[H\033[2J")
 			isOnce := false
 			client := *service.client
@@ -212,10 +209,10 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			event.Errata(err)
 
 			bWriter.Write([]byte("\n\n###\n\n"))
-			buffer = append(buffer, "\n\n###\n\n")
 
+			out := strings.Join(buffer, "")
 			for i := range resp.Choices {
-				resp.Choices[i].Text = fmt.Sprint(buffer)
+				resp.Choices[i].Text = fmt.Sprint(util.RemoveWrapper(out))
 			}
 			node.layout.app.Sync()
 			c.contextualResponse = resp

@@ -86,8 +86,12 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
-		for i := range comp.Choices {
-			responses = append(responses, comp.Choices[i].Text, "\n\n###\n\n")
+		if node.controller.currentAgent.preferences.IsPromptStreaming {
+			responses = append(responses, comp.Choices[0].Text, "\n\n###\n\n")
+		} else {
+			for i := range comp.Choices {
+				responses = append(responses, comp.Choices[i].Text, "\n\n###\n\n")
+			}
 		}
 	} else if edit != nil && comp == nil && search == nil && chat == nil {
 		for i := range edit.Choices {
@@ -111,11 +115,6 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 
 // appendToModel - Append conversation to session model
 func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
-	if node.controller.currentAgent.preferences.IsNewSession {
-		c.clearSession()
-		node.controller.currentAgent.preferences.IsNewSession = false
-	}
-
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -133,8 +132,17 @@ func (c *EventManager) appendToModel(header model.EngineProperties, body model.P
 	return modelTrainer, modelPrompt
 }
 
+// checkNewSession - Evaluate a new session
+func (c *EventManager) checkNewSession() {
+	if node.controller.currentAgent.preferences.IsNewSession {
+		c.clearSession()
+	}
+}
+
 // LogChatCompletion - Chat response details in a .json file
 func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+	c.checkNewSession()
+
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -159,6 +167,8 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 
 // LogGeneralCompletion - Response details in .json format
 func (c *EventManager) LogGeneralCompletion(header model.EngineProperties, body model.PromptProperties, resp []string, id string) {
+	c.checkNewSession()
+
 	body.Content = resp
 	modelTrainer, modelPrompt := c.appendToModel(header, body, model.PredictProperties{}, resp)
 
@@ -168,6 +178,8 @@ func (c *EventManager) LogGeneralCompletion(header model.EngineProperties, body 
 
 // LogPredict - ResponseDetails in a .json file
 func (c *EventManager) LogPredict(header model.EngineProperties, body model.PredictProperties, resp *model.PredictResponse) {
+	c.checkNewSession()
+
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -416,13 +428,11 @@ func (c *EventManager) LogPredictEngine(client Agent) {
 // Errata - Generic error method
 func (c *EventManager) Errata(err error) {
 	if err != nil {
-		node.controller.currentAgent.preferences.IsNewSession = true
 		node.layout.infoOutput.SetText(err.Error())
-		node.layout.promptArea.SetPlaceholder("An error was found repeat your request and press CTRL+SPACE or CMD+SPACE")
+		node.layout.promptArea.SetPlaceholder("An error was found or the response was not complete, just press CTRL+SPACE or CMD+SPACE to repeat it.")
 	} else {
 		node.layout.promptArea.SetPlaceholder("Type here...")
 	}
 
-	node.controller.currentAgent.preferences.IsLoading = false
 	node.layout.promptArea.SetText("", true)
 }

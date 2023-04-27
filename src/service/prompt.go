@@ -65,7 +65,6 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
 			Stream:           service.preferences.IsPromptStreaming,
 			N:                *gpt3.IntPtr(service.promptProperties.Results),
-			Stop:             []string{},
 		}
 
 		if service.preferences.IsPromptStreaming {

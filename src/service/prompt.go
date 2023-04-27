@@ -213,6 +213,7 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 			for i := range resp.Choices {
 				resp.Choices[i].Text = fmt.Sprint(util.RemoveWrapper(out))
 			}
+
 			node.layout.app.Sync()
 			c.contextualResponse = resp
 			return c.contextualResponse

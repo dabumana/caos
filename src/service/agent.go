@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"caos/model"
 	"caos/service/parameters"
@@ -89,7 +88,7 @@ func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 
 	externalClient := http.Client{
 		Transport: http.DefaultTransport,
-		Timeout:   time.Duration(12 * time.Second),
+		// Timeout:   time.Duration(12 * time.Second),
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)

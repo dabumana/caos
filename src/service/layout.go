@@ -350,6 +350,7 @@ func onEditChecked(state bool) {
 // onStreamingChecked - Streaming mode
 func onStreamingChecked(state bool) {
 	node.controller.currentAgent.preferences.IsPromptStreaming = state
+	onNewTopic()
 }
 
 // validateSelector - Validate the selected engine

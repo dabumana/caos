@@ -3,8 +3,6 @@ package service
 
 import (
 	"caos/model"
-
-	"github.com/PullRequestInc/go-gpt3"
 )
 
 // Controller - Contextual client controller API
@@ -29,21 +27,18 @@ func (c *Controller) FlushEvents() {
 
 // ChatCompletionRequest - Chat completion request to send task prompt
 func (c *Controller) ChatCompletionRequest() {
-	var cresp *gpt3.ChatCompletionStreamResponse
-	var resp *gpt3.ChatCompletionResponse
-
 	if c.currentAgent.preferences.IsPromptStreaming {
-		cresp, _ = node.prompt.SendChatCompletion(c.currentAgent)
-	} else {
-		_, resp = node.prompt.SendChatCompletion(c.currentAgent)
-	}
+		resp, _ := node.prompt.SendChatCompletion(c.currentAgent)
 
-	if resp != nil && cresp == nil {
-		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
-		c.events.VisualLogCompletion(nil, resp, nil)
-	} else if cresp != nil && resp == nil {
-		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, cresp)
-		c.events.VisualLogCompletion(nil, nil, cresp)
+		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, resp)
+		c.events.VisualLogCompletion(nil, nil, resp)
+	} else {
+		_, resp := node.prompt.SendChatCompletion(c.currentAgent)
+
+		if resp != nil {
+			c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
+			c.events.VisualLogCompletion(nil, resp, nil)
+		}
 	}
 
 	c.events.LogEngine(c.currentAgent)

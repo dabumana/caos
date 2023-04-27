@@ -1,4 +1,4 @@
-name: Acceptance Stage
+name: Acceptance
 
 on:
   push:

@@ -45,8 +45,6 @@ func isContextValid(current Agent) bool {
 func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
 	if isContextValid(service) {
 		var buffer []string
-
-		sresp := &gpt3.ChatCompletionStreamResponse{}
 		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
 
 		msg := gpt3.ChatCompletionRequestMessage{
@@ -65,9 +63,11 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
 			Stream:           service.preferences.IsPromptStreaming,
 			N:                *gpt3.IntPtr(service.promptProperties.Results),
+			Stop:             []string{"stop"},
 		}
 
 		if service.preferences.IsPromptStreaming {
+			sresp := &gpt3.ChatCompletionStreamResponse{}
 			bWriter := node.layout.promptOutput.BatchWriter()
 			defer bWriter.Close()
 			bWriter.Clear()

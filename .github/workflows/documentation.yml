@@ -1,5 +1,5 @@
 # Sample workflow for building and deploying a Hugo site to GitHub Pages
-name: Deploy Hugo site to Pages
+name: Documentation
 
 on:
   # Runs on pushes targeting the default branch
@@ -37,17 +37,24 @@ jobs:
         run: |
           wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
           && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+      
       - name: Install Dart Sass Embedded
         run: sudo snap install dart-sass-embedded
+      
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
+        with:
+          enablement: true
+        
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+      
       - name: Build with Hugo
         env:
           # For maximum backward compatibility with Hugo modules
@@ -57,6 +64,7 @@ jobs:
           hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

@@ -88,7 +88,6 @@ func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 
 	externalClient := http.Client{
 		Transport: http.DefaultTransport,
-		// Timeout:   time.Duration(12 * time.Second),
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)

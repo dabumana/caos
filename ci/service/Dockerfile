@@ -1,11 +1,14 @@
 FROM golang:1.20
 
-ENV APP_HOME /go/src/caos
-RUN mkdir -p $APP_HOME
-WORKDIR $APP_HOME
+WORKDIR /usr/local/bin/caos
 
-RUN git clone https://github.com/dabumana/caos "$WORKDIR" 
-RUN go clean \
-    go build
+ENV APP_HOME /usr/local/bin/caos
 
-ENTRYPOINT [ "$WORKDIR"/caos ]
+RUN mkdir -p ${APP_HOME}
+RUN git clone https://github.com/dabumana/caos ${APP_HOME}
+RUN make -C ${APP_HOME}/src build
+
+RUN mv ${APP_HOME}/src/bin/* ${APP_HOME}
+RUN rm -rf ${APP_HOME}/!"caos"
+
+CMD [ ".\caos" ]

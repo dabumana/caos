@@ -20,8 +20,9 @@ coverage:
 run: build
 	make -C ./src run
 
-deploy-pod:
-	docker build ${CONFIG_PATH} -t caos
+build-pod:
+	docker build --no-cache -t ${APP} ${CONFIG_PATH} 
 
-run-pod: build
-	docker run ${APP} --env-file=.env 
+run-pod: build-pod
+
+	docker run ${APP}

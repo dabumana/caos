@@ -2,13 +2,13 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"caos/model"
 	"caos/util"
+	"encoding/json"
 
 	"github.com/PullRequestInc/go-gpt3"
 )

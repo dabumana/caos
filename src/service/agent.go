@@ -3,14 +3,14 @@ package service
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"net/http"
 	"os"
 
 	"caos/model"
 	"caos/service/parameters"
 	"caos/util"
+	"encoding/csv"
+	"net/http"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"

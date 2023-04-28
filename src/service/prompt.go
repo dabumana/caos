@@ -2,15 +2,16 @@
 package service
 
 import (
-	"bytes"
 	"caos/model"
 	"caos/service/parameters"
 	"caos/util"
 	"encoding/json"
+	"net/http"
+
+	"bytes"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"

@@ -2,17 +2,17 @@
 package service
 
 import (
-	"caos/model"
-	"caos/service/parameters"
-	"caos/util"
-	"encoding/json"
-	"net/http"
-
 	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"strings"
+
+	"caos/model"
+	"caos/service/parameters"
+	"caos/util"
+	"encoding/json"
+	"net/http"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/mitchellh/go-wordwrap"

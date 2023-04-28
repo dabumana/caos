@@ -1,14 +1,11 @@
 // Package handler section
 package handler
 
-import (
-	"caos/service"
-)
+import "caos/service"
+
+var Node service.Node
 
 // IServiceRequester - Service requester interface API
 type IServiceRequester interface {
-	Start()
+	Init()
 }
-
-// Node - Global node service for handler
-var Node service.Node

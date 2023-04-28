@@ -6,9 +6,7 @@ import (
 )
 
 // node - Global node service
-var (
-	node Node
-)
+var node *Node
 
 // Node - Node manager
 type Node struct {
@@ -17,25 +15,38 @@ type Node struct {
 	controller Controller
 }
 
+// Init - Entrypoint for terminal service
+func (c *Node) Init() {
+	node = onConstruct()
+	node.Start()
+}
+
+// onConstruct - Construct agent
+func onConstruct() *Node {
+	service := Node{}
+	return &service
+}
+
 // Start - Initialize node service
 func (c *Node) Start() {
 	var controller Controller
 	var event EventManager
 
-	node.controller = controller
+	c.controller = controller
 
-	if node.controller.currentAgent.client == nil {
-		node.controller.currentAgent = c.controller.AttachProfile()
+	if c.controller.currentAgent.client == nil {
+		c.controller.currentAgent = c.controller.AttachProfile()
 	}
 
-	if node.controller.currentAgent.client != nil {
-		event.LogClient(node.controller.currentAgent)
+	if c.controller.currentAgent.client != nil {
+		event.LogClient(c.controller.currentAgent)
 	} else {
 		log.Fatalln("Client NOT loaded.")
 		return
 	}
 	// Generate service
-	node.layout.app, node.layout.screen = ConstructService()
+	c.layout.app, c.layout.screen = ConstructService()
 	// Initialize app layout service
-	Initialize()
+	InitializeService()
+
 }

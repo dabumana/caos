@@ -32,9 +32,10 @@ type Agent struct {
 	client   *gpt3.Client
 	exClient *http.Client
 	// Properties
-	engineProperties  model.EngineProperties
-	promptProperties  model.PromptProperties
-	predictProperties model.PredictProperties
+	engineProperties   model.EngineProperties
+	promptProperties   model.PromptProperties
+	predictProperties  model.PredictProperties
+	templateProperties model.TemplateProperties
 	// Preferences
 	preferences parameters.GlobalPreferences
 	// Temporal cache
@@ -234,6 +235,16 @@ func (c *Agent) SetPromptParameters(promptContext []string, instruction []string
 func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProperties {
 	properties := model.PredictProperties{
 		Input: prompContext,
+	}
+	return properties
+}
+
+// SetTemplateParameters - Set template properties parameters for current prompt context
+func (c *Agent) SetTemplateParameters(id string, context model.ChainPrompt, temperature float32) model.TemplateProperties {
+	properties := model.TemplateProperties{
+		TemplateID:    id,
+		PromptContext: context,
+		Temperature:   temperature,
 	}
 	return properties
 }

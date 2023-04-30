@@ -3,9 +3,10 @@ package model
 
 // TemplateProperties - Contextual template properties
 type TemplateProperties struct {
-	TemplateID string `json:"user_id"`
+	TemplateID int `json:"user_id"`
+	// Input
+	Input []string `json:"input"`
 	// Prompt stages
-	PromptContext        ChainPrompt `json:"prompt"`
 	PromptAssemble       ChainPrompt `json:"assemble"`
 	PromptImplementation ChainPrompt `json:"implementation"`
 	PromptValidated      ChainPrompt `json:"validation"`

@@ -71,12 +71,12 @@ func TestSetPromptParameters(t *testing.T) {
 			tokens,
 			result,
 			probabilities)
-		if requestProperties.PromptContext == nil ||
+		if requestProperties.Input == nil ||
 			requestProperties.Instruction == nil ||
 			requestProperties.MaxTokens != tokens ||
 			requestProperties.Results != result ||
 			requestProperties.Probabilities != probabilities {
-			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.PromptContext, context)
+			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Input, context)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Instruction, prompt)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.MaxTokens, tokens)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)

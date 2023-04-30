@@ -19,13 +19,14 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
-	// Versioned and ID
-	version string
-	id      string
-	key     []string
+	id string
+	// Key
+	key []string
 	// Assistant context
 	templateID  []string
 	templateCtx []string
+	// Chained event
+	transformers []Chain
 	// Context
 	ctx context.Context
 	// Client
@@ -45,7 +46,6 @@ type Agent struct {
 // Initialize - Creates context background to be used along with the client
 func (c *Agent) Initialize() Agent {
 	// ID
-	c.version = "v.0.2.2"
 	c.id = "anon"
 	// Key
 	c.key = getKeys()
@@ -54,6 +54,7 @@ func (c *Agent) Initialize() Agent {
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
+	c.transformers = []Chain{}
 	// Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
@@ -70,14 +71,12 @@ func (c *Agent) Initialize() Agent {
 	c.preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
 	c.preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
 	// Mode selection
-	c.preferences.IsConversational = false
-	c.preferences.IsDeveloper = false
+	c.preferences.IsChained = false
 	c.preferences.IsEditable = false
 	c.preferences.IsLoading = false
 	c.preferences.IsNewSession = true
 	c.preferences.IsPromptReady = false
 	c.preferences.IsPromptStreaming = true
-	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
 	// Return created client
 	return *c
@@ -222,7 +221,7 @@ func (c *Agent) SetEngineParameters(id string, pmodel string, role model.Roles, 
 // SetPromptParameters - Set request parameters for the current prompt
 func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, tokens int, results int, probabilities int) model.PromptProperties {
 	properties := model.PromptProperties{
-		PromptContext: promptContext,
+		Input:         promptContext,
 		Instruction:   instruction,
 		MaxTokens:     tokens,
 		Results:       results,
@@ -240,11 +239,11 @@ func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProp
 }
 
 // SetTemplateParameters - Set template properties parameters for current prompt context
-func (c *Agent) SetTemplateParameters(id string, context model.ChainPrompt, temperature float32) model.TemplateProperties {
+func (c *Agent) SetTemplateParameters(id int, promptContext []string, temperature float32) model.TemplateProperties {
 	properties := model.TemplateProperties{
-		TemplateID:    id,
-		PromptContext: context,
-		Temperature:   temperature,
+		TemplateID:  id,
+		Input:       promptContext,
+		Temperature: temperature,
 	}
 	return properties
 }
@@ -257,4 +256,9 @@ func (c *Agent) SetPrompt(context string, input string) []string {
 
 	prompt := []string{context + input}
 	return prompt
+}
+
+// OnChainSequence - Chained trasformer events
+func (c *Agent) RunChainSequence(engine *model.EngineProperties, prompPrompt *model.PromptProperties, transformer []Chain) ([]string, error) {
+	return nil, nil
 }

@@ -123,7 +123,7 @@ func (c *EventManager) appendToModel(header model.EngineProperties, body model.P
 	var modelPrompt model.HistoricalPrompt
 
 	modelTrainer = model.TrainingPrompt{
-		Prompt:     body.PromptContext,
+		Prompt:     body.Input,
 		Completion: completion,
 	}
 
@@ -400,7 +400,7 @@ func (c *EventManager) LogEngine(client Agent) {
 			client.engineProperties.TopP,
 			client.engineProperties.FrequencyPenalty,
 			client.engineProperties.PresencePenalty,
-			client.promptProperties.PromptContext,
+			client.promptProperties.Input,
 			client.promptProperties.Instruction,
 			client.promptProperties.Probabilities,
 			client.promptProperties.Results,

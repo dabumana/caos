@@ -260,7 +260,7 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 
 	node.controller.currentAgent.engineProperties = node.controller.currentAgent.SetEngineParameters(
 		node.controller.currentAgent.id,
-		node.controller.currentAgent.preferences.Engine, // "text-davinci-003",
+		node.controller.currentAgent.preferences.Engine,
 		node.controller.currentAgent.preferences.Role,
 		node.controller.currentAgent.preferences.Temperature, // if temperature is used set topp to 1.0
 		node.controller.currentAgent.preferences.Topp,        // if topp is used set temperature to 1.0
@@ -274,6 +274,12 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 		int(node.controller.currentAgent.preferences.MaxTokens),
 		int(node.controller.currentAgent.preferences.Results),
 		int(node.controller.currentAgent.preferences.Probabilities),
+	)
+
+	node.controller.currentAgent.templateProperties = node.controller.currentAgent.SetTemplateParameters(
+		node.controller.currentAgent.preferences.Template,
+		input,
+		node.controller.currentAgent.preferences.Temperature,
 	)
 
 	return true
@@ -317,7 +323,7 @@ func onTextAccept(key tcell.Key) {
 		group.Wait()
 
 		node.controller.currentAgent.cachedPrompt = fmt.Sprint(node.controller.currentAgent.cachedPrompt,
-			node.controller.currentAgent.promptProperties.PromptContext[0], node.layout.promptOutput.GetText(true))
+			node.controller.currentAgent.promptProperties.Input[0], node.layout.promptOutput.GetText(true))
 
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&

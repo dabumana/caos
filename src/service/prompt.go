@@ -46,7 +46,7 @@ func isContextValid(current Agent) bool {
 func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
 	if isContextValid(service) {
 		var buffer []string
-		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
+		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.Input[0])[0]
 
 		msg := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
@@ -146,7 +146,7 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 		resp := &gpt3.CompletionResponse{}
 
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
+			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.Input[0]),
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -239,10 +239,10 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 
 // SendEditPrompt - Send edit instruction task prompt
 func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
-	if isContextValid(service) && service.promptProperties.PromptContext != nil {
+	if isContextValid(service) && service.promptProperties.Input != nil {
 		req := gpt3.EditsRequest{
 			Model:       service.engineProperties.Model,
-			Input:       service.promptProperties.PromptContext[0],
+			Input:       service.promptProperties.Input[0],
 			Instruction: service.promptProperties.Instruction[0],
 			Temperature: gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:        gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -268,7 +268,7 @@ func (c *Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 	if isContextValid(service) {
 		req := gpt3.EmbeddingsRequest{
 			Model: service.engineProperties.Model,
-			Input: service.promptProperties.PromptContext,
+			Input: service.promptProperties.Input,
 		}
 
 		client := *service.client

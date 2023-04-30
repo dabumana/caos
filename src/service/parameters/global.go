@@ -26,15 +26,12 @@ type GlobalPreferences struct {
 	Frequency     float32
 	PromptCtx     []string
 	// Modes
+	IsChained         bool
 	IsLoading         bool
-	IsConversational  bool
-	IsDeveloper       bool
-	IsPredictable     bool
 	IsEditable        bool
 	IsNewSession      bool
 	IsPromptReady     bool
 	IsPromptStreaming bool
-	IsTurbo           bool
 	// Utilitaries
 	Role       model.Roles
 	CurrentID  string

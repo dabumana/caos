@@ -4,8 +4,8 @@ package service
 // ChainedTransforms - Sequence index
 var chainedTransform []Chain
 
-// SequenceHandler - Chained Transform template
-type SequenceHandler []ChainTransforms
+// SequenceRequester - Chained Transform template
+type SequenceRequester []ChainTransforms
 
 // SequencesInterface - Chain sequence interface
 type ChainTransforms interface {
@@ -17,7 +17,7 @@ type ChainTransforms interface {
 }
 
 // Get - Retrieve actual chain list
-func (c *SequenceHandler) Get() []Chain {
+func (c *SequenceRequester) Get() []Chain {
 	return chainedTransform
 }
 
@@ -27,25 +27,16 @@ func Set(chain []Chain) {
 }
 
 // Add - Add chain to actual stack
-func (c *SequenceHandler) Add(chain *Chain) {
+func (c *SequenceRequester) Add(chain *Chain) {
 	chainedTransform = append(chainedTransform, *chain)
 }
 
 // Remove - Remove chain from actual stack
-func (c *SequenceHandler) Remove(chain *Chain) {
+func (c *SequenceRequester) Remove(chain *Chain) {
 	lastIndex := len(chainedTransform) - 1
 	chain = &(chainedTransform)[lastIndex]
 	chainedTransform = (chainedTransform)[:lastIndex]
 }
-
-// onConstructAssemble - Assemble transformer
-func (c *Transformer) onConstructAssemble() {}
-
-// onConstructImplementation - Implement transformer
-func (c *Transformer) onConstructImplementation() {}
-
-// onConstructValidation - Valdiate transformer
-func (c *Transformer) onConstructValidation() {}
 
 // Chain - Event sequence object
 type Chain struct {
@@ -62,4 +53,4 @@ func (c *Chain) PrepareChain() {
 }
 
 // RunSequence - Run chain sequence
-func (c *Chain) RunSequence() {}
+func (c *Chain) RunSequence(input string) {}

@@ -12,6 +12,15 @@ type Transformer struct {
 	stop    []string
 }
 
+// onConstructAssemble - Assemble transformer
+func (c *Transformer) onConstructAssemble() {}
+
+// onConstructImplementation - Implement transformer
+func (c *Transformer) onConstructImplementation() {}
+
+// onConstructValidation - Valdiate transformer
+func (c *Transformer) onConstructValidation() {}
+
 // SetupTransformer
 func (c *Transformer) SetupTransformer(llm *llms.LLM, input []string, stop []string) {
 	c.model = llm

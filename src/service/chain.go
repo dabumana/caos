@@ -5,10 +5,10 @@ package service
 var chainedTransform []Chain
 
 // SequenceRequester - Chained Transform template
-type SequenceRequester []ChainTransforms
+type SequenceRequester []Sequence
 
-// SequencesInterface - Chain sequence interface
-type ChainTransforms interface {
+// Sequence - Chain sequence interface
+type Sequence interface {
 	Get() []Chain
 	Set(chainedTransform []Chain)
 	// Stack operation

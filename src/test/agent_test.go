@@ -68,7 +68,6 @@ func TestSetPromptParameters(t *testing.T) {
 		requestProperties := agent.SetPromptParameters(
 			context,
 			prompt,
-			tokens,
 			result,
 			probabilities)
 		if requestProperties.Input == nil ||

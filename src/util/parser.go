@@ -89,11 +89,6 @@ func RemoveWrapper(text string) string {
 	return out
 }
 
-// CalcTokenPrompt - Token prompt calculation
-func CalcTokenPrompt(length int) int64 {
-	return int64(length) / 4
-}
-
 // ConstructTsPathFileTo - Initialize a directory for further storage in a TXT or JSON file includes a timestamp
 func ConstructTsPathFileTo(path string, format string) *os.File {
 	var dir string

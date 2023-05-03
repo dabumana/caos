@@ -226,11 +226,6 @@ func onChangeEngine(option string, optionIndex int) {
 	}
 }
 
-// onChangeCharacter - Dropdown for tokens according to the amount of words
-func onChangeCharacter(option string, optionIndex int) {
-	node.controller.currentAgent.preferences.MaxTokens = util.CalcTokenPrompt(int(util.ParseInt64(option)))
-}
-
 // onTextChange - Text field from input
 func onTextChange(textToCheck string, lastChar rune) bool {
 	if node.controller.currentAgent.preferences.IsLoading {
@@ -271,7 +266,6 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 	node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
 		input,
 		ctx,
-		int(node.controller.currentAgent.preferences.MaxTokens),
 		int(node.controller.currentAgent.preferences.Results),
 		int(node.controller.currentAgent.preferences.Probabilities),
 	)
@@ -532,19 +526,6 @@ func createConsoleView() bool {
 		AddTextView("Mode", "", 15, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, onChangeEngine).
 		AddDropDown("Role", node.controller.currentAgent.preferences.Roles, 1, onChangeRoles).
-		AddDropDown("Characters",
-			[]string{
-				"\u0032\u0035\u0030",
-				"\u0035\u0030\u0030",
-				"\u0031\u0030\u0030\u0030",
-				"\u0032\u0035\u0030\u0030",
-				"\u0035\u0030\u0030\u0030",
-				"\u0037\u0035\u0030\u0030",
-				"\u0031\u0030\u0030\u0030\u0030",
-				"\u0031\u0035\u0030\u0030\u0030",
-				"\u0032\u0030\u0030\u0030\u0030"},
-			3,
-			onChangeCharacter).
 		AddDropDown("Template", node.controller.currentAgent.templateID, 0, onTemplateChange).
 		AddButton("Affinity", onRefinement).
 		AddButton("New conversation", onNewTopic).

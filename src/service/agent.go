@@ -219,11 +219,11 @@ func (c *Agent) SetEngineParameters(id string, pmodel string, role model.Roles, 
 }
 
 // SetPromptParameters - Set request parameters for the current prompt
-func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, tokens int, results int, probabilities int) model.PromptProperties {
+func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, results int, probabilities int) model.PromptProperties {
 	properties := model.PromptProperties{
 		Input:         promptContext,
 		Instruction:   instruction,
-		MaxTokens:     tokens,
+		MaxTokens:     util.EncodePromptToken(promptContext, c.preferences.Engine),
 		Results:       results,
 		Probabilities: probabilities,
 	}

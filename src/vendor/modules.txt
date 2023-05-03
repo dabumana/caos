@@ -9,6 +9,10 @@ github.com/PullRequestInc/go-gpt3
 ## explicit; go 1.12
 # github.com/derekparker/trie v0.0.0-20200317170641-1fdf38b7b0e9
 ## explicit
+# github.com/dlclark/regexp2 v1.8.1
+## explicit; go 1.13
+github.com/dlclark/regexp2
+github.com/dlclark/regexp2/syntax
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
@@ -64,6 +68,9 @@ github.com/gdamore/tcell/v2/terminfo/x/xterm_termite
 ## explicit
 # github.com/google/go-dap v0.6.0
 ## explicit; go 1.13
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/gorilla/websocket v1.5.0
 ## explicit; go 1.12
 # github.com/hashicorp/golang-lru v0.5.4
@@ -113,6 +120,11 @@ github.com/pelletier/go-toml/v2/internal/characters
 github.com/pelletier/go-toml/v2/internal/danger
 github.com/pelletier/go-toml/v2/internal/tracker
 github.com/pelletier/go-toml/v2/unstable
+# github.com/peterh/liner v1.2.2
+## explicit
+# github.com/pkoukk/tiktoken-go v0.1.1
+## explicit; go 1.19
+github.com/pkoukk/tiktoken-go
 # github.com/rivo/tview v0.0.0-20221217182043-ccce554c3803
 ## explicit; go 1.18
 github.com/rivo/tview

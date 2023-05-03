@@ -86,7 +86,7 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
-		if node.controller.currentAgent.preferences.IsPromptStreaming {
+		if node.controller.currentAgent.preferences.IsPromptStreaming && comp.Choices != nil {
 			responses = append(responses, comp.Choices[0].Text, "\n\n###\n\n")
 		} else {
 			for i := range comp.Choices {
@@ -98,7 +98,7 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 			responses = append(responses, edit.Choices[i].Text, "\n\n###\n\n")
 		}
 	} else if chat != nil && comp == nil && search == nil && edit == nil {
-		if node.controller.currentAgent.preferences.IsPromptStreaming {
+		if node.controller.currentAgent.preferences.IsPromptStreaming && chat.Choices != nil {
 			responses = append(responses, chat.Choices[0].Message.Content, "\n\n###\n\n")
 		} else {
 			for i := range chat.Choices {
@@ -236,17 +236,19 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse, cresp 
 					cresp.Choices[i].Index))
 		}
 	} else if sresp != nil && cresp == nil && resp == nil {
-		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
-				sresp.ID,
-				sresp.Model,
-				sresp.Created,
-				sresp.Object,
-				sresp.Usage.CompletionTokens,
-				sresp.Usage.PromptTokens,
-				sresp.Usage.TotalTokens,
-				sresp.Choices[0].FinishReason,
-				sresp.Choices[0].Index))
+		for i := range sresp.Choices {
+			node.layout.infoOutput.SetText(
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+					sresp.ID,
+					sresp.Model,
+					sresp.Created,
+					sresp.Object,
+					sresp.Usage.CompletionTokens,
+					sresp.Usage.PromptTokens,
+					sresp.Usage.TotalTokens,
+					sresp.Choices[i].FinishReason,
+					sresp.Choices[i].Index))
+		}
 	}
 }
 

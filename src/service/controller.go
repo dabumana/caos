@@ -49,7 +49,9 @@ func (c *Controller) CompletionRequest() {
 	resp := node.prompt.SendCompletion(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
+		for i := range resp.Choices {
+			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, resp.ID)
+		}
 		c.events.VisualLogCompletion(resp, nil, nil)
 	}
 
@@ -61,7 +63,9 @@ func (c *Controller) EditRequest() {
 	resp := node.prompt.SendEditPrompt(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, node.controller.currentAgent.preferences.CurrentID)
+		for i := range resp.Choices {
+			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, node.controller.currentAgent.preferences.CurrentID)
+		}
 		c.events.VisualLogEdit(resp)
 	}
 
@@ -73,7 +77,9 @@ func (c *Controller) EmbeddingRequest() {
 	resp := node.prompt.SendEmbeddingPrompt(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Data[0].Object}, node.controller.currentAgent.preferences.CurrentID)
+		for i := range resp.Data {
+			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Data[i].Object}, node.controller.currentAgent.preferences.CurrentID)
+		}
 		c.events.VisualLogEmbedding(resp)
 	}
 

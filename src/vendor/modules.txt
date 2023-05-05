@@ -1,6 +1,16 @@
+# github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96
+## explicit
+# github.com/BurntSushi/toml v1.2.1
+## explicit; go 1.16
 # github.com/PullRequestInc/go-gpt3 v1.1.13
 ## explicit; go 1.13
 github.com/PullRequestInc/go-gpt3
+# github.com/StackExchange/wmi v1.2.1
+## explicit; go 1.13
+# github.com/cespare/xxhash v1.1.0
+## explicit
+# github.com/cespare/xxhash/v2 v2.2.0
+## explicit; go 1.11
 # github.com/cilium/ebpf v0.7.0
 ## explicit; go 1.16
 # github.com/cosiner/argv v0.1.0
@@ -9,10 +19,16 @@ github.com/PullRequestInc/go-gpt3
 ## explicit; go 1.12
 # github.com/derekparker/trie v0.0.0-20200317170641-1fdf38b7b0e9
 ## explicit
+# github.com/dgraph-io/badger v1.6.2
+## explicit; go 1.12
+# github.com/dgraph-io/ristretto v0.1.1
+## explicit; go 1.12
 # github.com/dlclark/regexp2 v1.8.1
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
@@ -66,6 +82,28 @@ github.com/gdamore/tcell/v2/terminfo/x/xterm_termite
 ## explicit; go 1.16
 # github.com/go-delve/liner v1.2.3-0.20220127212407-d32d89dd2a5d
 ## explicit
+# github.com/go-ego/cedar v0.10.2
+## explicit; go 1.13
+# github.com/go-ego/gpy v0.42.1
+## explicit; go 1.17
+# github.com/go-ego/gse v0.80.2
+## explicit; go 1.17
+# github.com/go-ego/murmur v0.10.1
+## explicit; go 1.13
+# github.com/go-ego/riot v0.0.0-20201013133145-f4c30acb3704
+## explicit; go 1.13
+# github.com/go-ole/go-ole v1.2.6
+## explicit; go 1.12
+# github.com/go-vgo/gt/conf v0.0.0-20230225170401-ca2fcd747a17
+## explicit; go 1.17
+# github.com/go-vgo/gt/info v0.0.0-20230225170401-ca2fcd747a17
+## explicit; go 1.17
+# github.com/golang/glog v1.1.1
+## explicit; go 1.19
+# github.com/golang/protobuf v1.5.3
+## explicit; go 1.9
+# github.com/golang/snappy v0.0.4
+## explicit
 # github.com/google/go-dap v0.6.0
 ## explicit; go 1.13
 # github.com/google/uuid v1.3.0
@@ -97,6 +135,8 @@ github.com/joho/godotenv
 # github.com/lucasb-eyer/go-colorful v1.2.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
+# github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a
+## explicit; go 1.16
 # github.com/magiconair/properties v1.8.7
 ## explicit; go 1.19
 github.com/magiconair/properties
@@ -113,6 +153,8 @@ github.com/mitchellh/go-wordwrap
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
+# github.com/pelletier/go-toml v1.9.5
+## explicit; go 1.12
 # github.com/pelletier/go-toml/v2 v2.0.6
 ## explicit; go 1.16
 github.com/pelletier/go-toml/v2
@@ -122,9 +164,13 @@ github.com/pelletier/go-toml/v2/internal/tracker
 github.com/pelletier/go-toml/v2/unstable
 # github.com/peterh/liner v1.2.2
 ## explicit
+# github.com/pkg/errors v0.9.1
+## explicit
 # github.com/pkoukk/tiktoken-go v0.1.1
 ## explicit; go 1.19
 github.com/pkoukk/tiktoken-go
+# github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b
+## explicit; go 1.14
 # github.com/rivo/tview v0.0.0-20221217182043-ccce554c3803
 ## explicit; go 1.18
 github.com/rivo/tview
@@ -133,6 +179,12 @@ github.com/rivo/tview
 github.com/rivo/uniseg
 # github.com/russross/blackfriday/v2 v2.0.1
 ## explicit
+# github.com/shirou/gopsutil v3.21.11+incompatible
+## explicit
+# github.com/shirou/gopsutil/v3 v3.23.4
+## explicit; go 1.15
+# github.com/shoenig/go-m1cpu v0.1.5
+## explicit; go 1.20
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 ## explicit
 # github.com/sirupsen/logrus v1.6.0
@@ -167,14 +219,26 @@ github.com/spf13/viper/internal/encoding/yaml
 # github.com/subosito/gotenv v1.4.2
 ## explicit; go 1.18
 github.com/subosito/gotenv
+# github.com/syndtr/goleveldb v1.0.0
+## explicit
+# github.com/tklauser/go-sysconf v0.3.11
+## explicit; go 1.13
+# github.com/tklauser/numcpus v0.6.0
+## explicit; go 1.13
 # github.com/tmc/langchaingo v0.0.0-20230429215204-931a1fe7a2a9
 ## explicit; go 1.20
 github.com/tmc/langchaingo/llms
+# github.com/vcaesar/cedar v0.20.1
+## explicit; go 1.17
+# github.com/yusufpapurcu/wmi v1.2.2
+## explicit; go 1.16
+# go.etcd.io/bbolt v1.3.7
+## explicit; go 1.17
 # go.starlark.net v0.0.0-20220816155156-cfacd8902214
 ## explicit; go 1.13
 # golang.org/x/arch v0.0.0-20190927153633-4e8777c89be4
 ## explicit; go 1.11
-# golang.org/x/net v0.7.0
+# golang.org/x/net v0.9.0
 ## explicit; go 1.17
 # golang.org/x/sys v0.7.0
 ## explicit; go 1.17
@@ -192,6 +256,8 @@ golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
+# google.golang.org/protobuf v1.30.0
+## explicit; go 1.11
 # gopkg.in/ini.v1 v1.67.0
 ## explicit
 gopkg.in/ini.v1

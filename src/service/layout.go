@@ -196,7 +196,7 @@ func onChangeEngine(option string, optionIndex int) {
 	if strings.Contains(option, "edit") {
 		node.controller.currentAgent.preferences.Mode = "Edit"
 		node.layout.promptArea.SetLabel("Enter your context first: ")
-	} else if strings.Contains(option, "code") || strings.Contains(option, "curie") {
+	} else if strings.Contains(option, "code") || strings.EqualFold(option, "curie") {
 		node.controller.currentAgent.preferences.Mode = "Code"
 	} else if strings.Contains(option, "search") {
 		node.controller.currentAgent.preferences.Mode = "Search"
@@ -204,14 +204,14 @@ func onChangeEngine(option string, optionIndex int) {
 		node.controller.currentAgent.preferences.Mode = "Insert"
 	} else if strings.Contains(option, "instruct") {
 		node.controller.currentAgent.preferences.Mode = "Instruct"
-	} else if strings.Contains(option, "similarity") {
+	} else if strings.Contains(option, "similarity") || strings.EqualFold(option, "babbage") {
 		node.controller.currentAgent.preferences.Mode = "Similarity"
-	} else if strings.Contains(option, "embedding") {
+	} else if strings.Contains(option, "embedding") || strings.EqualFold(option, "ada") {
 		node.controller.currentAgent.preferences.Mode = "Embedded"
 		node.layout.promptArea.SetLabel("Enter the text to search for relatedness: ")
 	} else if strings.Contains(option, "turbo") {
 		node.controller.currentAgent.preferences.Mode = "Turbo"
-	} else if strings.Contains(option, "text") {
+	} else if strings.Contains(option, "text") || strings.EqualFold(option, "davinci") {
 		node.controller.currentAgent.preferences.Mode = "Text"
 	} else if strings.Contains(option, "zero") {
 		node.controller.currentAgent.preferences.Mode = "Predicted"
@@ -285,9 +285,9 @@ func onTextAccept(key tcell.Key) {
 		return
 	}
 
-	tokenConsumption := util.MatchToken(node.controller.currentAgent.preferences.PromptCtx)
-	node.controller.currentAgent.preferences.MaxTokens += tokenConsumption
-	node.controller.currentAgent.promptProperties.MaxTokens = int(node.controller.currentAgent.preferences.MaxTokens)
+	node.controller.currentAgent.cachedPromptCount = util.EncodePromptToken([]string{node.controller.currentAgent.promptProperties.Input[0]}, node.controller.currentAgent.engineProperties.Model)
+	node.controller.currentAgent.preferences.MaxTokens += util.EncodePromptToken([]string{node.controller.currentAgent.cachedPrompt}, node.controller.currentAgent.engineProperties.Model)
+	node.controller.currentAgent.promptProperties.MaxTokens = node.controller.currentAgent.preferences.MaxTokens + node.controller.currentAgent.cachedPromptCount
 
 	if key == tcell.KeyCtrlSpace &&
 		!node.controller.currentAgent.preferences.IsLoading {

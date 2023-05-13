@@ -19,7 +19,7 @@ type GlobalPreferences struct {
 	// Prompt properties
 	Probabilities int32
 	Results       int32
-	MaxTokens     int64
+	MaxTokens     int
 	Temperature   float32
 	Topp          float32
 	Penalty       float32

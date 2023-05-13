@@ -40,7 +40,8 @@ type Agent struct {
 	// Preferences
 	preferences parameters.GlobalPreferences
 	// Temporal cache
-	cachedPrompt string
+	cachedPrompt      string
+	cachedPromptCount int
 }
 
 // Initialize - Creates context background to be used along with the client
@@ -63,7 +64,7 @@ func (c *Agent) Initialize() Agent {
 	c.preferences.Engine = "text-davinci-003"
 	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
 	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
-	c.preferences.MaxTokens = util.ParseInt64("\u0032\u0035\u0030")
+	c.preferences.MaxTokens = 1024
 	c.preferences.Mode = "Text"
 	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
 	c.preferences.Probabilities = util.ParseInt32("\u0031")
@@ -223,7 +224,6 @@ func (c *Agent) SetPromptParameters(promptContext []string, instruction []string
 	properties := model.PromptProperties{
 		Input:         promptContext,
 		Instruction:   instruction,
-		MaxTokens:     util.EncodePromptToken(promptContext, c.preferences.Engine),
 		Results:       results,
 		Probabilities: probabilities,
 	}

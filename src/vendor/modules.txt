@@ -225,9 +225,6 @@ github.com/subosito/gotenv
 ## explicit; go 1.13
 # github.com/tklauser/numcpus v0.6.0
 ## explicit; go 1.13
-# github.com/tmc/langchaingo v0.0.0-20230429215204-931a1fe7a2a9
-## explicit; go 1.20
-github.com/tmc/langchaingo/llms
 # github.com/vcaesar/cedar v0.20.1
 ## explicit; go 1.17
 # github.com/yusufpapurcu/wmi v1.2.2

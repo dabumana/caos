@@ -49,9 +49,14 @@ func (c *Controller) CompletionRequest() {
 	resp := node.prompt.SendCompletion(c.currentAgent)
 
 	if resp != nil {
-		for i := range resp.Choices {
-			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, resp.ID)
+		if c.currentAgent.preferences.Results > 0 {
+			for i := range resp.Choices {
+				c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, resp.ID)
+			}
+		} else {
+			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
 		}
+
 		c.events.VisualLogCompletion(resp, nil, nil)
 	}
 

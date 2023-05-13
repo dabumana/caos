@@ -1,10 +1,6 @@
 // Package service section
 package service
 
-import (
-	"github.com/tmc/langchaingo/llms"
-)
-
 // transform - Sequence index
 var transform []Transformer
 
@@ -16,7 +12,7 @@ type Transform interface {
 	ClearListModel()
 	GetListModel() []Transformer
 	// Setup transformer
-	SetupTransformer(llm *llms.LLM, input []string, stop []string) Transformer
+	SetupTransformer(llm string, input []string, stop []string) Transformer
 }
 
 func (c *TransformRequester) ClearListModel() {
@@ -29,7 +25,7 @@ func (c *TransformRequester) GetListModel() []Transformer {
 }
 
 // SetupTransformer - Add new element to listed interface
-func (c *TransformRequester) SetupTransformer(llm *llms.LLM, input []string, stop []string) Transformer {
+func (c *TransformRequester) SetupTransformer(llm string, input []string, stop []string) Transformer {
 	chain := Transformer{
 		model:   llm,
 		prompts: input,
@@ -42,7 +38,7 @@ func (c *TransformRequester) SetupTransformer(llm *llms.LLM, input []string, sto
 
 // Transformer - LLM properties
 type Transformer struct {
-	model   *llms.LLM
+	model   string
 	prompts []string
 	stop    []string
 }

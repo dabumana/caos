@@ -302,7 +302,7 @@ func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 		}
 
 		var body io.Reader = bytes.NewBuffer(out)
-		path := parameters.ExternalBaseURL + string("/v2/predict/text")
+		path := parameters.ExternalPredictBaseURL + string("/v2/predict/text")
 
 		if out != nil {
 			req, err := http.NewRequestWithContext(service.ctx, "POST", path, body)

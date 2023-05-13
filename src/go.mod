@@ -13,6 +13,7 @@ require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/andelf/go-curl v0.0.0-20200630032108-fd49ff24ed97 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cilium/ebpf v0.7.0 // indirect

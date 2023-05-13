@@ -56,7 +56,10 @@ func (c *Agent) Initialize() Agent {
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
 	c.transformers = []Chain{}
-	// Role
+	// Agent properties
+	c.preferences.User = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/B08C390C"
+	c.preferences.Encode = "Accept-Language: en-US,en;q=0.8"
+	// Agent Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
 	c.preferences.TemplateIDs = len(c.templateID)

@@ -7,6 +7,9 @@
 github.com/PullRequestInc/go-gpt3
 # github.com/StackExchange/wmi v1.2.1
 ## explicit; go 1.13
+# github.com/andelf/go-curl v0.0.0-20200630032108-fd49ff24ed97
+## explicit
+github.com/andelf/go-curl
 # github.com/cespare/xxhash v1.1.0
 ## explicit
 # github.com/cespare/xxhash/v2 v2.2.0

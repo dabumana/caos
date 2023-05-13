@@ -96,6 +96,7 @@ func onBack() {
 // onNewTopic - Define a new conversation button event
 func onNewTopic() {
 	// Local preferences
+	node.controller.currentAgent.preferences.MaxTokens = 1024
 	node.controller.currentAgent.preferences.IsNewSession = true
 	node.controller.currentAgent.preferences.IsPromptReady = false
 	node.controller.currentAgent.preferences.PromptCtx = []string{""}

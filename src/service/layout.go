@@ -286,10 +286,6 @@ func onTextAccept(key tcell.Key) {
 		return
 	}
 
-	node.controller.currentAgent.cachedPromptCount = util.EncodePromptToken([]string{node.controller.currentAgent.promptProperties.Input[0]}, node.controller.currentAgent.engineProperties.Model)
-	node.controller.currentAgent.preferences.MaxTokens += util.EncodePromptToken([]string{node.controller.currentAgent.cachedPrompt}, node.controller.currentAgent.engineProperties.Model)
-	node.controller.currentAgent.promptProperties.MaxTokens = node.controller.currentAgent.preferences.MaxTokens + node.controller.currentAgent.cachedPromptCount
-
 	if key == tcell.KeyCtrlSpace &&
 		!node.controller.currentAgent.preferences.IsLoading {
 		group.Add(1)

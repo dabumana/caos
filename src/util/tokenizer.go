@@ -1,12 +1,17 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/pkoukk/tiktoken-go"
 )
 
-// EncoderPromptToken - Encode string and calculate amount of tokens required
-func EncodePromptToken(input []string, model string) int {
+// EncodePromptBytePair - Encode string and calculate amount of tokens required
+func EncodePromptBytePair(input []string, model string) []int {
+	var buffer []int
 	enc, _ := tiktoken.EncodingForModel(model)
-	total := enc.Encode(input[0], nil, nil)
-	return len(total)
+	if enc != nil && input != nil {
+		buffer = enc.Encode(fmt.Sprint(input), nil, nil)
+	}
+	return buffer
 }

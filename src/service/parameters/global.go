@@ -8,8 +8,8 @@ import (
 // GlobalPreferences - General
 type GlobalPreferences struct {
 	// Agent
-	User   string
-	Encode string
+	User     string
+	Encoding string
 	// Engine properties
 	TemplateIDs       int
 	Template          int
@@ -40,9 +40,6 @@ type GlobalPreferences struct {
 	CurrentID  string
 	InlineText chan string
 }
-
-// ExternalPredictBaseURL - External API endpoint
-const ExternalPredictBaseURL = "https://api.gptzero.me"
 
 // ExternalSearchBaseURL - External API endpoint
 const ExternalSearchBaseURL = "https://www.google.com/search?client=firefox-b-m&gbv=1&q="

@@ -3,14 +3,15 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/csv"
 	"fmt"
+	"net/http"
 	"os"
 
 	"caos/model"
 	"caos/service/parameters"
 	"caos/util"
-	"encoding/csv"
-	"net/http"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
@@ -40,8 +41,7 @@ type Agent struct {
 	// Preferences
 	preferences parameters.GlobalPreferences
 	// Temporal cache
-	cachedPrompt      string
-	cachedPromptCount int
+	cachedPrompt string
 }
 
 // Initialize - Creates context background to be used along with the client
@@ -57,8 +57,8 @@ func (c *Agent) Initialize() Agent {
 	c.client, c.exClient = c.Connect()
 	c.transformers = []Chain{}
 	// Agent properties
-	c.preferences.User = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/B08C390C"
-	c.preferences.Encode = "Accept-Language: en-US,en;q=0.8"
+	c.preferences.User = "Mozilla/5 [en] (X11; U; Linux 2.2.15 i686)"
+	c.preferences.Encoding = "gzip, deflate, br"
 	// Agent Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
@@ -90,8 +90,14 @@ func (c *Agent) Initialize() Agent {
 func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 	godotenv.Load()
 
+	transport := http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+		},
+	}
+
 	externalClient := http.Client{
-		Transport: http.DefaultTransport,
+		Transport: &transport,
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)
@@ -261,7 +267,12 @@ func (c *Agent) SetPrompt(context string, input string) []string {
 	return prompt
 }
 
-// OnChainSequence - Chained trasformer events
-func (c *Agent) RunChainSequence(engine *model.EngineProperties, prompPrompt *model.PromptProperties, transformer []Chain) ([]string, error) {
-	return nil, nil
+// SetContext - Chained trasformer events
+func (c *Agent) SetContext(engine *model.EngineProperties, prompt *model.PromptProperties) ([]string, []string) {
+	chain := Chain{
+		input:     prompt.Input,
+		transform: &Transformer{},
+	}
+	chain.ExecuteChainJob(*c)
+	return chain.transform.source, chain.transform.validationPrompt
 }

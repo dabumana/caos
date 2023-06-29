@@ -3,3 +3,4 @@ src/bin*
 src/log*
 src/export*
 src/training*
+src/.env

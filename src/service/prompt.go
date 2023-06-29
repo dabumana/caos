@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"caos/model"
-	"caos/service/parameters"
 	"caos/util"
 	"encoding/json"
 	"net/http"
@@ -46,18 +45,39 @@ func isContextValid(current Agent) bool {
 func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
 	if isContextValid(service) {
 		var buffer []string
-		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.Input[0])[0]
 
-		msg := gpt3.ChatCompletionRequestMessage{
+		prompt := service.SetPrompt(string(""), service.promptProperties.Input[0])[0]
+		urls, ctxVerified := service.SetContext(&service.engineProperties, &service.promptProperties)
+
+		msg := fmt.Sprintf(prompt,
+			"\nUsing the following online verified content and the report format to show the response",
+			"\nthis is fundamentally from real actual results, provide details around the information:",
+			ctxVerified,
+			"\nObtained from the following urls:",
+			urls,
+			"\nElaborate a detailed response with the following schema:",
+			"\n--------------------------------  /|_/|  --------------------------------",
+			"\n-------------------------------- ( o.o ) --------------------------------",
+			"\n--------------------------------  > ^ <  --------------------------------",
+			"\nQuestion: <User input ONLY>",
+			"\nResponse: <Your Detailed response, add each aspect that should be characteristic of the original prompt, include more than 5000-WORDS>",
+			"\nSuggestions: <based entirely on the verified context include suggestions to look or search>",
+			"\nSource: <List all the urls from the contextual information>",
+			"\n-------------------------------- ******* --------------------------------",
+			"\nKEEP ALWAYS THIS RESPONSE FORMAT, TO KEEP A FLUID COMMUNICATION WITH THE USER",
+			"\nNO COUNTER-QUESTION, NO DOUBT.",
+		)
+
+		ctx := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: ctxContent,
+			Content: msg,
 		}
 
 		req := gpt3.ChatCompletionRequest{
 			Model:            service.engineProperties.Model,
 			User:             service.id,
-			Messages:         []gpt3.ChatCompletionRequestMessage{msg},
-			MaxTokens:        *gpt3.IntPtr(service.promptProperties.MaxTokens),
+			Messages:         []gpt3.ChatCompletionRequestMessage{ctx},
+			MaxTokens:        service.promptProperties.MaxTokens,
 			Temperature:      *gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
@@ -302,7 +322,8 @@ func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 		}
 
 		var body io.Reader = bytes.NewBuffer(out)
-		path := parameters.ExternalPredictBaseURL + string("/v2/predict/text")
+
+		path := string("https://api.gptzero.me/v2/predict/text")
 
 		if out != nil {
 			req, err := http.NewRequestWithContext(service.ctx, "POST", path, body)

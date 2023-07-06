@@ -109,25 +109,6 @@ func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 	return c.client, c.exClient
 }
 
-// SaveKeys - Set API keys
-func (c *Agent) SaveKeys() {
-	event := &EventManager{}
-
-	dir, _ := os.Getwd()
-	path := fmt.Sprint(dir, ".env")
-
-	_, err := os.Open(path)
-	if err != nil {
-		file, err := os.Create(".env")
-		if err != nil {
-			event.Errata(err)
-		}
-		outFile := fmt.Sprintf("API_KEY=%v\nZERO_API_KEY=%v\n", c.key[0], c.key[1])
-		file.Write([]byte(outFile))
-		file.Sync()
-	}
-}
-
 // GetStatus - Current agent information
 func (c *Agent) GetStatus() parameters.GlobalPreferences {
 	return c.preferences
@@ -248,11 +229,9 @@ func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProp
 }
 
 // SetTemplateParameters - Set template properties parameters for current prompt context
-func (c *Agent) SetTemplateParameters(id int, promptContext []string, temperature float32) model.TemplateProperties {
+func (c *Agent) SetTemplateParameters(promptContext []string) model.TemplateProperties {
 	properties := model.TemplateProperties{
-		TemplateID:  id,
-		Input:       promptContext,
-		Temperature: temperature,
+		Input: promptContext,
 	}
 	return properties
 }
@@ -268,11 +247,8 @@ func (c *Agent) SetPrompt(context string, input string) []string {
 }
 
 // SetContext - Chained trasformer events
-func (c *Agent) SetContext(engine *model.EngineProperties, prompt *model.PromptProperties) ([]string, []string) {
-	chain := Chain{
-		input:     prompt.Input,
-		transform: &Transformer{},
-	}
-	chain.ExecuteChainJob(*c)
-	return chain.transform.source, chain.transform.validationPrompt
+func (c *Agent) SetContext(prompt *model.PromptProperties) ([]string, []string) {
+	var chain Chain
+	chain.ExecuteChainJob(*c, prompt)
+	return chain.transform.Source, chain.transform.Context
 }

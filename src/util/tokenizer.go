@@ -6,7 +6,7 @@ import (
 	"github.com/pkoukk/tiktoken-go"
 )
 
-// EncodePromptBytePair - Encode string and calculate amount of tokens required
+// EncodePromptBytePair - Encode string to byte pair
 func EncodePromptBytePair(input []string, model string) []int {
 	var buffer []int
 	enc, _ := tiktoken.EncodingForModel(model)

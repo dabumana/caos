@@ -3,9 +3,8 @@ package model
 
 // ChainPrompt - chain properties per prompt
 type ChainPrompt struct {
-	Model      string         `json:"model"`
-	Text       []string       `json:"input"`
-	Generative map[string]any `json:"generative"`
+	Source  []string `json:"source"`
+	Context []string `json:"context"`
 }
 
 // ChainEvent - Session chain event
@@ -16,6 +15,6 @@ type ChainEvent struct {
 
 // ChainSession - Chain session events
 type ChainSession struct {
-	ID      string            `json:"id"`
-	Session []HistoricalEvent `json:"session"`
+	ID      string       `json:"id"`
+	Session []ChainEvent `json:"session"`
 }

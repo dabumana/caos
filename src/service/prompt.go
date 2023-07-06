@@ -47,26 +47,28 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 		var buffer []string
 
 		prompt := service.SetPrompt(string(""), service.promptProperties.Input[0])[0]
-		urls, ctxVerified := service.SetContext(&service.engineProperties, &service.promptProperties)
+		urls, ctxVerified := service.SetContext(&service.promptProperties)
 
-		msg := fmt.Sprintf(prompt,
-			"\nUsing the following online verified content and the report format to show the response",
-			"\nthis is fundamentally from real actual results, provide details around the information:",
+		service.templateProperties.PromptValidated.Source = append(service.templateProperties.PromptValidated.Source, urls...)
+		service.templateProperties.PromptValidated.Context = append(service.templateProperties.PromptValidated.Context, ctxVerified...)
+
+		msg := fmt.Sprint(
+			prompt,
+			"\nNow you have real-time access to the internet, I'll provide some contextual information with urls for main reference for your responses",
+			"\nthis is fundamentally from real-time online actual results, provide a response around the following contextual information:",
 			ctxVerified,
 			"\nObtained from the following urls:",
 			urls,
-			"\nElaborate a detailed response with the following schema:",
-			"\n--------------------------------  /|_/|  --------------------------------",
-			"\n-------------------------------- ( o.o ) --------------------------------",
-			"\n--------------------------------  > ^ <  --------------------------------",
+			"\nPlease always elaborate a detailed response with the following complete schema (KEEP LINE BY LINE):",
 			"\nQuestion: <User input ONLY>",
-			"\nResponse: <Your Detailed response, add each aspect that should be characteristic of the original prompt, include more than 5000-WORDS>",
-			"\nSuggestions: <based entirely on the verified context include suggestions to look or search>",
-			"\nSource: <List all the urls from the contextual information>",
-			"\n-------------------------------- ******* --------------------------------",
-			"\nKEEP ALWAYS THIS RESPONSE FORMAT, TO KEEP A FLUID COMMUNICATION WITH THE USER",
-			"\nNO COUNTER-QUESTION, NO DOUBT.",
+			"\nResponse: <Your Detailed response should contain the contextual information from the real-time online results ONLY>",
+			"\nResume: <Include more than 3000-WORDS per response ONLY>",
+			"\nSuggestions: <based entirely on the verified context include suggestions to look or search ONLY>",
+			"\nSource: <List all the urls from the contextual information ONLY>",
 		)
+
+		service.promptProperties.MaxTokens = len(util.EncodePromptBytePair([]string{msg}, service.engineProperties.Model))
+		node.controller.currentAgent.preferences.MaxTokens = service.promptProperties.MaxTokens
 
 		ctx := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
@@ -77,7 +79,7 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 			Model:            service.engineProperties.Model,
 			User:             service.id,
 			Messages:         []gpt3.ChatCompletionRequestMessage{ctx},
-			MaxTokens:        service.promptProperties.MaxTokens,
+			MaxTokens:        *gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      *gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
 			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
@@ -117,13 +119,8 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 					// Write buffer
 					buffer = append(buffer, out.Choices[0].Delta.Content)
 					bWriter.Write([]byte(out.Choices[0].Delta.Content))
-					if out.Choices[0].Delta.Content == "\n" {
-						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-						fmt.Printf("\x1b[32m%s\r", out)
-					} else {
-						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-						fmt.Printf("\x1b[32m%s", out)
-					}
+					str := wordwrap.WrapString(out.Choices[0].Delta.Content, 25)
+					fmt.Printf("\x1b[32;43m%s", str)
 				})
 
 			var event EventManager
@@ -165,8 +162,13 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 
 		resp := &gpt3.CompletionResponse{}
 
+		msg := service.SetPrompt(service.cachedPrompt, service.promptProperties.Input[0])
+
+		service.promptProperties.MaxTokens = 1024 + len(util.EncodePromptBytePair(msg, service.engineProperties.Model))
+		node.controller.currentAgent.preferences.MaxTokens = service.promptProperties.MaxTokens
+
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.Input[0]),
+			Prompt:           msg,
 			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
 			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
 			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
@@ -212,13 +214,8 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 						for i := range out.Choices {
 							buffer = append(buffer, out.Choices[i].Text)
 							in <- out.Choices[i].Text
-							if out.Choices[i].Text == "\n" {
-								out := wordwrap.WrapString(out.Choices[i].Text, 50)
-								fmt.Printf("\x1b[32m%s\r", out)
-							} else {
-								out := wordwrap.WrapString(out.Choices[i].Text, 50)
-								fmt.Printf("\x1b[32m%s", out)
-							}
+							str := wordwrap.WrapString(out.Choices[i].Text, 50)
+							fmt.Printf("\x1b[32m%s", str)
 						}
 					}(service.preferences.InlineText)
 					// Write buffer

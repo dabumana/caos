@@ -118,7 +118,7 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 }
 
 // appendToModel - Append conversation to session model
-func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
+func (c *EventManager) appendToModel(transform model.TemplateProperties, header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
@@ -131,6 +131,7 @@ func (c *EventManager) appendToModel(header model.EngineProperties, body model.P
 		Header:         header,
 		Body:           body,
 		PredictiveBody: predictBody,
+		Template:       transform,
 	}
 
 	return modelTrainer, modelPrompt
@@ -144,7 +145,7 @@ func (c *EventManager) checkNewSession() {
 }
 
 // LogChatCompletion - Chat response details in a .json file
-func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+func (c *EventManager) LogChatCompletion(chain model.TemplateProperties, header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	c.checkNewSession()
 
 	var modelTrainer model.TrainingPrompt
@@ -153,7 +154,7 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	if resp != nil && cresp == nil {
 		for i := range resp.Choices {
 			body.Content = []string{resp.Choices[i].Message.Content}
-			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
+			modelTrainer, modelPrompt = c.appendToModel(chain, header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
 		}
 
 		c.appendToSession(resp.ID, modelPrompt, modelTrainer)
@@ -161,7 +162,7 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	} else if cresp != nil && resp == nil {
 		for i := range cresp.Choices {
 			body.Content = []string{cresp.Choices[i].Delta.Content}
-			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
+			modelTrainer, modelPrompt = c.appendToModel(chain, header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
 		}
 
 		c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
@@ -174,7 +175,7 @@ func (c *EventManager) LogGeneralCompletion(header model.EngineProperties, body 
 	c.checkNewSession()
 
 	body.Content = resp
-	modelTrainer, modelPrompt := c.appendToModel(header, body, model.PredictProperties{}, resp)
+	modelTrainer, modelPrompt := c.appendToModel(model.TemplateProperties{}, header, body, model.PredictProperties{}, resp)
 
 	c.appendToSession(id, modelPrompt, modelTrainer)
 	node.controller.currentAgent.preferences.CurrentID = id
@@ -193,7 +194,7 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 			Details: *resp,
 		}
 
-		modelTrainer, modelPrompt = c.appendToModel(header, model.PromptProperties{}, predictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
+		modelTrainer, modelPrompt = c.appendToModel(model.TemplateProperties{}, header, model.PromptProperties{}, predictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -385,8 +386,11 @@ func (c *EventManager) LogClient(client Agent) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((((((((%&& .....&&&#(((.,..(.(((((((((((((((((((((((((((((&@@@@@&  .  &..&......&....    &@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((&&     ..............&&&((((.,./(((((((((((((((((((((((((((((&@@@@& &  (.&......*....    @@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	`)
+	fmt.Printf("\n-------  /|_/|  ---------------------------")
+	fmt.Printf("\n------- ( o.o ) ---------------------------")
+	fmt.Printf("\n-------  > ^ <  ---------------------------")
 	fmt.Printf("\n-------------------------------------------\n")
-	fmt.Printf("ID name can be changed in PROFILE section\nmore information can be found in: https://github.com/dabumana/caos\nClient ID: %v", client.id)
+	fmt.Printf("ID name can be changed in PROFILE section\nmore information in: https://github.com/dabumana/caos\nClient ID: %v", client.id)
 	fmt.Printf("\n-------------------------------------------\n")
 	fmt.Print(`This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.`)
 	fmt.Printf("\n-------------------------------------------\n")
@@ -406,7 +410,7 @@ func (c *EventManager) LogEngine(client Agent) {
 			client.promptProperties.Instruction,
 			client.promptProperties.Probabilities,
 			client.promptProperties.Results,
-			client.promptProperties.MaxTokens))
+			client.preferences.MaxTokens))
 }
 
 // LogPredictEngine - Log current predict engine

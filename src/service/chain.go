@@ -3,6 +3,7 @@ package service
 
 import (
 	"bytes"
+	"caos/model"
 	"caos/service/parameters"
 	"caos/util"
 	"crypto/tls"
@@ -19,25 +20,28 @@ import (
 // Chain - Event sequence object
 type Chain struct {
 	input     []string
-	transform *Transformer
+	transform model.ChainPrompt
 }
 
 // ExecuteChainJob - ExecuteChainJob chain sequence
-func (c *Chain) ExecuteChainJob(service Agent) {
-	c.transform.onConstructAssemble(service, c.input)
-	go c.transform.onConstructValidation(service)
+func (c *Chain) ExecuteChainJob(service Agent, prompt *model.PromptProperties) {
+	defer clear()
+	c.input = append(c.input, prompt.Input...)
+	c.onConstructAssemble(service, prompt.Input)
+	if strings.Contains(service.engineProperties.Model, "16k") {
+		c.onConstructValidation(service)
+	}
 }
 
-// Transformer - LLM properties
-type Transformer struct {
-	source           []string
-	ctxSource        []string
-	contextualPrompt []string
-	validationPrompt []string
+// clear - Delete existent cookies and ssl certificate
+func clear() {
+	os.Remove("rootCA.pem")
+	os.Remove(".cookies")
 }
 
 // setCertificateSSL - Implement SSL
 func setCertificateSSL(service Agent, url string) {
+	os.Remove("rootCA.pem")
 	trimL := strings.Split(url, "//")
 	if trimL == nil {
 		return
@@ -70,6 +74,7 @@ func setCertificateSSL(service Agent, url string) {
 
 // setCookiejar - Implement cookies
 func setCookieJar(service Agent, url string) {
+	os.Remove(".cookies")
 	jar, _ := cookiejar.New(nil)
 	service.exClient.Jar = jar
 
@@ -89,6 +94,8 @@ func setCookieJar(service Agent, url string) {
 
 // setConstructResults - Implement transformer
 func setConstructResults(reader *bytes.Reader) ([]string, []string) {
+	var bufferBody string
+
 	resultBody := []string{}
 	urlHeader := []string{}
 
@@ -136,8 +143,7 @@ func setConstructResults(reader *bytes.Reader) ([]string, []string) {
 					if tknType == html.TextToken {
 						compound := strings.Split(c, " ")
 						if !strings.ContainsAny(c, "</>{}\n") &&
-							len(compound) > 3 &&
-							len(c) >= 1 {
+							len(compound) >= 1 {
 							return true
 						} else {
 							return false
@@ -150,10 +156,11 @@ func setConstructResults(reader *bytes.Reader) ([]string, []string) {
 				if isTagRef(tokenType, content) &&
 					len(resultBody) <= 99 {
 					context := fmt.Sprintf("%v", content)
-					resultBody = append(resultBody, context)
+					bufferBody += fmt.Sprintf(" %v", context)
 				}
 			}
 		} else {
+			resultBody = append(resultBody, bufferBody)
 			return urlHeader, resultBody
 		}
 	}
@@ -170,11 +177,15 @@ func setOpt(req string, user string, enc string) []byte {
 	easy.Setopt(curl.OPT_HTTP_CONTENT_DECODING, true)
 	easy.Setopt(curl.OPT_COOKIESESSION, true)
 	easy.Setopt(curl.OPT_COOKIEFILE, ".cookies")
-	easy.Setopt(curl.OPT_USE_SSL, true)
-	easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
-	easy.Setopt(curl.OPT_SSL_VERIFYHOST, true)
-	easy.Setopt(curl.OPT_SSL_VERIFYSTATUS, false)
-	easy.Setopt(curl.OPT_CAINFO, "rootCA.pem")
+
+	_, e := os.OpenFile("rootCA.pem", 0, 0)
+	if e == nil {
+		easy.Setopt(curl.OPT_USE_SSL, true)
+		easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
+		easy.Setopt(curl.OPT_SSL_VERIFYHOST, true)
+		easy.Setopt(curl.OPT_SSL_VERIFYSTATUS, false)
+		easy.Setopt(curl.OPT_CAINFO, "rootCA.pem")
+	}
 	// Create a buffer for storing the response body
 	var buffer []byte
 	writer := func(data []byte, userdata interface{}) bool {
@@ -191,25 +202,25 @@ func setOpt(req string, user string, enc string) []byte {
 }
 
 // onConstructAssemble - Assemble transformer
-func (c *Transformer) onConstructAssemble(service Agent, input []string) {
+func (c *Chain) onConstructAssemble(service Agent, input []string) {
 	setCertificateSSL(service, parameters.ExternalSearchBaseURL)
 	setCookieJar(service, parameters.ExternalSearchBaseURL)
 	context := strings.ReplaceAll(input[0], " ", "+")
 	req := fmt.Sprint(parameters.ExternalSearchBaseURL, context)
 	reader := bytes.NewReader(setOpt(req, service.preferences.User, service.preferences.Encoding))
-	c.source, c.contextualPrompt = setConstructResults(reader)
+	c.transform.Source, c.transform.Context = setConstructResults(reader)
 }
 
 // onConstructValidation - Validate transformer
-func (c *Transformer) onConstructValidation(service Agent) {
+func (c *Chain) onConstructValidation(service Agent) {
 	var sourceBuffer []string
 	var contextBuffer []string
-	for i := range c.source {
-		if i <= 10 {
-			setCertificateSSL(service, c.source[i])
-			setCookieJar(service, c.source[i])
+	for i := range c.transform.Source {
+		if i <= 3 {
+			setCertificateSSL(service, c.transform.Source[i])
+			setCookieJar(service, c.transform.Source[i])
 
-			req := fmt.Sprint(c.source[i])
+			req := fmt.Sprint(c.transform.Source[i])
 			reader := bytes.NewReader(setOpt(req, service.preferences.User, service.preferences.Encoding))
 			header, context := setConstructResults(reader)
 
@@ -218,6 +229,6 @@ func (c *Transformer) onConstructValidation(service Agent) {
 		}
 	}
 
-	c.ctxSource = append(c.ctxSource, sourceBuffer...)
-	c.validationPrompt = append(c.validationPrompt, contextBuffer...)
+	c.transform.Source = append(c.transform.Source, sourceBuffer...)
+	c.transform.Context = append(c.transform.Context, contextBuffer...)
 }

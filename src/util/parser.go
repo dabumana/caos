@@ -71,6 +71,17 @@ func MatchNumber(text string) bool {
 	return matched
 }
 
+// MatchToken - Match token amount
+func MatchToken(text []string) int64 {
+	var maxTokens int64 = 0
+	for j, _ := range []byte(fmt.Sprintf("%v", text)) {
+		if j%4 == 1 {
+			maxTokens++
+		}
+	}
+	return maxTokens
+}
+
 // RemoveWrapper - Remove wrapper from string
 func RemoveWrapper(text string) string {
 	out := strings.TrimSuffix(text, "]")

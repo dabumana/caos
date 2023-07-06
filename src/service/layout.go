@@ -26,7 +26,6 @@ type Layout struct {
 	// User form
 	refinementInput *tview.Form
 	detailsInput    *tview.Form
-	idInput         *tview.Form
 	// User modal
 	modalInput *tview.Modal
 	// User input
@@ -118,8 +117,9 @@ func clearConsoleView() {
 	node.layout.infoOutput.SetText("")
 	node.layout.metadataOutput.SetText("")
 	node.layout.promptOutput.SetText("")
-	node.layout.promptArea.SetPlaceholder("Type here...")
-	node.layout.promptArea.SetText("", true)
+	node.layout.promptArea.
+		SetPlaceholder("Type here...").
+		SetText("", true)
 }
 
 // onConsole - Console view event
@@ -138,11 +138,6 @@ func onRefinement() {
 func OnModal() {
 	// Training modal view
 	returnToPage(3)
-}
-
-// onProfile - Profile view event
-func onProfile() {
-	returnToPage(4)
 }
 
 // onExportTopic - Export current conversation as a file .txt
@@ -234,7 +229,6 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 	}
 
 	textToCheck = strings.ReplaceAll(textToCheck, "\u000D", "\u0020")
-
 	input := []string{textToCheck}
 	ctx := []string{""}
 
@@ -272,9 +266,7 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 	)
 
 	node.controller.currentAgent.templateProperties = node.controller.currentAgent.SetTemplateParameters(
-		node.controller.currentAgent.preferences.Template,
 		input,
-		node.controller.currentAgent.preferences.Temperature,
 	)
 
 	return true
@@ -403,22 +395,18 @@ func returnToPage(index int) {
 		node.layout.pages.ShowPage("console")
 		node.layout.pages.HidePage("refinement")
 		node.layout.pages.HidePage("training")
-		node.layout.pages.HidePage("id")
 	case 2:
 		node.layout.pages.HidePage("console")
 		node.layout.pages.ShowPage("refinement")
 		node.layout.pages.HidePage("training")
-		node.layout.pages.HidePage("id")
 	case 3:
 		node.layout.pages.HidePage("console")
 		node.layout.pages.HidePage("refinement")
 		node.layout.pages.ShowPage("training")
-		node.layout.pages.HidePage("id")
 	case 4:
 		node.layout.pages.HidePage("console")
 		node.layout.pages.HidePage("refinement")
 		node.layout.pages.HidePage("training")
-		node.layout.pages.ShowPage("id")
 	}
 }
 
@@ -440,15 +428,18 @@ func generateLayoutContent() {
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkOrange.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	node.layout.metadataOutput.
 		SetToggleHighlights(true).
+		SetLabel("Properties: ").
 		SetScrollable(true).
 		ScrollToEnd().
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkTurquoise.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	node.layout.promptOutput.
 		SetToggleHighlights(true).
 		SetLabel("Response: ").
@@ -457,14 +448,14 @@ func generateLayoutContent() {
 		SetTextAlign(tview.AlignLeft).
 		SetTextColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetRegions(true).
-		SetDynamicColors(true)
+		SetDynamicColors(true).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	// Input
 	node.layout.promptArea.
-		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkOrange).
-		SetTitle("Input").
-		SetTitleAlign(tview.AlignLeft).
-		SetTitleColor(tcell.ColorDarkCyan)
+		SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorLightGray)).
+		SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorDimGray)).
+		SetTextStyle(tcell.StyleDefault.Background(tcell.ColorGray)).SetBorderPadding(1, 1, 1, 1).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	// List models
 	node.controller.ListModels()
 	// Add types
@@ -482,6 +473,7 @@ func createConsoleSections() (*tview.Flex, *tview.Flex, *tview.Flex) {
 	// Initialize sections
 	metadataSection.
 		AddItem(node.layout.metadataOutput, 0, 1, false).
+		SetBackgroundColor(tcell.ColorDarkGray.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkSlateGray.TrueColor()).
 		SetBorderPadding(1, 2, 2, 4).
@@ -490,6 +482,7 @@ func createConsoleSections() (*tview.Flex, *tview.Flex, *tview.Flex) {
 		SetTitleAlign(tview.AlignLeft)
 	infoSection.
 		AddItem(node.layout.infoOutput, 0, 1, false).
+		SetBackgroundColor(tcell.ColorDarkGray).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetBorderPadding(1, 2, 2, 4).
@@ -498,12 +491,14 @@ func createConsoleSections() (*tview.Flex, *tview.Flex, *tview.Flex) {
 		SetTitleAlign(tview.AlignLeft)
 	comSection.
 		AddItem(node.layout.promptOutput, 0, 1, false).
+		SetBackgroundColor(tcell.ColorDarkGray).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
 		SetBorderPadding(1, 2, 2, 4).
 		SetTitle("Prompter").
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetTitleAlign(tview.AlignLeft)
+		SetTitleAlign(tview.AlignLeft).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	return metadataSection, infoSection, comSection
 }
 
@@ -513,31 +508,38 @@ func createConsoleView() bool {
 	helpOutput := tview.NewTextView()
 	helpOutput.
 		SetText("Press CTRL+SPACE or CMD+SPACE to send the prompt.\nPress CTRL+C or CMD+Q to exit from the application.\nGo to fullscreen for advanced options.").
-		SetTextAlign(tview.AlignRight)
+		SetTextAlign(tview.AlignRight).
+		SetBackgroundColor(tcell.ColorDarkGray)
 	// Layout
 	node.layout.detailsInput = tview.NewForm()
-	// Console section
-	node.layout.promptArea.
-		SetBorderPadding(1, 2, 2, 4)
 	node.layout.detailsInput.
 		AddTextView("Mode", "", 15, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, onChangeEngine).
 		AddDropDown("Role", node.controller.currentAgent.preferences.Roles, 1, onChangeRoles).
 		AddDropDown("Template", node.controller.currentAgent.templateID, 0, onTemplateChange).
-		AddButton("Affinity", onRefinement).
+		AddButton("Configuration", onRefinement).
 		AddButton("New conversation", onNewTopic).
 		AddButton("Export conversation", onExportTopic).
 		AddButton("Export training", onExportTrainedTopic).
-		AddButton("Profile", onProfile).
 		SetHorizontal(true).
-		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
-		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		SetLabelColor(tcell.Color105).
+		SetFieldBackgroundColor(tcell.Color100).
+		SetFieldTextColor(tcell.Color102).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetButtonsAlign(tview.AlignRight)
+		SetButtonsAlign(tview.AlignRight).
+		SetBackgroundColor(tcell.ColorDarkGray)
+	// Dropdown
+	ddE := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
+	ddE.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
+	ddR := node.layout.detailsInput.GetFormItem(2).(*tview.DropDown)
+	ddR.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
+	ddT := node.layout.detailsInput.GetFormItem(3).(*tview.DropDown)
+	ddT.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
 	// Create sections
 	metadataSection, infoSection, comSection := createConsoleSections()
 	// Console grid
-	node.layout.consoleView = tview.NewGrid().
+	node.layout.consoleView = tview.NewGrid()
+	node.layout.consoleView.
 		SetRows(0, 12).
 		SetColumns(0, 2).
 		AddItem(metadataSection, 1, 0, 1, 1, 0, 0, false).
@@ -562,6 +564,7 @@ func createConsoleView() bool {
 		SetBorderPadding(0, 0, 9, 9).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
+		SetBackgroundColor(tcell.ColorDarkGray).
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
 	// Validate view
@@ -582,17 +585,22 @@ func createRefinementView() bool {
 		AddInputField("Frequency Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
 		AddCheckbox("Edit mode (edit and improve the previous response)", false, onEditChecked).
 		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, onStreamingChecked).
+		AddInputField("API key: ", node.controller.currentAgent.key[0], 60, func(textToCheck string, lastChar rune) bool {
+			node.controller.currentAgent.key[0] = textToCheck
+			return true
+		}, nil).
 		AddButton("Back to chat", onBack).
-		SetFieldBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		SetFieldBackgroundColor(tcell.ColorGrey.TrueColor()).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignCenter).
 		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
 		SetTitle("Improve your search criteria: ").
 		SetTitleAlign(tview.AlignLeft).
-		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
+		SetTitleColor(tcell.ColorMediumPurple.TrueColor()).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(5, 5, 25, 25)
+		SetBorderPadding(5, 5, 25, 25).
+		SetBackgroundColor(tcell.ColorDarkGrey)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
@@ -603,9 +611,10 @@ func createRefinementView() bool {
 		AddItem(affinitySection, 0, 0, 1, 3, 0, 0, true).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
+		SetBackgroundColor(tcell.ColorDarkGray).
 		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
 		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBorderPadding(12, 12, 24, 24)
+		SetBorderPadding(12, 6, 24, 24)
 	// Validate view
 	return node.layout.affinityView != nil
 }
@@ -618,7 +627,7 @@ func createModalView() {
 	node.layout.modalInput.
 		SetText("Do you want to export the current conversation? Press Ok to export it or Cancel to start a new conversation.").
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBackgroundColor(tcell.ColorDarkGrey.TrueColor()).
+		SetBackgroundColor(tcell.ColorLightGray.TrueColor()).
 		AddButtons([]string{"Ok", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Ok" {
@@ -631,43 +640,6 @@ func createModalView() {
 
 			onConsole()
 		})
-}
-
-// createIDModalView - Create modal view for training mode
-func createIDModalView() {
-	// Form layout
-	node.layout.idInput = tview.NewForm()
-	// Form section
-	node.layout.idInput.
-		AddInputField("Enter your name: ", node.controller.currentAgent.id, 30, func(textToCheck string, lastChar rune) bool {
-			node.controller.currentAgent.id = textToCheck
-			return true
-		}, nil).
-		AddInputField("API key: ", node.controller.currentAgent.key[0], 60, func(textToCheck string, lastChar rune) bool {
-			node.controller.currentAgent.key[0] = textToCheck
-			return true
-		}, nil).
-		AddInputField("API key [GPT-Zero]: ", node.controller.currentAgent.key[1], 60, func(textToCheck string, lastChar rune) bool {
-			node.controller.currentAgent.key[1] = textToCheck
-			return true
-		}, nil).
-		AddButton("Save", func() {
-			node.controller.currentAgent.client, node.controller.currentAgent.exClient = node.controller.currentAgent.Connect()
-			node.controller.currentAgent.SaveKeys()
-			onRefinement()
-		}).
-		AddButton("Cancel", func() {
-			onConsole()
-		}).
-		SetLabelColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetButtonsAlign(tview.AlignCenter).
-		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
-		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
-		SetTitleColor(tcell.ColorDarkOrange.TrueColor()).
-		SetBorderPadding(10, 10, 35, 35).
-		SetTitleAlign(tview.AlignCenter)
-
 }
 
 // ConstructService - Service constructor
@@ -688,14 +660,13 @@ func InitializeService() {
 	createConsoleView()
 	createRefinementView()
 	createModalView()
-	createIDModalView()
 	// Window frame
 	node.layout.pages = tview.NewPages()
 	node.layout.pages.
 		AddAndSwitchToPage("console", node.layout.consoleView, true).
 		AddAndSwitchToPage("refinement", node.layout.affinityView, true).
 		AddAndSwitchToPage("training", node.layout.modalInput, true).
-		AddAndSwitchToPage("id", node.layout.idInput, true)
+		SetBackgroundColor(tcell.ColorDarkGray)
 	// App terminal configuration
 	node.layout.app.
 		SetRoot(node.layout.pages, true).
@@ -704,7 +675,7 @@ func InitializeService() {
 	// Inline
 	node.controller.currentAgent.preferences.InlineText = make(chan string)
 	// Initial view
-	onProfile()
+	onRefinement()
 	// Validate forms
 	validateRefinementForm()
 	// Exception

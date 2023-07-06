@@ -30,13 +30,13 @@ func (c *Controller) ChatCompletionRequest() {
 	if c.currentAgent.preferences.IsPromptStreaming {
 		resp, _ := node.prompt.SendChatCompletion(c.currentAgent)
 
-		c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, nil, resp)
+		c.events.LogChatCompletion(c.currentAgent.templateProperties, c.currentAgent.engineProperties, c.currentAgent.promptProperties, nil, resp)
 		c.events.VisualLogCompletion(nil, nil, resp)
 	} else {
 		_, resp := node.prompt.SendChatCompletion(c.currentAgent)
 
 		if resp != nil {
-			c.events.LogChatCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, resp, nil)
+			c.events.LogChatCompletion(c.currentAgent.templateProperties, c.currentAgent.engineProperties, c.currentAgent.promptProperties, resp, nil)
 			c.events.VisualLogCompletion(nil, resp, nil)
 		}
 	}
@@ -50,11 +50,7 @@ func (c *Controller) CompletionRequest() {
 
 	if resp != nil {
 		if c.currentAgent.preferences.Results > 0 {
-			for i := range resp.Choices {
-				c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, resp.ID)
-			}
-		} else {
-			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
+			c.events.LogGeneralCompletion(c.currentAgent.engineProperties, c.currentAgent.promptProperties, []string{resp.Choices[0].Text}, resp.ID)
 		}
 
 		c.events.VisualLogCompletion(resp, nil, nil)
@@ -69,7 +65,7 @@ func (c *Controller) EditRequest() {
 
 	if resp != nil {
 		for i := range resp.Choices {
-			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Choices[i].Text}, node.controller.currentAgent.preferences.CurrentID)
+			c.events.LogGeneralCompletion(c.currentAgent.engineProperties, c.currentAgent.promptProperties, []string{resp.Choices[i].Text}, c.currentAgent.preferences.CurrentID)
 		}
 		c.events.VisualLogEdit(resp)
 	}
@@ -83,7 +79,7 @@ func (c *Controller) EmbeddingRequest() {
 
 	if resp != nil {
 		for i := range resp.Data {
-			c.events.LogGeneralCompletion(node.controller.currentAgent.engineProperties, node.controller.currentAgent.promptProperties, []string{resp.Data[i].Object}, node.controller.currentAgent.preferences.CurrentID)
+			c.events.LogGeneralCompletion(c.currentAgent.engineProperties, c.currentAgent.promptProperties, []string{resp.Data[i].Object}, c.currentAgent.preferences.CurrentID)
 		}
 		c.events.VisualLogEmbedding(resp)
 	}
@@ -96,7 +92,7 @@ func (c *Controller) PredictableRequest() {
 	resp := node.prompt.SendPredictablePrompt(c.currentAgent)
 
 	if resp != nil {
-		c.events.LogPredict(node.controller.currentAgent.engineProperties, node.controller.currentAgent.predictProperties, resp)
+		c.events.LogPredict(c.currentAgent.engineProperties, c.currentAgent.predictProperties, resp)
 		c.events.VisualLogPredict(resp)
 
 		c.currentAgent.predictProperties.Details.Documents = append(c.currentAgent.predictProperties.Details.Documents, resp.Documents...)
@@ -110,7 +106,7 @@ func (c *Controller) ListModels() {
 	resp := node.prompt.GetListModels(c.currentAgent)
 	if resp != nil {
 		for _, i := range resp.Data {
-			node.controller.currentAgent.preferences.Models = append(node.controller.currentAgent.preferences.Models, i.ID)
+			c.currentAgent.preferences.Models = append(c.currentAgent.preferences.Models, i.ID)
 		}
 	}
 }

@@ -234,7 +234,7 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 
 	if !node.controller.currentAgent.preferences.IsPromptReady &&
 		node.controller.currentAgent.preferences.Mode == "Predicted" {
-		node.controller.currentAgent.predictProperties = node.controller.currentAgent.SetPredictionParameters(
+		node.controller.currentAgent.PredictProperties = node.controller.currentAgent.SetPredictionParameters(
 			input,
 		)
 	}
@@ -248,7 +248,7 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 		ctx = []string{textToCheck}
 	}
 
-	node.controller.currentAgent.engineProperties = node.controller.currentAgent.SetEngineParameters(
+	node.controller.currentAgent.EngineProperties = node.controller.currentAgent.SetEngineParameters(
 		node.controller.currentAgent.id,
 		node.controller.currentAgent.preferences.Engine,
 		node.controller.currentAgent.preferences.Role,
@@ -258,14 +258,14 @@ func onTextChange(textToCheck string, lastChar rune) bool {
 		node.controller.currentAgent.preferences.Frequency,   // Frequency  of penalization
 	)
 
-	node.controller.currentAgent.promptProperties = node.controller.currentAgent.SetPromptParameters(
+	node.controller.currentAgent.PromptProperties = node.controller.currentAgent.SetPromptParameters(
 		input,
 		ctx,
 		int(node.controller.currentAgent.preferences.Results),
 		int(node.controller.currentAgent.preferences.Probabilities),
 	)
 
-	node.controller.currentAgent.templateProperties = node.controller.currentAgent.SetTemplateParameters(
+	node.controller.currentAgent.TemplateProperties = node.controller.currentAgent.SetTemplateParameters(
 		input,
 	)
 
@@ -306,7 +306,7 @@ func onTextAccept(key tcell.Key) {
 		group.Wait()
 
 		node.controller.currentAgent.cachedPrompt = fmt.Sprint(node.controller.currentAgent.cachedPrompt,
-			node.controller.currentAgent.promptProperties.Input[0], node.layout.promptOutput.GetText(true))
+			node.controller.currentAgent.PromptProperties.Input[0], node.layout.promptOutput.GetText(true))
 
 		if node.controller.currentAgent.preferences.IsEditable ||
 			(node.controller.currentAgent.preferences.Mode == "Edit" &&

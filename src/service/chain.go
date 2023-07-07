@@ -19,16 +19,16 @@ import (
 
 // Chain - Event sequence object
 type Chain struct {
-	input     []string
-	transform model.ChainPrompt
+	Input     []string
+	Transform model.ChainPrompt
 }
 
 // ExecuteChainJob - ExecuteChainJob chain sequence
 func (c *Chain) ExecuteChainJob(service Agent, prompt *model.PromptProperties) {
 	defer clear()
-	c.input = append(c.input, prompt.Input...)
+	c.Input = append(c.Input, prompt.Input...)
 	c.onConstructAssemble(service, prompt.Input)
-	if strings.Contains(service.engineProperties.Model, "16k") {
+	if strings.Contains(service.EngineProperties.Model, "16k") {
 		c.onConstructValidation(service)
 	}
 }
@@ -208,19 +208,19 @@ func (c *Chain) onConstructAssemble(service Agent, input []string) {
 	context := strings.ReplaceAll(input[0], " ", "+")
 	req := fmt.Sprint(parameters.ExternalSearchBaseURL, context)
 	reader := bytes.NewReader(setOpt(req, service.preferences.User, service.preferences.Encoding))
-	c.transform.Source, c.transform.Context = setConstructResults(reader)
+	c.Transform.Source, c.Transform.Context = setConstructResults(reader)
 }
 
 // onConstructValidation - Validate transformer
 func (c *Chain) onConstructValidation(service Agent) {
 	var sourceBuffer []string
 	var contextBuffer []string
-	for i := range c.transform.Source {
+	for i := range c.Transform.Source {
 		if i <= 3 {
-			setCertificateSSL(service, c.transform.Source[i])
-			setCookieJar(service, c.transform.Source[i])
+			setCertificateSSL(service, c.Transform.Source[i])
+			setCookieJar(service, c.Transform.Source[i])
 
-			req := fmt.Sprint(c.transform.Source[i])
+			req := fmt.Sprint(c.Transform.Source[i])
 			reader := bytes.NewReader(setOpt(req, service.preferences.User, service.preferences.Encoding))
 			header, context := setConstructResults(reader)
 
@@ -229,6 +229,6 @@ func (c *Chain) onConstructValidation(service Agent) {
 		}
 	}
 
-	c.transform.Source = append(c.transform.Source, sourceBuffer...)
-	c.transform.Context = append(c.transform.Context, contextBuffer...)
+	c.Transform.Source = append(c.Transform.Source, sourceBuffer...)
+	c.Transform.Context = append(c.Transform.Context, contextBuffer...)
 }

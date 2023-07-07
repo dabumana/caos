@@ -17,7 +17,12 @@ func TestInitialize(t *testing.T) {
 
 		if preferences.TemplateIDs == 0 {
 			t.Errorf("Received:%v", preferences.TemplateIDs)
+			t.Log("Test - FAILED")
+		} else {
+			t.Log("Test - PASSED")
 		}
+
+		t.Log("Test - FINISHED")
 	})
 }
 
@@ -49,7 +54,7 @@ func TestSetEngineParameters(t *testing.T) {
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.TopP, topp)
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.PresencePenalty, penalty)
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.FrequencyPenalty, frequency)
-			t.Log("Test - ERROR")
+			t.Log("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}
@@ -80,7 +85,7 @@ func TestSetPromptParameters(t *testing.T) {
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.MaxTokens, tokens)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Probabilities, probabilities)
-			t.Log("Test - ERROR")
+			t.Log("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}
@@ -95,7 +100,7 @@ func TestSetPredictionParameters(t *testing.T) {
 		predictProperties := agent.SetPredictionParameters(context)
 		if predictProperties.Input == nil {
 			t.Errorf("Received:%v\nExpected:%v\n", predictProperties.Input, context)
-			t.Error("Test - ERROR")
+			t.Error("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}

@@ -34,10 +34,10 @@ type Agent struct {
 	client   *gpt3.Client
 	exClient *http.Client
 	// Properties
-	engineProperties   model.EngineProperties
-	promptProperties   model.PromptProperties
-	predictProperties  model.PredictProperties
-	templateProperties model.TemplateProperties
+	EngineProperties   model.EngineProperties
+	PromptProperties   model.PromptProperties
+	PredictProperties  model.PredictProperties
+	TemplateProperties model.TemplateProperties
 	// Preferences
 	preferences parameters.GlobalPreferences
 	// Temporal cache
@@ -236,8 +236,8 @@ func (c *Agent) SetTemplateParameters(promptContext []string) model.TemplateProp
 	return properties
 }
 
-// SetPrompt - Conversion human-ai roles
-func (c *Agent) SetPrompt(context string, input string) []string {
+// SetTemplate - Conversion human-ai roles
+func (c *Agent) SetTemplate(context string, input string) []string {
 	if context == "" {
 		context = c.templateCtx[c.preferences.Template]
 	}
@@ -250,5 +250,5 @@ func (c *Agent) SetPrompt(context string, input string) []string {
 func (c *Agent) SetContext(prompt *model.PromptProperties) ([]string, []string) {
 	var chain Chain
 	chain.ExecuteChainJob(*c, prompt)
-	return chain.transform.Source, chain.transform.Context
+	return chain.Transform.Source, chain.Transform.Context
 }

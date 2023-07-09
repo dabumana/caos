@@ -2,6 +2,7 @@
 package service
 
 import (
+	"flag"
 	"fmt"
 	"strings"
 	"time"
@@ -435,12 +436,14 @@ func (c *EventManager) LogPredictEngine(client Agent) {
 
 // Errata - Generic error method
 func (c *EventManager) Errata(err error) {
-	if err != nil {
-		node.layout.infoOutput.SetText(err.Error())
-		node.layout.promptArea.SetPlaceholder("An error was found or the response was not complete, just press CTRL+SPACE or CMD+SPACE to repeat it.")
-	} else {
-		node.layout.promptArea.SetPlaceholder("Type here...")
-	}
+	if flag.Lookup("test.v") == nil {
+		if err != nil {
+			node.layout.infoOutput.SetText(err.Error())
+			node.layout.promptArea.SetPlaceholder("An error was found or the response was not complete, just press CTRL+SPACE or CMD+SPACE to repeat it.")
+		} else {
+			node.layout.promptArea.SetPlaceholder("Type here...")
+		}
 
-	node.layout.promptArea.SetText("", true)
+		node.layout.promptArea.SetText("", true)
+	}
 }

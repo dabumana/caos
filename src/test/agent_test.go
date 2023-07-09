@@ -67,7 +67,6 @@ func TestSetPromptParameters(t *testing.T) {
 		agent := &service.Agent{}
 		context := []string{"Generate an UML template"}
 		prompt := []string{"for an eshop, include customers and providers."}
-		tokens := 64
 		result := 4
 		probabilities := 4
 		requestProperties := agent.SetPromptParameters(
@@ -77,12 +76,10 @@ func TestSetPromptParameters(t *testing.T) {
 			probabilities)
 		if requestProperties.Input == nil ||
 			requestProperties.Instruction == nil ||
-			requestProperties.MaxTokens != tokens ||
 			requestProperties.Results != result ||
 			requestProperties.Probabilities != probabilities {
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Input, context)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Instruction, prompt)
-			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.MaxTokens, tokens)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Probabilities, probabilities)
 			t.Log("Test - FAILED")

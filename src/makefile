@@ -1,5 +1,6 @@
 APP=caos
 VERSION=v.0.0.0
+PKG_LIST=$(go list ./... | grep -v /vendor/ | tr '\n' ' ')
 
 build:
 	go build -o ./bin/${APP}-${VERSION}
@@ -16,12 +17,16 @@ clean:
 	rm -rf 'localCA.crt'
 	rm -rf 'localCA.pem'
 	rm -rf 'rootCA.pem'
+	rm -rf 'coverage.out'
 
 run:
 	./bin/${APP}-${VERSION}
 
 test:
-	go test -cover ./...
+	go test ./...
+
+coverage:
+	go test -covermode=count -coverprofile coverage.out ${PKG_LIST}
 
 update:
 	go mod tidy

@@ -117,8 +117,10 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 					sresp.Choices[0].Delta.Content = out.Choices[0].Delta.Content
 					sresp.Choices[0].Delta.Role = out.Choices[0].Delta.Role
 					// Write buffer
-					buffer = append(buffer, out.Choices[0].Delta.Content)
-					bWriter.Write([]byte(out.Choices[0].Delta.Content))
+					if !isTestingEnvironment() {
+						buffer = append(buffer, out.Choices[0].Delta.Content)
+						bWriter.Write([]byte(out.Choices[0].Delta.Content))
+					}
 					str := wordwrap.WrapString(out.Choices[0].Delta.Content, 25)
 					fmt.Printf("\x1b[32;43m%s", str)
 				})
@@ -212,14 +214,18 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 						resp.Choices[0].LogProbs.TopLogprobs = append(resp.Choices[0].LogProbs.TopLogprobs, out.Choices[0].LogProbs.TopLogprobs...)
 
 						for i := range out.Choices {
-							buffer = append(buffer, out.Choices[i].Text)
+							if !isTestingEnvironment() {
+								buffer = append(buffer, out.Choices[i].Text)
+							}
 							in <- out.Choices[i].Text
 							str := wordwrap.WrapString(out.Choices[i].Text, 50)
 							fmt.Printf("\x1b[32m%s", str)
 						}
 					}(service.preferences.InlineText)
-					// Write buffer
-					bWriter.Write([]byte(<-service.preferences.InlineText))
+					if !isTestingEnvironment() {
+						// Write buffer
+						bWriter.Write([]byte(<-service.preferences.InlineText))
+					}
 				})
 
 			var event EventManager

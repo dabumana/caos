@@ -205,7 +205,7 @@ func (c *Prompt) SendCompletionPrompt(service Agent) *gpt3.CompletionResponse {
 
 			var bWriter tview.TextViewWriter
 			if !isTestingEnvironment() {
-				bWriter := node.layout.promptOutput.BatchWriter()
+				bWriter = node.layout.promptOutput.BatchWriter()
 				defer bWriter.Close()
 				bWriter.Clear()
 			}
@@ -246,7 +246,6 @@ func (c *Prompt) SendCompletionPrompt(service Agent) *gpt3.CompletionResponse {
 						}
 					}(service.preferences.InlineText)
 					if !isTestingEnvironment() {
-						// Write buffer
 						bWriter.Write([]byte(<-service.preferences.InlineText))
 					}
 				})

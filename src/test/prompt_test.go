@@ -176,7 +176,6 @@ func TestSendEmbeddingPrompt(t *testing.T) {
 	})
 }
 
-/**
 func TestSendPredictablePrompt(t *testing.T) {
 	t.Run("SendPredictablePrompt", func(t *testing.T) {
 		controller := &service.Controller{}
@@ -201,7 +200,6 @@ func TestSendPredictablePrompt(t *testing.T) {
 		t.Log("Test - FINISHED")
 	})
 }
-**/
 
 func TestGetListModels(t *testing.T) {
 	t.Run("GetListModels", func(t *testing.T) {

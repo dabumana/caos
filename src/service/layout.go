@@ -512,6 +512,7 @@ func createConsoleView() bool {
 		SetBackgroundColor(tcell.ColorDarkGray)
 	// Layout
 	node.layout.detailsInput = tview.NewForm()
+
 	node.layout.detailsInput.
 		AddTextView("Mode", "", 15, 2, true, false).
 		AddDropDown("Engine", node.controller.currentAgent.preferences.Models, 11, onChangeEngine).
@@ -528,13 +529,9 @@ func createConsoleView() bool {
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
 		SetButtonsAlign(tview.AlignRight).
 		SetBackgroundColor(tcell.ColorDarkGray)
-	// Dropdown
-	ddE := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
-	ddE.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
-	ddR := node.layout.detailsInput.GetFormItem(2).(*tview.DropDown)
-	ddR.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
-	ddT := node.layout.detailsInput.GetFormItem(3).(*tview.DropDown)
-	ddT.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
+
+	node.layout.promptArea.
+		SetBorderPadding(1, 2, 2, 4)
 	// Create sections
 	metadataSection, infoSection, comSection := createConsoleSections()
 	// Console grid
@@ -548,6 +545,13 @@ func createConsoleView() bool {
 		AddItem(comSection, 3, 0, 8, 5, 0, 0, false).
 		AddItem(node.layout.promptArea, 11, 0, 2, 5, 0, 0, true).
 		AddItem(helpOutput, 13, 0, 1, 5, 0, 0, false)
+	// Dropdown
+	ddE := node.layout.detailsInput.GetFormItem(1).(*tview.DropDown)
+	ddE.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
+	ddR := node.layout.detailsInput.GetFormItem(2).(*tview.DropDown)
+	ddR.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
+	ddT := node.layout.detailsInput.GetFormItem(3).(*tview.DropDown)
+	ddT.SetListStyles(tcell.StyleDefault.Background(tcell.Color100), tcell.StyleDefault.Background(tcell.Color101))
 	// Key event
 	_ = node.layout.promptArea.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlSpace {
@@ -649,11 +653,12 @@ func ConstructService() (*tview.Application, *tcell.Screen) {
 	// Main screen
 	screen := new(tcell.Screen)
 	app.SetScreen(*screen)
+
 	return app, screen
 }
 
-// InitializeService - Create service layout for terminal session
-func InitializeService() {
+// initializeLayout - Create service layout for terminal session
+func InitializeLayout() {
 	/* Layout content */
 	generateLayoutContent()
 	// Create views

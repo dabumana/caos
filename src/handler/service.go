@@ -5,10 +5,10 @@ import (
 	"caos/service"
 )
 
-// ServiceRequester - Service requester interface API
-type ServiceRequester interface {
-	Start()
-}
-
 // Node - Global node service for handler
 var Node service.Node
+
+// ServiceRequester - Service requester interface API
+type ServiceRequester interface {
+	Init()
+}

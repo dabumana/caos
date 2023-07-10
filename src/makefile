@@ -28,9 +28,6 @@ test:
 coverage:
 	go test -covermode=count -coverprofile coverage.out ${PKG_LIST}
 
-update:
-	go mod tidy
-
 env:
 	openssl genrsa -out localCA.key 4096
 	openssl req -x509 -new -nodes -key localCA.key -sha256 -days 1024 -out localCA.crt

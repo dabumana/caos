@@ -190,7 +190,7 @@ func TestSendPredictablePrompt(t *testing.T) {
 
 		agent.PredictProperties = predictProperties
 
-		resp := prompt.SendEmbeddingPrompt(agent)
+		resp := prompt.SendPredictablePrompt(agent)
 		if resp == nil {
 			t.Errorf("Received:%v", resp)
 			t.Log("Test - FAILED")

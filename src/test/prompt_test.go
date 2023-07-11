@@ -45,20 +45,23 @@ func initializeAgent() {
 	localAgent.TemplateProperties = *templateProperties
 }
 
+func checkResponse(t *testing.T, resp any) {
+	if resp != nil {
+		t.Log("Test - PASSED")
+	} else {
+		t.Errorf("Received:%v", resp)
+		t.Log("Test - FAILED")
+	}
+	t.Log("Test - FINISHED")
+}
+
 func TestSendChatCompletion(t *testing.T) {
 	t.Run("SendChatCompletion", func(t *testing.T) {
 		engineProperties.Model = "gpt-3.5-turbo"
 		initializeAgent()
 
-		chat, schat := prompter.SendChatCompletionPrompt(localAgent)
-		if chat != nil && schat == nil ||
-			schat != nil && chat == nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v/%v", chat, schat)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		resp, _ := prompter.SendChatCompletionPrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
@@ -68,13 +71,7 @@ func TestSendCompletion(t *testing.T) {
 		initializeAgent()
 
 		resp := prompter.SendCompletionPrompt(localAgent)
-		if resp != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		checkResponse(t, resp)
 	})
 }
 
@@ -84,14 +81,7 @@ func TestSendEditPrompt(t *testing.T) {
 		initializeAgent()
 
 		resp := prompter.SendEditPrompt(localAgent)
-		if resp != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		}
-
-		t.Log("Test - FINISHED")
+		checkResponse(t, resp)
 	})
 }
 
@@ -101,13 +91,7 @@ func TestSendEmbeddingPrompt(t *testing.T) {
 		initializeAgent()
 
 		resp := prompter.SendEmbeddingPrompt(localAgent)
-		if resp != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		checkResponse(t, resp)
 	})
 }
 
@@ -116,13 +100,7 @@ func TestSendPredictablePrompt(t *testing.T) {
 		initializeAgent()
 
 		resp := prompter.SendPredictablePrompt(localAgent)
-		if resp != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		checkResponse(t, resp)
 	})
 }
 
@@ -131,12 +109,6 @@ func TestGetListModels(t *testing.T) {
 		initializeAgent()
 
 		resp := prompter.GetListModels(localAgent)
-		if resp != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		checkResponse(t, resp)
 	})
 }

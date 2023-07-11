@@ -8,9 +8,6 @@ build:
 	make -C ./src test
 	make -C ./src build APP=${APP} VERSION=${VERSION}
 
-test:
-	make -C ./src test
-
 clean:
 	make -C ./src clean
 
@@ -19,6 +16,12 @@ coverage:
 
 run: build
 	make -C ./src run
+
+test:
+	make -C ./src test
+
+tidy:
+	make -C ./src tidy
 
 vendor:
 	make -C ./src vendor

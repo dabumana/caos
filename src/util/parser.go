@@ -73,8 +73,8 @@ func MatchNumber(text string) bool {
 
 // MatchToken - Match token amount
 func MatchToken(text []string) int64 {
-	var maxTokens int64 = 0
-	for j, _ := range []byte(fmt.Sprintf("%v", text)) {
+	var maxTokens int64
+	for j := range []byte(fmt.Sprintf("%v", text)) {
 		if j%4 == 1 {
 			maxTokens++
 		}

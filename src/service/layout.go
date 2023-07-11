@@ -657,7 +657,7 @@ func ConstructService() (*tview.Application, *tcell.Screen) {
 	return app, screen
 }
 
-// initializeLayout - Create service layout for terminal session
+// InitializeLayout - Create service layout for terminal session
 func InitializeLayout() {
 	/* Layout content */
 	generateLayoutContent()

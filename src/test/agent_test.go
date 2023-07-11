@@ -8,10 +8,22 @@ import (
 	"caos/service"
 )
 
+var agent = &service.Agent{}
+
+var context = []string{"Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..."}
+var prompt = []string{"Extend the quote"}
+
+const id = "test_user"
+const role = model.Assistant
+const temperature = 1.0
+const topp = 0.4
+const penalty = 0.5
+const frequency = 0.5
+const result = 4
+const probabilities = 4
+
 func TestInitialize(t *testing.T) {
 	t.Run("Initialize", func(t *testing.T) {
-		agent := &service.Agent{}
-
 		agent.Initialize()
 		preferences := agent.GetStatus()
 
@@ -28,14 +40,7 @@ func TestInitialize(t *testing.T) {
 
 func TestSetEngineParameters(t *testing.T) {
 	t.Run("SetEngineParameters", func(t *testing.T) {
-		agent := &service.Agent{}
-		id := "test_user"
-		role := model.Assistant
 		model := "text-davinci-003"
-		temperature := 1.0
-		topp := 0.4
-		penalty := 0.5
-		frequency := 0.5
 		engineProperties := agent.SetEngineParameters(
 			id,
 			model,
@@ -44,6 +49,7 @@ func TestSetEngineParameters(t *testing.T) {
 			float32(topp),
 			float32(penalty),
 			float32(frequency))
+
 		if engineProperties.Model != model ||
 			engineProperties.Temperature != float32(temperature) ||
 			engineProperties.TopP != float32(topp) ||
@@ -64,16 +70,12 @@ func TestSetEngineParameters(t *testing.T) {
 
 func TestSetPromptParameters(t *testing.T) {
 	t.Run("SetPromptParameters", func(t *testing.T) {
-		agent := &service.Agent{}
-		context := []string{"Generate an UML template"}
-		prompt := []string{"for an eshop, include customers and providers."}
-		result := 4
-		probabilities := 4
 		requestProperties := agent.SetPromptParameters(
 			context,
 			prompt,
 			result,
 			probabilities)
+
 		if requestProperties.Input == nil ||
 			requestProperties.Instruction == nil ||
 			requestProperties.Results != result ||
@@ -92,8 +94,6 @@ func TestSetPromptParameters(t *testing.T) {
 
 func TestSetPredictionParameters(t *testing.T) {
 	t.Run("SetPredictionParameters", func(t *testing.T) {
-		agent := &service.Agent{}
-		context := []string{"Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..."}
 		predictProperties := agent.SetPredictionParameters(context)
 		if predictProperties.Input == nil {
 			t.Errorf("Received:%v\nExpected:%v\n", predictProperties.Input, context)

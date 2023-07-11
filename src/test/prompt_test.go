@@ -8,214 +8,107 @@ import (
 	"caos/service"
 )
 
+var controller = &service.Controller{}
+var prompter = &service.Prompt{}
+
+var localAgent = controller.AttachProfile()
+
+var engineProperties = &model.EngineProperties{
+	UserID:           "test_user",
+	Role:             model.Assistant,
+	Temperature:      1.0,
+	TopP:             0.4,
+	PresencePenalty:  0.5,
+	FrequencyPenalty: 0.5,
+}
+
+var promptProperties = &model.PromptProperties{
+	Input:         []string{"Generate an uml template"},
+	Instruction:   []string{"for an eshop, include customers and providers."},
+	Content:       []string{"UML generated"},
+	MaxTokens:     1024,
+	Results:       1,
+	Probabilities: 1,
+}
+
+var predictProperties = &model.PredictProperties{
+	Input:   []string{"This is a generative response"},
+	Details: model.PredictResponse{},
+}
+
+var templateProperties = &model.TemplateProperties{}
+
+func initializeAgent() {
+	localAgent.EngineProperties = *engineProperties
+	localAgent.PromptProperties = *promptProperties
+	localAgent.PredictProperties = *predictProperties
+	localAgent.TemplateProperties = *templateProperties
+}
+
+func checkResponse(t *testing.T, resp any) {
+	if resp != nil {
+		t.Log("Test - PASSED")
+	} else {
+		t.Errorf("Received:%v", resp)
+		t.Log("Test - FAILED")
+	}
+	t.Log("Test - FINISHED")
+}
+
 func TestSendChatCompletion(t *testing.T) {
 	t.Run("SendChatCompletion", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		engineProperties.Model = "gpt-3.5-turbo"
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-
-		engineProperties := &model.EngineProperties{
-			UserID:           "test_user",
-			Model:            "gpt-3.5-turbo",
-			Role:             model.Assistant,
-			Temperature:      1.0,
-			TopP:             0.4,
-			PresencePenalty:  0.5,
-			FrequencyPenalty: 0.5,
-		}
-
-		promptProperties := &model.PromptProperties{
-			Input:         []string{"Generate an uml template"},
-			Instruction:   []string{"for an eshop, include customers and providers."},
-			Content:       []string{""},
-			MaxTokens:     1024,
-			Results:       1,
-			Probabilities: 1,
-		}
-
-		templateProperties := &model.TemplateProperties{}
-
-		agent.EngineProperties = *engineProperties
-		agent.PromptProperties = *promptProperties
-		agent.TemplateProperties = *templateProperties
-
-		chat, schat := prompt.SendChatCompletionPrompt(agent)
-		if chat != nil && schat == nil ||
-			schat != nil && chat == nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v/%v", chat, schat)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		resp, _ := prompter.SendChatCompletionPrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
 func TestSendCompletion(t *testing.T) {
 	t.Run("SendCompletion", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		engineProperties.Model = "text-davinci-003"
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-
-		engineProperties := &model.EngineProperties{
-			UserID:           "test_user",
-			Model:            "text-davinci-003",
-			Role:             model.Assistant,
-			Temperature:      1.0,
-			TopP:             0.4,
-			PresencePenalty:  0.5,
-			FrequencyPenalty: 0.5,
-		}
-
-		promptProperties := &model.PromptProperties{
-			Input:         []string{"Generate an uml template"},
-			Instruction:   []string{"for an eshop, include customers and providers."},
-			Content:       []string{""},
-			MaxTokens:     1024,
-			Results:       1,
-			Probabilities: 1,
-		}
-
-		templateProperties := &model.TemplateProperties{}
-
-		agent.EngineProperties = *engineProperties
-		agent.PromptProperties = *promptProperties
-		agent.TemplateProperties = *templateProperties
-
-		chat := prompt.SendCompletionPrompt(agent)
-		if chat != nil {
-			t.Log("Test - PASSED")
-		} else {
-			t.Errorf("Received:%v", chat)
-			t.Log("Test - FAILED")
-		}
-		t.Log("Test - FINISHED")
+		resp := prompter.SendCompletionPrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
 func TestSendEditPrompt(t *testing.T) {
 	t.Run("SendEditPrompt", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		engineProperties.Model = "text-davinci-edit-001"
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-
-		engineProperties := &model.EngineProperties{
-			UserID:           "test_user",
-			Model:            "text-davinci-edit-001",
-			Role:             model.Assistant,
-			Temperature:      1.0,
-			TopP:             0.4,
-			PresencePenalty:  0.5,
-			FrequencyPenalty: 0.5,
-		}
-
-		promptProperties := &model.PromptProperties{
-			Input:         []string{"Generate an uml template"},
-			Instruction:   []string{"for an eshop, include customers and providers."},
-			Content:       []string{"Instructive content"},
-			MaxTokens:     512,
-			Results:       1,
-			Probabilities: 1,
-		}
-
-		agent.EngineProperties = *engineProperties
-		agent.PromptProperties = *promptProperties
-
-		resp := prompt.SendEditPrompt(agent)
-		if resp == nil {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		} else {
-			t.Log("Test - PASSED")
-		}
-
-		t.Log("Test - FINISHED")
+		resp := prompter.SendEditPrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
 func TestSendEmbeddingPrompt(t *testing.T) {
 	t.Run("SendEmbeddingPrompt", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		engineProperties.Model = "text-embedding-ada-002"
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-
-		engineProperties := &model.EngineProperties{
-			UserID:           "test_user",
-			Model:            "text-embedding-ada-002",
-			Role:             model.Assistant,
-			Temperature:      1.0,
-			TopP:             0.4,
-			PresencePenalty:  0.5,
-			FrequencyPenalty: 0.5,
-		}
-
-		promptProperties := &model.PromptProperties{
-			Input:         []string{"Generate an uml template"},
-			Instruction:   []string{"for an eshop, include customers and providers."},
-			Content:       []string{"Instructive content"},
-			MaxTokens:     1024,
-			Results:       1,
-			Probabilities: 1,
-		}
-
-		agent.EngineProperties = *engineProperties
-		agent.PromptProperties = *promptProperties
-
-		resp := prompt.SendEmbeddingPrompt(agent)
-		if resp == nil {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		} else {
-			t.Log("Test - PASSED")
-		}
-		t.Log("Test - FINISHED")
+		resp := prompter.SendEmbeddingPrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
 func TestSendPredictablePrompt(t *testing.T) {
 	t.Run("SendPredictablePrompt", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-
-		predictProperties := model.PredictProperties{
-			Input:   []string{"This is a generative response"},
-			Details: model.PredictResponse{},
-		}
-
-		agent.PredictProperties = predictProperties
-
-		resp := prompt.SendPredictablePrompt(agent)
-		if resp == nil {
-			t.Errorf("Received:%v", resp)
-			t.Log("Test - FAILED")
-		} else {
-			t.Log("Test - PASSED")
-		}
-		t.Log("Test - FINISHED")
+		resp := prompter.SendPredictablePrompt(localAgent)
+		checkResponse(t, resp)
 	})
 }
 
 func TestGetListModels(t *testing.T) {
 	t.Run("GetListModels", func(t *testing.T) {
-		controller := &service.Controller{}
-		prompt := &service.Prompt{}
+		initializeAgent()
 
-		agent := controller.AttachProfile()
-		engines := prompt.GetListModels(agent)
-
-		if engines == nil {
-			t.Errorf("Received:%v", engines)
-			t.Log("Test - FAILED")
-		} else {
-			t.Log("Test - PASSED")
-		}
-
-		t.Log("Test - FINISHED")
+		resp := prompter.GetListModels(localAgent)
+		checkResponse(t, resp)
 	})
 }

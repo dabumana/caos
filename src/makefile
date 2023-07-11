@@ -19,12 +19,6 @@ clean:
 	rm -rf 'rootCA.pem'
 	rm -rf 'coverage.out'
 
-run:
-	./bin/${APP}-${VERSION}
-
-test:
-	go test ./...
-
 coverage:
 	go test -covermode=count -coverprofile coverage.out ${PKG_LIST}
 
@@ -32,6 +26,15 @@ env:
 	openssl genrsa -out localCA.key 4096
 	openssl req -x509 -new -nodes -key localCA.key -sha256 -days 1024 -out localCA.crt
 	openssl x509 -in localCA.crt -out localCA.pem -outform PEM
+
+run:
+	./bin/${APP}-${VERSION}
+
+test:
+	go test ./...
+
+tidy:
+	go mod tidy
 
 vendor:
 	go mod vendor

@@ -20,6 +20,9 @@ coverage:
 run: build
 	make -C ./src run
 
+vendor:
+	make -C ./src vendor
+
 build-pod:
 	docker build --no-cache -t ${APP} ${CONFIG_PATH} 
 

@@ -32,3 +32,6 @@ env:
 	openssl genrsa -out localCA.key 4096
 	openssl req -x509 -new -nodes -key localCA.key -sha256 -days 1024 -out localCA.crt
 	openssl x509 -in localCA.crt -out localCA.pem -outform PEM
+
+vendor:
+	go mod vendor

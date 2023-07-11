@@ -17,7 +17,12 @@ func TestInitialize(t *testing.T) {
 
 		if preferences.TemplateIDs == 0 {
 			t.Errorf("Received:%v", preferences.TemplateIDs)
+			t.Log("Test - FAILED")
+		} else {
+			t.Log("Test - PASSED")
 		}
+
+		t.Log("Test - FINISHED")
 	})
 }
 
@@ -49,7 +54,7 @@ func TestSetEngineParameters(t *testing.T) {
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.TopP, topp)
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.PresencePenalty, penalty)
 			t.Errorf("Received:%v\nExpected:%v\n", engineProperties.FrequencyPenalty, frequency)
-			t.Log("Test - ERROR")
+			t.Log("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}
@@ -62,26 +67,22 @@ func TestSetPromptParameters(t *testing.T) {
 		agent := &service.Agent{}
 		context := []string{"Generate an UML template"}
 		prompt := []string{"for an eshop, include customers and providers."}
-		tokens := 64
 		result := 4
 		probabilities := 4
 		requestProperties := agent.SetPromptParameters(
 			context,
 			prompt,
-			tokens,
 			result,
 			probabilities)
-		if requestProperties.PromptContext == nil ||
+		if requestProperties.Input == nil ||
 			requestProperties.Instruction == nil ||
-			requestProperties.MaxTokens != tokens ||
 			requestProperties.Results != result ||
 			requestProperties.Probabilities != probabilities {
-			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.PromptContext, context)
+			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Input, context)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Instruction, prompt)
-			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.MaxTokens, tokens)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Results, result)
 			t.Errorf("Received:%v\nExpected:%v\n", requestProperties.Probabilities, probabilities)
-			t.Log("Test - ERROR")
+			t.Log("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}
@@ -96,7 +97,7 @@ func TestSetPredictionParameters(t *testing.T) {
 		predictProperties := agent.SetPredictionParameters(context)
 		if predictProperties.Input == nil {
 			t.Errorf("Received:%v\nExpected:%v\n", predictProperties.Input, context)
-			t.Error("Test - ERROR")
+			t.Error("Test - FAILED")
 		} else {
 			t.Log("Test - PASSED")
 		}

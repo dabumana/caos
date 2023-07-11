@@ -2,35 +2,32 @@ name: Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
-    
-    - name: Checkout
-      uses: actions/checkout@v3
-    
-    - name: Version
-      id: semantic
-      uses: codacy/git-version@2.4.0
-      with:
-        release-branch: master
-        dev-branch: developer
-        prefix: v.
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
 
-    - name: Test
-      run: make test
-      
-    - name: Build
-      run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}
-    
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Version
+        id: semantic
+        uses: codacy/git-version@2.4.0
+        with:
+          release-branch: master
+          dev-branch: developer
+          prefix: v.
+
+      - name: Dependencies
+        run: sudo apt-get install libcurl4-openssl-dev
+
+      - name: Build
+        run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}

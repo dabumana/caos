@@ -3,19 +3,20 @@ package service
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"strings"
 
 	"caos/model"
-	"caos/service/parameters"
 	"caos/util"
 	"encoding/json"
 	"net/http"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/mitchellh/go-wordwrap"
+	"github.com/rivo/tview"
 )
 
 // Prompt - Handle prompt request
@@ -42,39 +43,73 @@ func isContextValid(current Agent) bool {
 	return true
 }
 
-// SendChatCompletion - Send streaming chat completion prompt
-func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
+// isTestingEnvironment - Validate when test executes
+func isTestingEnvironment() bool {
+	hasTestFlag := flag.Lookup("test.v") != nil
+	return hasTestFlag
+}
+
+// SendChatCompletionPrompt - Send streaming chat completion prompt
+func (c *Prompt) SendChatCompletionPrompt(service Agent) (*gpt3.ChatCompletionStreamResponse, *gpt3.ChatCompletionResponse) {
 	if isContextValid(service) {
 		var buffer []string
-		ctxContent := service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0])[0]
 
-		msg := gpt3.ChatCompletionRequestMessage{
+		prompt := service.SetTemplate(string(""), service.PromptProperties.Input[0])[0]
+		urls, ctxVerified := service.SetContext(&service.PromptProperties)
+
+		service.TemplateProperties.PromptValidated.Source = append(service.TemplateProperties.PromptValidated.Source, urls...)
+		service.TemplateProperties.PromptValidated.Context = append(service.TemplateProperties.PromptValidated.Context, ctxVerified...)
+
+		msg := fmt.Sprint(
+			prompt,
+			"\nNow you have real-time access to the internet, I'll provide some contextual information with urls for main reference for your responses",
+			"\nthis is fundamentally from real-time online actual results, provide a response around the following contextual information:",
+			ctxVerified,
+			"\nObtained from the following urls:",
+			urls,
+			"\nPlease always elaborate a detailed response with the following complete schema (KEEP LINE BY LINE):",
+			"\nQuestion: <User input ONLY>",
+			"\nResponse: <Your Detailed response should contain the contextual information from the real-time online results ONLY>",
+			"\nResume: <Include more than 3000-WORDS per response ONLY>",
+			"\nSuggestions: <based entirely on the verified context include suggestions to look or search ONLY>",
+			"\nSource: <List all the urls from the contextual information ONLY>",
+		)
+
+		if !isTestingEnvironment() {
+			service.PromptProperties.MaxTokens = len(util.EncodePromptBytePair([]string{msg}, service.EngineProperties.Model))
+			node.controller.currentAgent.preferences.MaxTokens = service.PromptProperties.MaxTokens
+		}
+
+		ctx := gpt3.ChatCompletionRequestMessage{
 			Role:    string(service.preferences.Role),
-			Content: ctxContent,
+			Content: msg,
 		}
 
 		req := gpt3.ChatCompletionRequest{
-			Model:            service.engineProperties.Model,
+			Model:            service.EngineProperties.Model,
 			User:             service.id,
-			Messages:         []gpt3.ChatCompletionRequestMessage{msg},
-			MaxTokens:        *gpt3.IntPtr(service.promptProperties.MaxTokens),
-			Temperature:      *gpt3.Float32Ptr(service.engineProperties.Temperature),
-			TopP:             *gpt3.Float32Ptr(service.engineProperties.TopP),
-			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
-			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
+			Messages:         []gpt3.ChatCompletionRequestMessage{ctx},
+			MaxTokens:        *gpt3.IntPtr(service.PromptProperties.MaxTokens),
+			Temperature:      *gpt3.Float32Ptr(service.EngineProperties.Temperature),
+			TopP:             *gpt3.Float32Ptr(service.EngineProperties.TopP),
+			PresencePenalty:  *gpt3.Float32Ptr(service.EngineProperties.PresencePenalty),
+			FrequencyPenalty: *gpt3.Float32Ptr(service.EngineProperties.FrequencyPenalty),
 			Stream:           service.preferences.IsPromptStreaming,
-			N:                *gpt3.IntPtr(service.promptProperties.Results),
+			N:                *gpt3.IntPtr(service.PromptProperties.Results),
 			Stop:             []string{"stop"},
 		}
 
 		if service.preferences.IsPromptStreaming {
 			sresp := &gpt3.ChatCompletionStreamResponse{}
-			bWriter := node.layout.promptOutput.BatchWriter()
-			defer bWriter.Close()
-			bWriter.Clear()
 
-			bWriter.Write([]byte("\n"))
-			buffer = append(buffer, "\n")
+			var bWriter tview.TextViewWriter
+			if !isTestingEnvironment() {
+				bWriter = node.layout.promptOutput.BatchWriter()
+				defer bWriter.Close()
+				bWriter.Clear()
+				bWriter.Write([]byte("\n"))
+				buffer = append(buffer, "\n")
+			}
 
 			fmt.Print("\033[H\033[2J")
 			client := *service.client
@@ -95,29 +130,30 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 					sresp.Choices[0].Delta.Content = out.Choices[0].Delta.Content
 					sresp.Choices[0].Delta.Role = out.Choices[0].Delta.Role
 					// Write buffer
-					buffer = append(buffer, out.Choices[0].Delta.Content)
-					bWriter.Write([]byte(out.Choices[0].Delta.Content))
-					if out.Choices[0].Delta.Content == "\n" {
-						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-						fmt.Printf("\x1b[32m%s\r", out)
-					} else {
-						out := wordwrap.WrapString(out.Choices[0].Delta.Content, 50)
-						fmt.Printf("\x1b[32m%s", out)
+					if !isTestingEnvironment() {
+						buffer = append(buffer, out.Choices[0].Delta.Content)
+						bWriter.Write([]byte(out.Choices[0].Delta.Content))
 					}
+					str := wordwrap.WrapString(out.Choices[0].Delta.Content, 25)
+					fmt.Printf("\x1b[32;43m%s", str)
 				})
 
 			var event EventManager
 			event.Errata(err)
 
-			bWriter.Write([]byte("\n\n###\n\n"))
-			buffer = append(buffer, "\n\n###\n\n")
-
+			if !isTestingEnvironment() {
+				bWriter.Write([]byte("\n\n###\n\n"))
+				buffer = append(buffer, "\n\n###\n\n")
+			}
 			out := strings.Join(buffer, "")
 			for i := range sresp.Choices {
 				sresp.Choices[i].Delta.Content = fmt.Sprint(util.RemoveWrapper(out))
 			}
 
-			node.layout.app.Sync()
+			if !isTestingEnvironment() {
+				node.layout.app.Sync()
+			}
+
 			c.chatStreamResponse = sresp
 			return c.chatStreamResponse, nil
 		}
@@ -130,7 +166,9 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 		var event EventManager
 		event.Errata(err)
 
-		node.layout.app.Sync()
+		if !isTestingEnvironment() {
+			node.layout.app.Sync()
+		}
 		c.chatResponse = resp
 		return nil, c.chatResponse
 
@@ -138,36 +176,45 @@ func (c *Prompt) SendChatCompletion(service Agent) (*gpt3.ChatCompletionStreamRe
 	return nil, nil
 }
 
-// SendCompletion - Send task prompt on stream mode
-func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
+// SendCompletionPrompt - Send task prompt on stream mode
+func (c *Prompt) SendCompletionPrompt(service Agent) *gpt3.CompletionResponse {
 	if isContextValid(service) {
 		var buffer []string
 
 		resp := &gpt3.CompletionResponse{}
 
+		msg := service.SetTemplate(service.cachedPrompt, service.PromptProperties.Input[0])
+
+		if !isTestingEnvironment() {
+			service.PromptProperties.MaxTokens = 1024 + len(util.EncodePromptBytePair(msg, service.EngineProperties.Model))
+			node.controller.currentAgent.preferences.MaxTokens = service.PromptProperties.MaxTokens
+		}
 		req := gpt3.CompletionRequest{
-			Prompt:           service.SetPrompt(service.cachedPrompt, service.promptProperties.PromptContext[0]),
-			MaxTokens:        gpt3.IntPtr(service.promptProperties.MaxTokens),
-			Temperature:      gpt3.Float32Ptr(service.engineProperties.Temperature),
-			TopP:             gpt3.Float32Ptr(service.engineProperties.TopP),
-			PresencePenalty:  *gpt3.Float32Ptr(service.engineProperties.PresencePenalty),
-			FrequencyPenalty: *gpt3.Float32Ptr(service.engineProperties.FrequencyPenalty),
+			Prompt:           msg,
+			MaxTokens:        gpt3.IntPtr(service.PromptProperties.MaxTokens),
+			Temperature:      gpt3.Float32Ptr(service.EngineProperties.Temperature),
+			TopP:             gpt3.Float32Ptr(service.EngineProperties.TopP),
+			PresencePenalty:  *gpt3.Float32Ptr(service.EngineProperties.PresencePenalty),
+			FrequencyPenalty: *gpt3.Float32Ptr(service.EngineProperties.FrequencyPenalty),
 			Stream:           service.preferences.IsPromptStreaming,
-			N:                gpt3.IntPtr(service.promptProperties.Results),
-			LogProbs:         gpt3.IntPtr(service.promptProperties.Probabilities),
+			N:                gpt3.IntPtr(service.PromptProperties.Results),
+			LogProbs:         gpt3.IntPtr(service.PromptProperties.Probabilities),
 			Echo:             false}
 
 		if service.preferences.IsPromptStreaming {
-			bWriter := node.layout.promptOutput.BatchWriter()
-			defer bWriter.Close()
-			bWriter.Clear()
 
+			var bWriter tview.TextViewWriter
+			if !isTestingEnvironment() {
+				bWriter = node.layout.promptOutput.BatchWriter()
+				defer bWriter.Close()
+				bWriter.Clear()
+			}
 			fmt.Print("\033[H\033[2J")
 			isOnce := false
 			client := *service.client
 			err := client.CompletionStreamWithEngine(
 				service.ctx,
-				service.engineProperties.Model,
+				service.EngineProperties.Model,
 				req, func(out *gpt3.CompletionResponse) {
 					go func(in chan string) {
 						if !isOnce {
@@ -190,32 +237,31 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 						resp.Choices[0].LogProbs.TopLogprobs = append(resp.Choices[0].LogProbs.TopLogprobs, out.Choices[0].LogProbs.TopLogprobs...)
 
 						for i := range out.Choices {
-							buffer = append(buffer, out.Choices[i].Text)
-							in <- out.Choices[i].Text
-							if out.Choices[i].Text == "\n" {
-								out := wordwrap.WrapString(out.Choices[i].Text, 50)
-								fmt.Printf("\x1b[32m%s\r", out)
-							} else {
-								out := wordwrap.WrapString(out.Choices[i].Text, 50)
-								fmt.Printf("\x1b[32m%s", out)
+							if !isTestingEnvironment() {
+								buffer = append(buffer, out.Choices[i].Text)
 							}
+							in <- out.Choices[i].Text
+							str := wordwrap.WrapString(out.Choices[i].Text, 50)
+							fmt.Printf("\x1b[32m%s", str)
 						}
 					}(service.preferences.InlineText)
-					// Write buffer
-					bWriter.Write([]byte(<-service.preferences.InlineText))
+					if !isTestingEnvironment() {
+						bWriter.Write([]byte(<-service.preferences.InlineText))
+					}
 				})
 
 			var event EventManager
 			event.Errata(err)
-
-			bWriter.Write([]byte("\n\n###\n\n"))
 
 			out := strings.Join(buffer, "")
 			for i := range resp.Choices {
 				resp.Choices[i].Text = fmt.Sprint(util.RemoveWrapper(out))
 			}
 
-			node.layout.app.Sync()
+			if !isTestingEnvironment() {
+				bWriter.Write([]byte("\n\n###\n\n"))
+				node.layout.app.Sync()
+			}
 			c.contextualResponse = resp
 			return c.contextualResponse
 		}
@@ -223,13 +269,15 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 		client := *service.client
 		resp, err := client.CompletionWithEngine(
 			service.ctx,
-			service.engineProperties.Model,
+			service.EngineProperties.Model,
 			req)
 
 		var event EventManager
 		event.Errata(err)
 
-		node.layout.app.Sync()
+		if isTestingEnvironment() {
+			node.layout.app.Sync()
+		}
 		c.contextualResponse = resp
 		return c.contextualResponse
 
@@ -239,14 +287,16 @@ func (c *Prompt) SendCompletion(service Agent) *gpt3.CompletionResponse {
 
 // SendEditPrompt - Send edit instruction task prompt
 func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
-	if isContextValid(service) && service.promptProperties.PromptContext != nil {
+	if isContextValid(service) &&
+		service.PromptProperties.Input != nil {
+
 		req := gpt3.EditsRequest{
-			Model:       service.engineProperties.Model,
-			Input:       service.promptProperties.PromptContext[0],
-			Instruction: service.promptProperties.Instruction[0],
-			Temperature: gpt3.Float32Ptr(service.engineProperties.Temperature),
-			TopP:        gpt3.Float32Ptr(service.engineProperties.TopP),
-			N:           gpt3.IntPtr(service.promptProperties.Results)}
+			Model:       service.EngineProperties.Model,
+			Input:       service.PromptProperties.Input[0],
+			Instruction: service.PromptProperties.Instruction[0],
+			Temperature: gpt3.Float32Ptr(service.EngineProperties.Temperature),
+			TopP:        gpt3.Float32Ptr(service.EngineProperties.TopP),
+			N:           gpt3.IntPtr(service.PromptProperties.Results)}
 
 		client := *service.client
 		resp, err := client.Edits(
@@ -256,7 +306,10 @@ func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 		var event EventManager
 		event.Errata(err)
 
-		node.layout.app.Sync()
+		if !isTestingEnvironment() {
+			node.layout.app.Sync()
+		}
+
 		c.extendedResponse = resp
 		return c.extendedResponse
 	}
@@ -267,8 +320,8 @@ func (c *Prompt) SendEditPrompt(service Agent) *gpt3.EditsResponse {
 func (c *Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 	if isContextValid(service) {
 		req := gpt3.EmbeddingsRequest{
-			Model: service.engineProperties.Model,
-			Input: service.promptProperties.PromptContext,
+			Model: service.EngineProperties.Model,
+			Input: service.PromptProperties.Input,
 		}
 
 		client := *service.client
@@ -279,7 +332,10 @@ func (c *Prompt) SendEmbeddingPrompt(service Agent) *gpt3.EmbeddingsResponse {
 		var event EventManager
 		event.Errata(err)
 
-		node.layout.app.Sync()
+		if !isTestingEnvironment() {
+			node.layout.app.Sync()
+		}
+
 		c.embeddingResponse = resp
 		return c.embeddingResponse
 	}
@@ -291,7 +347,7 @@ func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 	isValid := isContextValid(service)
 	if isValid {
 		req := model.PredictRequest{
-			Document: string(service.predictProperties.Input[0]),
+			Document: string(service.PredictProperties.Input[0]),
 		}
 
 		var event EventManager
@@ -302,7 +358,8 @@ func (c *Prompt) SendPredictablePrompt(service Agent) *model.PredictResponse {
 		}
 
 		var body io.Reader = bytes.NewBuffer(out)
-		path := parameters.ExternalBaseURL + string("/v2/predict/text")
+
+		path := string("https://api.gptzero.me/v2/predict/text")
 
 		if out != nil {
 			req, err := http.NewRequestWithContext(service.ctx, "POST", path, body)

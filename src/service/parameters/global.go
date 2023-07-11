@@ -7,6 +7,9 @@ import (
 
 // GlobalPreferences - General
 type GlobalPreferences struct {
+	// Agent
+	User     string
+	Encoding string
 	// Engine properties
 	TemplateIDs       int
 	Template          int
@@ -19,27 +22,24 @@ type GlobalPreferences struct {
 	// Prompt properties
 	Probabilities int32
 	Results       int32
-	MaxTokens     int64
+	MaxTokens     int
 	Temperature   float32
 	Topp          float32
 	Penalty       float32
 	Frequency     float32
 	PromptCtx     []string
 	// Modes
+	IsChained         bool
 	IsLoading         bool
-	IsConversational  bool
-	IsDeveloper       bool
-	IsPredictable     bool
 	IsEditable        bool
 	IsNewSession      bool
 	IsPromptReady     bool
 	IsPromptStreaming bool
-	IsTurbo           bool
 	// Utilitaries
 	Role       model.Roles
 	CurrentID  string
 	InlineText chan string
 }
 
-// ExternalBaseURL - External API endpoint
-const ExternalBaseURL = "https://api.gptzero.me"
+// ExternalSearchBaseURL - External API endpoint
+const ExternalSearchBaseURL = "https://www.google.com/search?client=firefox-b-m&gbv=1&q="

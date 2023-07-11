@@ -2,6 +2,7 @@
 package service
 
 import (
+	"flag"
 	"fmt"
 	"strings"
 	"time"
@@ -86,7 +87,7 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 	var responses []string
 	responses = append(responses, "\n")
 	if comp != nil && edit == nil && search == nil && chat == nil {
-		if node.controller.currentAgent.preferences.IsPromptStreaming {
+		if node.controller.currentAgent.preferences.IsPromptStreaming && comp.Choices != nil {
 			responses = append(responses, comp.Choices[0].Text, "\n\n###\n\n")
 		} else {
 			for i := range comp.Choices {
@@ -98,7 +99,7 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 			responses = append(responses, edit.Choices[i].Text, "\n\n###\n\n")
 		}
 	} else if chat != nil && comp == nil && search == nil && edit == nil {
-		if node.controller.currentAgent.preferences.IsPromptStreaming {
+		if node.controller.currentAgent.preferences.IsPromptStreaming && chat.Choices != nil {
 			responses = append(responses, chat.Choices[0].Message.Content, "\n\n###\n\n")
 		} else {
 			for i := range chat.Choices {
@@ -118,12 +119,12 @@ func (c *EventManager) appendToChoice(comp *gpt3.CompletionResponse, edit *gpt3.
 }
 
 // appendToModel - Append conversation to session model
-func (c *EventManager) appendToModel(header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
+func (c *EventManager) appendToModel(transform model.TemplateProperties, header model.EngineProperties, body model.PromptProperties, predictBody model.PredictProperties, completion []string) (model.TrainingPrompt, model.HistoricalPrompt) {
 	var modelTrainer model.TrainingPrompt
 	var modelPrompt model.HistoricalPrompt
 
 	modelTrainer = model.TrainingPrompt{
-		Prompt:     body.PromptContext,
+		Prompt:     body.Input,
 		Completion: completion,
 	}
 
@@ -131,6 +132,7 @@ func (c *EventManager) appendToModel(header model.EngineProperties, body model.P
 		Header:         header,
 		Body:           body,
 		PredictiveBody: predictBody,
+		Template:       transform,
 	}
 
 	return modelTrainer, modelPrompt
@@ -144,7 +146,7 @@ func (c *EventManager) checkNewSession() {
 }
 
 // LogChatCompletion - Chat response details in a .json file
-func (c *EventManager) LogChatCompletion(header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
+func (c *EventManager) LogChatCompletion(chain model.TemplateProperties, header model.EngineProperties, body model.PromptProperties, resp *gpt3.ChatCompletionResponse, cresp *gpt3.ChatCompletionStreamResponse) {
 	c.checkNewSession()
 
 	var modelTrainer model.TrainingPrompt
@@ -153,7 +155,7 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	if resp != nil && cresp == nil {
 		for i := range resp.Choices {
 			body.Content = []string{resp.Choices[i].Message.Content}
-			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
+			modelTrainer, modelPrompt = c.appendToModel(chain, header, body, model.PredictProperties{}, []string{resp.Choices[i].Message.Content})
 		}
 
 		c.appendToSession(resp.ID, modelPrompt, modelTrainer)
@@ -161,7 +163,7 @@ func (c *EventManager) LogChatCompletion(header model.EngineProperties, body mod
 	} else if cresp != nil && resp == nil {
 		for i := range cresp.Choices {
 			body.Content = []string{cresp.Choices[i].Delta.Content}
-			modelTrainer, modelPrompt = c.appendToModel(header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
+			modelTrainer, modelPrompt = c.appendToModel(chain, header, body, model.PredictProperties{}, []string{cresp.Choices[i].Delta.Content})
 		}
 
 		c.appendToSession(cresp.ID, modelPrompt, modelTrainer)
@@ -174,7 +176,7 @@ func (c *EventManager) LogGeneralCompletion(header model.EngineProperties, body 
 	c.checkNewSession()
 
 	body.Content = resp
-	modelTrainer, modelPrompt := c.appendToModel(header, body, model.PredictProperties{}, resp)
+	modelTrainer, modelPrompt := c.appendToModel(model.TemplateProperties{}, header, body, model.PredictProperties{}, resp)
 
 	c.appendToSession(id, modelPrompt, modelTrainer)
 	node.controller.currentAgent.preferences.CurrentID = id
@@ -188,12 +190,12 @@ func (c *EventManager) LogPredict(header model.EngineProperties, body model.Pred
 	var modelPrompt model.HistoricalPrompt
 
 	for i := range resp.Documents {
-		predictProperties := model.PredictProperties{
+		PredictProperties := model.PredictProperties{
 			Input:   body.Input,
 			Details: *resp,
 		}
 
-		modelTrainer, modelPrompt = c.appendToModel(header, model.PromptProperties{}, predictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
+		modelTrainer, modelPrompt = c.appendToModel(model.TemplateProperties{}, header, model.PromptProperties{}, PredictProperties, []string{fmt.Sprintf("%v", resp.Documents[i])})
 	}
 
 	c.appendToSession(node.controller.currentAgent.preferences.CurrentID, modelPrompt, modelTrainer)
@@ -236,17 +238,19 @@ func (c *EventManager) VisualLogCompletion(resp *gpt3.CompletionResponse, cresp 
 					cresp.Choices[i].Index))
 		}
 	} else if sresp != nil && cresp == nil && resp == nil {
-		node.layout.infoOutput.SetText(
-			fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
-				sresp.ID,
-				sresp.Model,
-				sresp.Created,
-				sresp.Object,
-				sresp.Usage.CompletionTokens,
-				sresp.Usage.PromptTokens,
-				sresp.Usage.TotalTokens,
-				sresp.Choices[0].FinishReason,
-				sresp.Choices[0].Index))
+		for i := range sresp.Choices {
+			node.layout.infoOutput.SetText(
+				fmt.Sprintf("ID: %v\nModel: %v\nCreated: %v\nObject: %v\nCompletion tokens: %v\nPrompt tokens: %v\nTotal tokens: %v\nFinish reason: %v\nIndex: %v \n",
+					sresp.ID,
+					sresp.Model,
+					sresp.Created,
+					sresp.Object,
+					sresp.Usage.CompletionTokens,
+					sresp.Usage.PromptTokens,
+					sresp.Usage.TotalTokens,
+					sresp.Choices[i].FinishReason,
+					sresp.Choices[i].Index))
+		}
 	}
 }
 
@@ -383,8 +387,11 @@ func (c *EventManager) LogClient(client Agent) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((((((((%&& .....&&&#(((.,..(.(((((((((((((((((((((((((((((&@@@@@&  .  &..&......&....    &@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&((((((&&     ..............&&&((((.,./(((((((((((((((((((((((((((((&@@@@& &  (.&......*....    @@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	`)
+	fmt.Printf("\n-------  /|_/|  ---------------------------")
+	fmt.Printf("\n------- ( o.o ) ---------------------------")
+	fmt.Printf("\n-------  > ^ <  ---------------------------")
 	fmt.Printf("\n-------------------------------------------\n")
-	fmt.Printf("ID name can be changed in PROFILE section\nmore information can be found in: https://github.com/dabumana/caos\nClient ID: %v", client.id)
+	fmt.Printf("ID name can be changed in PROFILE section\nmore information in: https://github.com/dabumana/caos\nClient ID: %v", client.id)
 	fmt.Printf("\n-------------------------------------------\n")
 	fmt.Print(`This software is provided "as is" and any expressed or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the author or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential.`)
 	fmt.Printf("\n-------------------------------------------\n")
@@ -394,24 +401,24 @@ func (c *EventManager) LogClient(client Agent) {
 func (c *EventManager) LogEngine(client Agent) {
 	node.layout.metadataOutput.SetText(
 		fmt.Sprintf("Model: %v\nRole: %v\nTemperature: %v\nTopp: %v\nFrequency penalty: %v\nPresence penalty: %v\nPrompt: %v\nInstruction: %v\nProbabilities: %v\nResults: %v\nMax tokens: %v\n",
-			client.engineProperties.Model,
-			client.engineProperties.Role,
-			client.engineProperties.Temperature,
-			client.engineProperties.TopP,
-			client.engineProperties.FrequencyPenalty,
-			client.engineProperties.PresencePenalty,
-			client.promptProperties.PromptContext,
-			client.promptProperties.Instruction,
-			client.promptProperties.Probabilities,
-			client.promptProperties.Results,
-			client.promptProperties.MaxTokens))
+			client.EngineProperties.Model,
+			client.EngineProperties.Role,
+			client.EngineProperties.Temperature,
+			client.EngineProperties.TopP,
+			client.EngineProperties.FrequencyPenalty,
+			client.EngineProperties.PresencePenalty,
+			client.PromptProperties.Input,
+			client.PromptProperties.Instruction,
+			client.PromptProperties.Probabilities,
+			client.PromptProperties.Results,
+			client.preferences.MaxTokens))
 }
 
 // LogPredictEngine - Log current predict engine
 func (c *EventManager) LogPredictEngine(client Agent) {
 	var out string
-	for i := range client.predictProperties.Details.Documents {
-		if client.predictProperties.Details.Documents[i].AverageProb >= 0.5 {
+	for i := range client.PredictProperties.Details.Documents {
+		if client.PredictProperties.Details.Documents[i].AverageProb >= 0.5 {
 			out = "Probably generated by AI"
 		} else {
 			out = "Mostly human generated content"
@@ -419,22 +426,24 @@ func (c *EventManager) LogPredictEngine(client Agent) {
 
 		node.layout.metadataOutput.SetText(
 			fmt.Sprintf("Model: %v\nAverage Prob: %v\nCompletely Prob: %v\noversall burstiness: %v\n---\n%v\n",
-				client.engineProperties.Model,
-				client.predictProperties.Details.Documents[i].AverageProb,
-				client.predictProperties.Details.Documents[i].CompletelyProb,
-				client.predictProperties.Details.Documents[i].OverallBurstiness,
+				client.EngineProperties.Model,
+				client.PredictProperties.Details.Documents[i].AverageProb,
+				client.PredictProperties.Details.Documents[i].CompletelyProb,
+				client.PredictProperties.Details.Documents[i].OverallBurstiness,
 				out))
 	}
 }
 
 // Errata - Generic error method
 func (c *EventManager) Errata(err error) {
-	if err != nil {
-		node.layout.infoOutput.SetText(err.Error())
-		node.layout.promptArea.SetPlaceholder("An error was found or the response was not complete, just press CTRL+SPACE or CMD+SPACE to repeat it.")
-	} else {
-		node.layout.promptArea.SetPlaceholder("Type here...")
-	}
+	if flag.Lookup("test.v") == nil {
+		if err != nil {
+			node.layout.infoOutput.SetText(err.Error())
+			node.layout.promptArea.SetPlaceholder("An error was found or the response was not complete, just press CTRL+SPACE or CMD+SPACE to repeat it.")
+		} else {
+			node.layout.promptArea.SetPlaceholder("Type here...")
+		}
 
-	node.layout.promptArea.SetText("", true)
+		node.layout.promptArea.SetText("", true)
+	}
 }

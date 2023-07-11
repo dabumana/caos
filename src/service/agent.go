@@ -3,14 +3,15 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/csv"
 	"fmt"
+	"net/http"
 	"os"
 
 	"caos/model"
 	"caos/service/parameters"
 	"caos/util"
-	"encoding/csv"
-	"net/http"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
@@ -19,22 +20,24 @@ import (
 
 // Agent - Contextual client API
 type Agent struct {
-	// Versioned and ID
-	version string
-	id      string
-	key     []string
+	id string
+	// Key
+	key []string
 	// Assistant context
 	templateID  []string
 	templateCtx []string
+	// Chained event
+	transformers []Chain
 	// Context
 	ctx context.Context
 	// Client
 	client   *gpt3.Client
 	exClient *http.Client
 	// Properties
-	engineProperties  model.EngineProperties
-	promptProperties  model.PromptProperties
-	predictProperties model.PredictProperties
+	EngineProperties   model.EngineProperties
+	PromptProperties   model.PromptProperties
+	PredictProperties  model.PredictProperties
+	TemplateProperties model.TemplateProperties
 	// Preferences
 	preferences parameters.GlobalPreferences
 	// Temporal cache
@@ -44,7 +47,6 @@ type Agent struct {
 // Initialize - Creates context background to be used along with the client
 func (c *Agent) Initialize() Agent {
 	// ID
-	c.version = "v.0.2.2"
 	c.id = "anon"
 	// Key
 	c.key = getKeys()
@@ -53,7 +55,11 @@ func (c *Agent) Initialize() Agent {
 	// Background context
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
-	// Role
+	c.transformers = []Chain{}
+	// Agent properties
+	c.preferences.User = "Mozilla/5 [en] (X11; U; Linux 2.2.15 i686)"
+	c.preferences.Encoding = "gzip, deflate, br"
+	// Agent Role
 	c.preferences.Role = model.Assistant
 	// Global preferences
 	c.preferences.TemplateIDs = len(c.templateID)
@@ -61,7 +67,7 @@ func (c *Agent) Initialize() Agent {
 	c.preferences.Engine = "text-davinci-003"
 	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
 	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
-	c.preferences.MaxTokens = util.ParseInt64("\u0032\u0035\u0030")
+	c.preferences.MaxTokens = 1024
 	c.preferences.Mode = "Text"
 	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
 	c.preferences.Probabilities = util.ParseInt32("\u0031")
@@ -69,14 +75,12 @@ func (c *Agent) Initialize() Agent {
 	c.preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
 	c.preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
 	// Mode selection
-	c.preferences.IsConversational = false
-	c.preferences.IsDeveloper = false
+	c.preferences.IsChained = false
 	c.preferences.IsEditable = false
 	c.preferences.IsLoading = false
 	c.preferences.IsNewSession = true
 	c.preferences.IsPromptReady = false
 	c.preferences.IsPromptStreaming = true
-	c.preferences.IsTurbo = false
 	c.preferences.InlineText = make(chan string)
 	// Return created client
 	return *c
@@ -86,8 +90,14 @@ func (c *Agent) Initialize() Agent {
 func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 	godotenv.Load()
 
+	transport := http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: false,
+		},
+	}
+
 	externalClient := http.Client{
-		Transport: http.DefaultTransport,
+		Transport: &transport,
 	}
 
 	option := gpt3.WithHTTPClient(&externalClient)
@@ -97,25 +107,6 @@ func (c *Agent) Connect() (*gpt3.Client, *http.Client) {
 	c.exClient = &externalClient
 
 	return c.client, c.exClient
-}
-
-// SaveKeys - Set API keys
-func (c *Agent) SaveKeys() {
-	event := &EventManager{}
-
-	dir, _ := os.Getwd()
-	path := fmt.Sprint(dir, ".env")
-
-	_, err := os.Open(path)
-	if err != nil {
-		file, err := os.Create(".env")
-		if err != nil {
-			event.Errata(err)
-		}
-		outFile := fmt.Sprintf("API_KEY=%v\nZERO_API_KEY=%v\n", c.key[0], c.key[1])
-		file.Write([]byte(outFile))
-		file.Sync()
-	}
 }
 
 // GetStatus - Current agent information
@@ -219,11 +210,10 @@ func (c *Agent) SetEngineParameters(id string, pmodel string, role model.Roles, 
 }
 
 // SetPromptParameters - Set request parameters for the current prompt
-func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, tokens int, results int, probabilities int) model.PromptProperties {
+func (c *Agent) SetPromptParameters(promptContext []string, instruction []string, results int, probabilities int) model.PromptProperties {
 	properties := model.PromptProperties{
-		PromptContext: promptContext,
+		Input:         promptContext,
 		Instruction:   instruction,
-		MaxTokens:     tokens,
 		Results:       results,
 		Probabilities: probabilities,
 	}
@@ -238,12 +228,27 @@ func (c *Agent) SetPredictionParameters(prompContext []string) model.PredictProp
 	return properties
 }
 
-// SetPrompt - Conversion human-ai roles
-func (c *Agent) SetPrompt(context string, input string) []string {
+// SetTemplateParameters - Set template properties parameters for current prompt context
+func (c *Agent) SetTemplateParameters(promptContext []string) model.TemplateProperties {
+	properties := model.TemplateProperties{
+		Input: promptContext,
+	}
+	return properties
+}
+
+// SetTemplate - Conversion human-ai roles
+func (c *Agent) SetTemplate(context string, input string) []string {
 	if context == "" {
 		context = c.templateCtx[c.preferences.Template]
 	}
 
 	prompt := []string{context + input}
 	return prompt
+}
+
+// SetContext - Chained trasformer events
+func (c *Agent) SetContext(prompt *model.PromptProperties) ([]string, []string) {
+	var chain Chain
+	chain.ExecuteChainJob(*c, prompt)
+	return chain.Transform.Source, chain.Transform.Context
 }

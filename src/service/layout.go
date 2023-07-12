@@ -426,36 +426,37 @@ func generateLayoutContent() {
 		SetScrollable(true).
 		ScrollToEnd().
 		SetTextAlign(tview.AlignLeft).
-		SetTextColor(tcell.ColorDarkOrange.TrueColor()).
+		SetTextColor(tcell.ColorDarkOrange).
 		SetRegions(true).
 		SetDynamicColors(true).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	node.layout.metadataOutput.
 		SetToggleHighlights(true).
 		SetLabel("Properties: ").
 		SetScrollable(true).
 		ScrollToEnd().
 		SetTextAlign(tview.AlignLeft).
-		SetTextColor(tcell.ColorDarkTurquoise.TrueColor()).
+		SetTextColor(tcell.ColorDarkTurquoise).
 		SetRegions(true).
 		SetDynamicColors(true).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	node.layout.promptOutput.
 		SetToggleHighlights(true).
 		SetLabel("Response: ").
 		SetScrollable(true).
 		ScrollToEnd().
 		SetTextAlign(tview.AlignLeft).
-		SetTextColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetTextColor(tcell.ColorDarkOliveGreen).
 		SetRegions(true).
 		SetDynamicColors(true).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	// Input
 	node.layout.promptArea.
-		SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorLightGray)).
-		SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorDimGray)).
-		SetTextStyle(tcell.StyleDefault.Background(tcell.ColorGray)).SetBorderPadding(1, 1, 1, 1).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorWhite)).
+		SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorPurple)).
+		SetTextStyle(tcell.StyleDefault.Background(tcell.Color100)).
+		SetBorderPadding(1, 1, 1, 1).
+		SetBackgroundColor(tcell.ColorBlack)
 	// List models
 	node.controller.ListModels()
 	// Add types
@@ -473,32 +474,32 @@ func createConsoleSections() (*tview.Flex, *tview.Flex, *tview.Flex) {
 	// Initialize sections
 	metadataSection.
 		AddItem(node.layout.metadataOutput, 0, 1, false).
-		SetBackgroundColor(tcell.ColorDarkGray.TrueColor()).
+		SetBackgroundColor(tcell.ColorBlack).
 		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkSlateGray.TrueColor()).
+		SetBorderColor(tcell.ColorDarkSlateGray).
 		SetBorderPadding(1, 2, 2, 4).
 		SetTitle("Metadata").
-		SetTitleColor(tcell.ColorOrange.TrueColor()).
+		SetTitleColor(tcell.ColorOrange).
 		SetTitleAlign(tview.AlignLeft)
 	infoSection.
 		AddItem(node.layout.infoOutput, 0, 1, false).
-		SetBackgroundColor(tcell.ColorDarkGray).
+		SetBackgroundColor(tcell.ColorBlack).
 		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBorderColor(tcell.ColorDarkOliveGreen).
 		SetBorderPadding(1, 2, 2, 4).
 		SetTitle("Details").
-		SetTitleColor(tcell.ColorDarkTurquoise.TrueColor()).
+		SetTitleColor(tcell.ColorDarkTurquoise).
 		SetTitleAlign(tview.AlignLeft)
 	comSection.
 		AddItem(node.layout.promptOutput, 0, 1, false).
-		SetBackgroundColor(tcell.ColorDarkGray).
+		SetBackgroundColor(tcell.ColorBlack).
 		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkCyan.TrueColor()).
+		SetBorderColor(tcell.ColorDarkCyan).
 		SetBorderPadding(1, 2, 2, 4).
 		SetTitle("Prompter").
-		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetTitleColor(tcell.ColorDarkOliveGreen).
 		SetTitleAlign(tview.AlignLeft).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	return metadataSection, infoSection, comSection
 }
 
@@ -509,7 +510,7 @@ func createConsoleView() bool {
 	helpOutput.
 		SetText("Press CTRL+SPACE or CMD+SPACE to send the prompt.\nPress CTRL+C or CMD+Q to exit from the application.\nGo to fullscreen for advanced options.").
 		SetTextAlign(tview.AlignRight).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	// Layout
 	node.layout.detailsInput = tview.NewForm()
 
@@ -525,10 +526,10 @@ func createConsoleView() bool {
 		SetHorizontal(true).
 		SetLabelColor(tcell.Color105).
 		SetFieldBackgroundColor(tcell.Color100).
-		SetFieldTextColor(tcell.Color102).
-		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetFieldTextColor(tcell.ColorBlack).
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen).
 		SetButtonsAlign(tview.AlignRight).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 
 	node.layout.promptArea.
 		SetBorderPadding(1, 2, 2, 4)
@@ -568,9 +569,9 @@ func createConsoleView() bool {
 		SetBorderPadding(0, 0, 9, 9).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
-		SetBackgroundColor(tcell.ColorDarkGray).
-		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
-		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor())
+		SetBackgroundColor(tcell.ColorBlack).
+		SetBorderColor(tcell.ColorDarkSlateGray).
+		SetTitleColor(tcell.ColorDarkOliveGreen)
 	// Validate view
 	return node.layout.consoleView != nil
 }
@@ -594,17 +595,17 @@ func createRefinementView() bool {
 			return true
 		}, nil).
 		AddButton("Back to chat", onBack).
-		SetFieldBackgroundColor(tcell.ColorGrey.TrueColor()).
-		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetFieldBackgroundColor(tcell.ColorGray).
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen).
 		SetButtonsAlign(tview.AlignCenter).
-		SetLabelColor(tcell.ColorDarkCyan.TrueColor()).
+		SetLabelColor(tcell.ColorDarkCyan).
 		SetTitle("Improve your search criteria: ").
 		SetTitleAlign(tview.AlignLeft).
-		SetTitleColor(tcell.ColorMediumPurple.TrueColor()).
+		SetTitleColor(tcell.ColorMediumPurple).
 		SetBorder(true).
-		SetBorderColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBorderColor(tcell.ColorDarkOliveGreen).
 		SetBorderPadding(5, 5, 25, 25).
-		SetBackgroundColor(tcell.ColorDarkGrey)
+		SetBackgroundColor(tcell.ColorBlack)
 	// Refinement form
 	node.layout.refinementInput = affinitySection
 	// Affinity grid
@@ -615,9 +616,9 @@ func createRefinementView() bool {
 		AddItem(affinitySection, 0, 0, 1, 3, 0, 0, true).
 		SetBorder(true).
 		SetTitle(" C A O S - Conversational Assistant for OpenAI Services ").
-		SetBackgroundColor(tcell.ColorDarkGray).
-		SetBorderColor(tcell.ColorDarkSlateGrey.TrueColor()).
-		SetTitleColor(tcell.ColorDarkOliveGreen.TrueColor()).
+		SetBackgroundColor(tcell.ColorBlack).
+		SetBorderColor(tcell.ColorDarkSlateGray).
+		SetTitleColor(tcell.ColorDarkOliveGreen).
 		SetBorderPadding(12, 6, 24, 24)
 	// Validate view
 	return node.layout.affinityView != nil
@@ -630,8 +631,8 @@ func createModalView() {
 	// Modal section
 	node.layout.modalInput.
 		SetText("Do you want to export the current conversation? Press Ok to export it or Cancel to start a new conversation.").
-		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen.TrueColor()).
-		SetBackgroundColor(tcell.ColorLightGray.TrueColor()).
+		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen).
+		SetBackgroundColor(tcell.ColorLightGray).
 		AddButtons([]string{"Ok", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Ok" {
@@ -671,7 +672,7 @@ func InitializeLayout() {
 		AddAndSwitchToPage("console", node.layout.consoleView, true).
 		AddAndSwitchToPage("refinement", node.layout.affinityView, true).
 		AddAndSwitchToPage("training", node.layout.modalInput, true).
-		SetBackgroundColor(tcell.ColorDarkGray)
+		SetBackgroundColor(tcell.ColorBlack)
 	// App terminal configuration
 	node.layout.app.
 		SetRoot(node.layout.pages, true).

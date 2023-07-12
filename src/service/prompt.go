@@ -135,7 +135,7 @@ func (c *Prompt) SendChatCompletionPrompt(service Agent) (*gpt3.ChatCompletionSt
 						bWriter.Write([]byte(out.Choices[0].Delta.Content))
 					}
 					str := wordwrap.WrapString(out.Choices[0].Delta.Content, 25)
-					fmt.Printf("\x1b[32;43m%s", str)
+					fmt.Printf("\x1b[1:32m%s", str)
 				})
 
 			var event EventManager
@@ -242,7 +242,7 @@ func (c *Prompt) SendCompletionPrompt(service Agent) *gpt3.CompletionResponse {
 							}
 							in <- out.Choices[i].Text
 							str := wordwrap.WrapString(out.Choices[i].Text, 50)
-							fmt.Printf("\x1b[32m%s", str)
+							fmt.Printf("\x1b[1:32m%s", str)
 						}
 					}(service.preferences.InlineText)
 					if !isTestingEnvironment() {

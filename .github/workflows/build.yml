@@ -23,14 +23,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Version
-        id: semantic
-        uses: codfish/semantic-release-action@v2.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependencies
         run: sudo apt-get install libcurl4-openssl-dev
 
       - name: Build
-        run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}
+        run: make build APP=caos

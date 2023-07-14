@@ -2,7 +2,9 @@ name: Build
 
 on:
   push:
-    branches: ["main"]
+    branches: 
+      - main
+      - developer
   pull_request:
     branches: ["main"]
 
@@ -17,17 +19,16 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Version
-        id: semantic
-        uses: codacy/git-version@2.4.0
         with:
-          release-branch: master
-          dev-branch: developer
-          prefix: v.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependencies
         run: sudo apt-get install libcurl4-openssl-dev
 
       - name: Build
-        run: make build APP=caos VERSION=${{ steps.semantic.outputs.version }}
+        run: make build APP=caos

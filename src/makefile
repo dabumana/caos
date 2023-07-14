@@ -3,7 +3,12 @@ VERSION=v.0.0.0
 PKG_LIST=$(go list ./... | grep -v /vendor/ | tr '\n' ' ')
 
 build:
-	go build -o ./bin/${APP}-${VERSION}
+	mkdir bin
+	mkdir bin/caos
+	cp .env ./bin/caos
+	cp -r template ./bin/caos
+	go build -o ./bin/caos/${APP}
+
 
 clean:
 	go clean
@@ -28,7 +33,7 @@ env:
 	openssl x509 -in localCA.crt -out localCA.pem -outform PEM
 
 run:
-	./bin/${APP}-${VERSION}
+	./bin/caos/${APP}
 
 test:
 	go test ./...

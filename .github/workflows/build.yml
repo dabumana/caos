@@ -2,9 +2,7 @@ name: Build
 
 on:
   push:
-    branches:
-      - main
-      - developer
+    branches: ["main", "developer"]
   pull_request:
     branches: ["main"]
 
@@ -25,11 +23,6 @@ jobs:
         uses: codfish/semantic-release-action@v2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release-branch: master
-          dev-branch: developer
-          prefix: v.
-        
 
       - name: Dependencies
         run: sudo apt-get install libcurl4-openssl-dev

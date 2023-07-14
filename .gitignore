@@ -5,3 +5,4 @@ src/export*
 src/training*
 src/.env
 src/test/.env
+.env

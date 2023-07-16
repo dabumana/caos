@@ -1,14 +1,13 @@
 APP=caos
-VERSION=v.0.0.0
-PKG_LIST=$(go list ./... | grep -v /vendor/ | tr '\n' ' ')
+VERSION=v0.0.0
 
 build:
 	mkdir bin
 	mkdir bin/caos
+	mkdir report
+	mkdir report/${VERSION}
 	cp .env ./bin/caos
-	cp -r template ./bin/caos
 	go build -o ./bin/caos/${APP}
-
 
 clean:
 	go clean
@@ -16,6 +15,7 @@ clean:
 	rm -rf 'bin'
 	rm -rf 'log'
 	rm -rf 'export'
+	rm -rf 'report'
 	rm -rf 'training'
 	rm -rf '.cookies'
 	rm -rf 'localCA.key'
@@ -25,7 +25,7 @@ clean:
 	rm -rf 'coverage.out'
 
 coverage:
-	go test -covermode=count -coverprofile coverage.out ${PKG_LIST}
+	go test ./test/... -coverprofile=report/${VERSION}/coverage.out -coverpkg ./...
 
 env:
 	openssl genrsa -out localCA.key 4096
@@ -35,8 +35,8 @@ env:
 run:
 	./bin/caos/${APP}
 
-test:
-	go test ./...
+test: coverage
+	go test ./test/...
 
 tidy:
 	go mod tidy

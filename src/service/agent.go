@@ -2,21 +2,24 @@
 package service
 
 import (
+	"caos/model"
+	"caos/service/parameters"
+	"caos/util"
 	"context"
 	"crypto/tls"
+	"embed"
 	"encoding/csv"
 	"fmt"
 	"net/http"
 	"os"
 
-	"caos/model"
-	"caos/service/parameters"
-	"caos/util"
-
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
+
+//go:embed template
+var roles embed.FS
 
 // Agent - Contextual client API
 type Agent struct {
@@ -175,10 +178,7 @@ func getTemplateFromLocal() ([]string, []string) {
 	var index []string
 	var context []string
 
-	dir, _ := os.Getwd()
-	path := fmt.Sprintf("%v/template/role.csv", dir)
-
-	file, _ := os.Open(path)
+	file, _ := roles.Open("template/role.csv")
 	reader := csv.NewReader(file)
 	data, _ := reader.ReadAll()
 
@@ -238,7 +238,7 @@ func (c *Agent) SetTemplateParameters(promptContext []string) model.TemplateProp
 
 // SetTemplate - Conversion human-ai roles
 func (c *Agent) SetTemplate(context string, input string) []string {
-	if context == "" {
+	if context == "" && len(c.templateCtx) > 0 {
 		context = c.templateCtx[c.preferences.Template]
 	}
 

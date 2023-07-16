@@ -5,9 +5,10 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/ce2f44761a6e486999eddd05b749c1be)](https://app.codacy.com/gh/dabumana/caos/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Maintainability](https://api.codeclimate.com/v1/badges/9bf177949db99d4b2f15/maintainability)](https://codeclimate.com/github/dabumana/caos/maintainability)
 
-[![Build](https://github.com/dabumana/caos/actions/workflows/build.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/build.yml)
-[![Integrity](https://github.com/dabumana/caos/actions/workflows/integration.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/integration.yml)
+
 [![Acceptance](https://github.com/dabumana/caos/actions/workflows/acceptance.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/acceptance.yml)
+[![Integrity](https://github.com/dabumana/caos/actions/workflows/integration.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/integration.yml)
+[![Release](https://github.com/dabumana/caos/actions/workflows/release.yml/badge.svg)](https://github.com/dabumana/caos/actions/workflows/release.yml)
 
 ### Description :notebook:
 

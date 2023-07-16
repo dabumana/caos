@@ -6,10 +6,13 @@ on:
   pull_request:
     branches: [ "main", "developer" ]
 
+permissions:
+  actions: read
+
 jobs:
 
   build-coverage:
-    name: Build // Coverage
+    name: Coverage
     runs-on: ${{ 'macos-latest' || 'ubuntu-latest' || 'windows-latest' }}
     steps:
       - name: Set up Go

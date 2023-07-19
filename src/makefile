@@ -1,12 +1,14 @@
 APP=caos
 VERSION=v0.0.0
 
+benchmark:
+	go test ./test/... -bench -count 5 -benchmem | tee report/${VERSION}/profile.txt
+ 
 build:
 	mkdir bin
 	mkdir bin/caos
 	mkdir report
 	mkdir report/${VERSION}
-	cp .env ./bin/caos
 	go build -o ./bin/caos/${APP}
 
 clean:
@@ -22,9 +24,8 @@ clean:
 	rm -rf 'localCA.crt'
 	rm -rf 'localCA.pem'
 	rm -rf 'rootCA.pem'
-	rm -rf 'coverage.out'
 
-coverage:
+coverage: benchmark
 	go test ./test/... -coverprofile=report/${VERSION}/coverage.out -coverpkg ./...
 
 env:

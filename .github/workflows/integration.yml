@@ -13,7 +13,7 @@ jobs:
 
   build-coverage:
     name: Coverage
-    runs-on: ${{ 'macos-latest' || 'ubuntu-latest' || 'windows-latest' }}
+    runs-on: ${{'ubuntu-latest'  || 'macos-latest' || 'windows-latest' }}
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3

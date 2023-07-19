@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	"caos/model"
+	"caos/resources"
 	"caos/util"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/spf13/viper"
 )
 
 var group sync.WaitGroup
@@ -362,6 +364,7 @@ func validateRefinementForm() {
 	toppInput := node.layout.refinementInput.GetFormItem(3).(*tview.InputField)
 	penaltyInput := node.layout.refinementInput.GetFormItem(4).(*tview.InputField)
 	frequencyInput := node.layout.refinementInput.GetFormItem(5).(*tview.InputField)
+	keyInput := node.layout.refinementInput.GetFormItem(6).(*tview.InputField)
 
 	if !util.MatchNumber(resultInput.GetText()) {
 		resultInput.SetText("\u0031")
@@ -385,6 +388,17 @@ func validateRefinementForm() {
 
 	if !util.MatchNumber(frequencyInput.GetText()) {
 		frequencyInput.SetText("\u0030\u002e\u0035")
+	}
+
+	// Validate Key
+	file, _ := resources.Asset.Open("template/.env")
+	if file != nil {
+		err := viper.ReadConfig(file)
+		if err == nil {
+			viper.Set("API_KEY", keyInput.GetText())
+			viper.WriteConfig()
+			node.controller.currentAgent.key = append(node.controller.currentAgent.key, keyInput.GetText())
+		}
 	}
 }
 
@@ -588,12 +602,12 @@ func createRefinementView() bool {
 		AddInputField("Topp [0.0 / 1.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Topp), 5, onTypeAccept, onToppChange).
 		AddInputField("Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Penalty), 5, onTypeAccept, onPenaltyChange).
 		AddInputField("Frequency Penalty [-2.0 / 2.0]: ", fmt.Sprintf("%v", node.controller.currentAgent.preferences.Frequency), 5, onTypeAccept, onFrequencyChange).
-		AddCheckbox("Edit mode (edit and improve the previous response)", false, onEditChecked).
-		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, onStreamingChecked).
 		AddInputField("API key: ", node.controller.currentAgent.key[0], 60, func(textToCheck string, lastChar rune) bool {
 			node.controller.currentAgent.key[0] = textToCheck
 			return true
 		}, nil).
+		AddCheckbox("Edit mode (edit and improve the previous response)", false, onEditChecked).
+		AddCheckbox("Streaming mode (on Text and Turbo mode only)", true, onStreamingChecked).
 		AddButton("Back to chat", onBack).
 		SetFieldBackgroundColor(tcell.ColorGray).
 		SetButtonBackgroundColor(tcell.ColorDarkOliveGreen).

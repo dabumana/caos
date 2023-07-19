@@ -3,11 +3,11 @@ package service
 
 import (
 	"caos/model"
+	"caos/resources"
 	"caos/service/parameters"
 	"caos/util"
 	"context"
 	"crypto/tls"
-	"embed"
 	"encoding/csv"
 	"fmt"
 	"net/http"
@@ -17,9 +17,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
-
-//go:embed template
-var roles embed.FS
 
 // Agent - Contextual client API
 type Agent struct {
@@ -123,10 +120,14 @@ func getKeys() []string {
 	path := fmt.Sprintf("%v/.env", dir)
 
 	file, _ := os.Stat(path)
-	if file != nil {
+
+	key := os.Getenv("API_KEY")
+	if key != "" {
+		return getKeyFromEnv()
+	} else if file != nil {
 		return getKeyFromLocal()
 	}
-	return getKeyFromEnv()
+	return getKeyFromInternal()
 }
 
 // getKeyFromEnv - Get environment keys
@@ -173,12 +174,32 @@ func getKeyFromLocal() []string {
 	return keys
 }
 
+// getKeyFromInternal - Get the currect key stablished on the internal .env file
+func getKeyFromInternal() []string {
+	var keys []string
+
+	file, _ := resources.Asset.Open("template/profile.csv")
+	reader := csv.NewReader(file)
+	data, _ := reader.ReadAll()
+
+	for _, j := range data {
+		for k, l := range j {
+			if k == 1 {
+				keys = append(keys, l)
+			}
+		}
+	}
+
+	keys = append(keys, "", "")
+	return keys
+}
+
 // getTemplateFromLocal - Get templates on local dir
 func getTemplateFromLocal() ([]string, []string) {
 	var index []string
 	var context []string
 
-	file, _ := roles.Open("template/role.csv")
+	file, _ := resources.Asset.Open("template/role.csv")
 	reader := csv.NewReader(file)
 	data, _ := reader.ReadAll()
 

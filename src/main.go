@@ -1,7 +1,9 @@
 // Main package
 package main
 
-import "caos/handler"
+import (
+	"caos/handler"
+)
 
 // Main
 func main() {

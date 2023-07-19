@@ -9,7 +9,7 @@ build:
 	mkdir bin/caos
 	mkdir report
 	mkdir report/${VERSION}
-	go build -o ./bin/caos/${APP}
+	go build -o bin/caos/${APP}
 
 clean:
 	go clean

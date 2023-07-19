@@ -2,14 +2,15 @@ name: Acceptance
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "developer" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "developer" ]
 
 jobs:
-  analyze:
+
+  codeql-analysis:
     name: Analyze
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: ${{'ubuntu-latest'  || 'macos-latest' || 'windows-latest' }}
     permissions:
       actions: read
       contents: read
@@ -34,3 +35,35 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
+
+  codacy-security-scan:
+    name: Security Scan
+    runs-on: ${{'ubuntu-latest'  || 'macos-latest' || 'windows-latest' }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          output: results.sarif
+          format: sarif
+          gh-code-scanning-compat: true
+          max-allowed-issues: 2147483647
+
+      - name: Upload SARIF results file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif

@@ -1,13 +1,12 @@
-FROM golang:1.20
+FROM golang:1.19
 
 WORKDIR /usr/local/bin
 ENV APP_HOME /usr/local/bin/caos
 
 RUN mkdir -p ${APP_HOME}
 RUN git clone https://github.com/dabumana/caos ${APP_HOME}
-RUN make -C ${APP_HOME}/src build
 
-RUN mv ${APP_HOME}/src/bin/* /usr/local/bin
+RUN cp ${APP_HOME}/src/bin/caos/* /usr/local/bin
 RUN rm -rf ${APP_HOME}
 
-ENTRYPOINT [ "caos-v.0.0.0" ]
+ENTRYPOINT [ "caos" ]

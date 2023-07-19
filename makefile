@@ -1,12 +1,11 @@
 APP=caos
-VERSION=v.0.0.0
 # Configuration path
 CONFIG_PATH=./ci/service
 
-build:
+build: 
 	make -C ./src clean
+	make -C ./src build
 	make -C ./src test
-	make -C ./src build APP=${APP} VERSION=${VERSION}
 
 clean:
 	make -C ./src clean

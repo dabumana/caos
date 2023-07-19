@@ -24,6 +24,7 @@ jobs:
         uses: go-semantic-release/action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          force-bump-patch-version: true
 
       - name: Dependencies
         run: sudo apt-get install libcurl4-openssl-dev

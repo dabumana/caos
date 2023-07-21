@@ -466,7 +466,7 @@ func generateLayoutContent() {
 		SetBackgroundColor(tcell.ColorBlack)
 	// Input
 	node.layout.promptArea.
-		SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorWhite)).
+		SetPlaceholderStyle(tcell.StyleDefault.Background(tcell.ColorDarkSlateGray)).
 		SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorPurple)).
 		SetTextStyle(tcell.StyleDefault.Background(tcell.Color100)).
 		SetBorderPadding(1, 1, 1, 1).

@@ -42,6 +42,37 @@ Each new conversation can be exported once you finished your prompt requests, ke
 
 ***16K Models*** can process larger training sessions, but it depends on how much context can be found once the results are filtered and processed. 
 
+### Ready to use pod :octopus:
+
+#### Requirements to virtualize:
+
+- Docker
+
+#### First run:
+
+- Download installation script
+```
+curl -sL https://gist.github.com/dabumana/eaa4bce0a34b1b6cc68e6f54b70b6182/raw/install-caos.sh>>install-caos.sh
+```
+- Add permissions to the file
+```
+chmod +x install-caos.sh
+```
+- Now execute the following command, define the amount of cpus, do not forget to add your *API-KEY* for *OpenAI* and *ZeroGPT*, this script will create the pod and includes the environment variables required, once the pod completes the build stage will run for first time.
+
+```
+./install-caos.sh <Number of dedicated CPUs> <OpenAI-API-Key> <ZeroGPT-API-Key>
+```
+- Then a new file it's generated called caos.sh, this file requires permissions to run
+```
+chmod +x caos.sh
+```
+#### Daily use case:
+
+- Next time you just need to run
+```
+./caos.sh
+```
 ### Build :wrench:
 
 Firts download the repository, installation process can be completed from the source using ***make*** and installing the required dependencies:

@@ -13,6 +13,9 @@ clean:
 coverage:
 	make -C ./src coverage
 
+install: build
+	make -C ./src install
+
 run: build
 	make -C ./src run
 
@@ -26,8 +29,8 @@ vendor:
 	make -C ./src vendor
 
 build-pod:
-	docker build --no-cache -t ${APP} ${CONFIG_PATH} 
+	docker build --pull --rm -f "ci/service/Dockerfile" -t ${APP}:latest ${CONFIG_PATH}
 
 run-pod: build-pod
 
-	docker run ${APP}
+	docker run -it --cpus="2" ${APP}:latest

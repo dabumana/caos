@@ -1,4 +1,9 @@
 APP=caos
+# Enter your credentials for OpenAI && ZeroGPT
+KEY="<YOUR-API-KEY>"
+ZKEY="<YOUR-API-KEY>"
+# Assign resources for service pod
+CPU=2
 # Configuration path
 CONFIG_PATH=./ci/service
 
@@ -29,8 +34,8 @@ vendor:
 	make -C ./src vendor
 
 build-pod:
-	docker build --pull --rm -f "ci/service/Dockerfile" -t ${APP}:latest ${CONFIG_PATH}
+	docker build --build-arg KEY=${KEY} --pull --rm -f "ci/service/Dockerfile" -t ${APP}:latest ${CONFIG_PATH}
 
 run-pod: build-pod
 
-	docker run -it --cpus="2" ${APP}:latest
+	docker run -it --cpus=${CPU} ${APP}:latest

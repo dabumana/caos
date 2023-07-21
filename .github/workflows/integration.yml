@@ -2,15 +2,14 @@ name: Integration
 
 on:
   push:
-    branches: [ "main", "developer" ]
+    branches: ["main", "developer"]
   pull_request:
-    branches: [ "main", "developer" ]
+    branches: ["main", "developer"]
 
 permissions:
   actions: read
 
 jobs:
-
   build-coverage:
     name: Coverage
     runs-on: ${{'ubuntu-latest'  || 'macos-latest' || 'windows-latest' }}
@@ -27,10 +26,10 @@ jobs:
           persist-credentials: false
 
       - name: Dependencies
-        run: sudo apt-get install libcurl4-openssl-dev
+        run: sudo apt-get update && sudo apt-get install libcurl4-openssl-dev --fix-missing
 
       - name: Build
         run: make build APP=caos
-      
+
       - name: Coverage
         run: make test

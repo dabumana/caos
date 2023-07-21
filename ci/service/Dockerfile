@@ -14,4 +14,7 @@ RUN make build
 RUN cp ${APP_HOME}/source/src/bin/caos/caos /bin
 RUN rm -rf ${APP_HOME}
 
+ENV API_KEY=<YOUR-API-KEY>
+ENV API_KEY_ZERO=<YOUR-API-KEY>
+
 ENTRYPOINT [ "caos" ]

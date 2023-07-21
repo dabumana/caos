@@ -34,7 +34,7 @@ vendor:
 	make -C ./src vendor
 
 build-pod:
-	docker build --build-arg KEY=${KEY} --pull --rm -f "ci/service/Dockerfile" -t ${APP}:latest ${CONFIG_PATH}
+	docker build --build-arg KEY=${KEY} --build-arg ZKEY=${ZKEY} --pull --rm -f "ci/service/Dockerfile" -t ${APP}:latest ${CONFIG_PATH}
 
 run-pod: build-pod
 

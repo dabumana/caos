@@ -15,7 +15,7 @@ RUN cp ${APP_HOME}/source/src/bin/caos/caos /bin
 RUN rm -rf ${APP_HOME}
 # Setup argument variables
 ARG KEY
-ARG ZERO-KEY
+ARG ZKEY
 # Initialize environment variables
 ENV API_KEY $KEY
 ENV ZERO_API_KEY $ZERO-KEY

@@ -56,34 +56,42 @@ func (c *Agent) Initialize() Agent {
 	c.ctx = context.Background()
 	c.client, c.exClient = c.Connect()
 	c.transformers = []Chain{}
-	// Agent properties
-	c.preferences.User = "Mozilla/5 [en] (X11; U; Linux 2.2.15 i686)"
-	c.preferences.Encoding = "gzip, deflate, br"
-	// Agent Role
-	c.preferences.Role = model.Assistant
-	// Global preferences
+	c.preferences = getPreferences()
 	c.preferences.TemplateIDs = len(c.templateID)
-	c.preferences.Template = 0
-	c.preferences.Engine = "text-davinci-003"
-	c.preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
-	c.preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
-	c.preferences.MaxTokens = 1024
-	c.preferences.Mode = "Text"
-	c.preferences.Models = append(c.preferences.Models, "zero-gpt")
-	c.preferences.Probabilities = util.ParseInt32("\u0031")
-	c.preferences.Results = util.ParseInt32("\u0031")
-	c.preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
-	c.preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
-	// Mode selection
-	c.preferences.IsChained = false
-	c.preferences.IsEditable = false
-	c.preferences.IsLoading = false
-	c.preferences.IsNewSession = true
-	c.preferences.IsPromptReady = false
-	c.preferences.IsPromptStreaming = true
-	c.preferences.InlineText = make(chan string)
 	// Return created client
 	return *c
+}
+
+// getPreferences - Get actual preferences for current agent
+func getPreferences() parameters.GlobalPreferences {
+	var preferences parameters.GlobalPreferences
+	// Agent properties
+	preferences.User = "Mozilla/5 [en] (X11; U; Linux 2.2.15 i686)"
+	preferences.Encoding = "gzip, deflate, br"
+	// Agent Role
+	preferences.Role = model.Assistant
+	// Global preferences
+	preferences.Template = 0
+	preferences.Engine = "text-davinci-003"
+	preferences.Frequency = util.ParseFloat32("\u0030\u002e\u0035")
+	preferences.Penalty = util.ParseFloat32("\u0030\u002e\u0035")
+	preferences.MaxTokens = 1024
+	preferences.Mode = "Text"
+	preferences.Models = append(preferences.Models, "zero-gpt")
+	preferences.Probabilities = util.ParseInt32("\u0031")
+	preferences.Results = util.ParseInt32("\u0031")
+	preferences.Temperature = util.ParseFloat32("\u0030\u002e\u0034")
+	preferences.Topp = util.ParseFloat32("\u0030\u002e\u0036")
+	// Mode selection
+	preferences.IsChained = false
+	preferences.IsEditable = false
+	preferences.IsLoading = false
+	preferences.IsNewSession = true
+	preferences.IsPromptReady = false
+	preferences.IsPromptStreaming = true
+	preferences.InlineText = make(chan string)
+	// Return preferences
+	return preferences
 }
 
 // Connect - Contextualize the API to create a new client

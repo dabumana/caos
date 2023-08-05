@@ -109,18 +109,7 @@ func setConstructResults(reader *bytes.Reader) ([]string, []string) {
 			if content != " " &&
 				!strings.Contains(content, "(function(){") {
 
-				isLinkRef := func(c string) bool {
-					if strings.Contains(c, "href") &&
-						!strings.Contains(c, "analytics") &&
-						!strings.Contains(c, "google") &&
-						!strings.Contains(c, "cdn") {
-						return true
-					} else {
-						return false
-					}
-				}
-
-				if isLinkRef(content) {
+				if isLinkReference(content) {
 					urls := strings.Split(content, "https://")
 					o := len(urls)
 					if o > 1 {
@@ -139,21 +128,7 @@ func setConstructResults(reader *bytes.Reader) ([]string, []string) {
 					}
 				}
 
-				isTagRef := func(tknType html.TokenType, c string) bool {
-					if tknType == html.TextToken {
-						compound := strings.Split(c, " ")
-						if !strings.ContainsAny(c, "</>{}\n") &&
-							len(compound) >= 1 {
-							return true
-						} else {
-							return false
-						}
-					} else {
-						return false
-					}
-				}
-
-				if isTagRef(tokenType, content) &&
+				if isTagReference(tokenType, content) &&
 					len(resultBody) <= 99 {
 					context := fmt.Sprintf("%v", content)
 					bufferBody += fmt.Sprintf(" %v", context)
@@ -163,6 +138,33 @@ func setConstructResults(reader *bytes.Reader) ([]string, []string) {
 			resultBody = append(resultBody, bufferBody)
 			return urlHeader, resultBody
 		}
+	}
+}
+
+// isTagReference
+func isTagReference(tknType html.TokenType, c string) bool {
+	if tknType == html.TextToken {
+		compound := strings.Split(c, " ")
+		if !strings.ContainsAny(c, "</>{}\n") &&
+			len(compound) >= 1 {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+}
+
+// isLinkReference
+func isLinkReference(c string) bool {
+	if strings.Contains(c, "href") &&
+		!strings.Contains(c, "analytics") &&
+		!strings.Contains(c, "google") &&
+		!strings.Contains(c, "cdn") {
+		return true
+	} else {
+		return false
 	}
 }
 
